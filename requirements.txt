@@ -1,0 +1,24 @@
+# DO NOT include azure-functions-worker in this file
+# The Python Worker is managed by Azure Functions platform
+# Manually managing azure-functions-worker may cause unexpected issues
+
+azure-functions
+
+# core dependencies
+elasticsearch
+langchain
+langchain_community
+
+# Vertex AI dependencies
+google-cloud-aiplatform
+grpcio-status
+
+# OpenAI dependencies
+openai
+
+# BedRock dependencies
+boto3
+tiktoken
+
+jinja2
+python-dotenv

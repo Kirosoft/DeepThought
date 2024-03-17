@@ -1,8 +1,8 @@
 import azure.functions as func
 import logging
 from langchain_community.vectorstores import ElasticsearchStore
-from llm_integrations import get_llm
-from elasticsearch_client import elasticsearch_client
+from utils.llm_integrations import get_llm
+from utils.elasticsearch_client import elasticsearch_client
 from langchain.embeddings import OpenAIEmbeddings
 import os
 import jinja2

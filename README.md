@@ -1,4 +1,4 @@
-# Deepthought
+# DeepThought
 
 Functional agentic framework
 

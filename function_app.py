@@ -1,72 +1,62 @@
 import azure.functions as func
 import logging
-from langchain_community.vectorstores import ElasticsearchStore
-from utils.llm_integrations import get_llm
-from utils.elasticsearch_client import elasticsearch_client
-from langchain.embeddings import OpenAIEmbeddings
-import os
-import jinja2
+import datetime
 import json
-from urllib.parse import unquote
 
+# Local 
+from core.agent_llm import AgentLLM
+from core.agent_role import AgentRole
+from core.agent_config import AgentConfig
+from core.agent_memory import AgentMemory
 
 app = func.FunctionApp()
 
-@app.event_hub_message_trigger(arg_name="azeventhub", event_hub_name="deepthoughtcore",
-                               connection="DeepThoughtEvents_RootManageSharedAccessKey_EVENTHUB") 
-@app.event_hub_output(arg_name="answer",event_hub_name="eventhub_output",
-                      connection="DeepThoughtEvents_RootManageSharedAccessKey_EVENTHUB")
-def CoreLLMAgent(azeventhub: func.EventHubEvent, answer: func.Out[str]) -> func.HttpResponse:
-    body = json.loads(azeventhub.get_body().decode('utf-8'))
-    question=body["question"]
-    role=body["role"]
-    logging.info('PythonCoreLLMAgent processed an event: %s',question)
+@app.event_hub_message_trigger(arg_name="azeventhub", event_hub_name="deepthoughtcore",connection="DeepThoughtEvents_RootManageSharedAccessKey_EVENTHUB") 
+@app.event_hub_output(arg_name="answer",event_hub_name="eventhub_output", connection="DeepThoughtEvents_RootManageSharedAccessKey_EVENTHUB")
+def core_llm_agent(azeventhub: func.EventHubEvent, answer: func.Out[str]) -> func.HttpResponse:
 
-    # TODO: should there be an index per role or per agent or both?
-    INDEX = os.getenv("ES_INDEX", "workplace-app-docs")
-    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-    EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL")
-    ES_NUM_DOCS = int(os.getenv("ES_NUM_DOCS", "10"))
-    ES_INDEX_ROLES = os.getenv("ES_INDEX_ROLES", "ai_roles")
+    logging.info('core_llm_agent trigger from event hub input')
 
-    # connect to elastic and intialise a connection to the vector store
-    store = ElasticsearchStore(
-        es_connection=elasticsearch_client,
-        index_name=INDEX,
-        embedding=OpenAIEmbeddings(openai_api_key = OPENAI_API_KEY, model = EMBEDDING_MODEL)
-    )
+    agent_config = AgentConfig(azeventhub.get_body())
+    
+    if agent_config.is_valid():
+        logging.info('core_llm_agent processed an event: %s',agent_config.question)
+        agent_memory = AgentMemory(agent_config)
+        agent_role = AgentRole(agent_config)
+        agent_llm = AgentLLM(agent_config)
 
-    result = store.client.get(index=ES_INDEX_ROLES, id = role)
-    rag_prompt = unquote(result.body["_source"]["prompt"])
-    # result = store.client.search(index=ES_INDEX_ROLES, query={"match": {"_id": "ukho_policy"}})
+        # retrieve any context results
+        context_results = agent_memory.get_context(agent_config.question) if agent_memory.use_context_search() else ""
 
-    # use the input question to do a lookup similarity search in elastic
-    store.client.indices.refresh(index=INDEX)
-    results = store.similarity_search(question, k = ES_NUM_DOCS)
+        # retrieve any session history
+        session_history = agent_memory.get_session_history(agent_config.session_token) if agent_memory.use_session_history() else []
 
-    # transform the search results into json payload
-    doc_results = []
-    for doc in results:
-        doc_source = {**doc.metadata, 'page_content': doc.page_content}
-        doc_results.append(doc_source)
- 
-    # create the prompt template
-    template = jinja2.Template(rag_prompt)
-    qa_prompt = template.render(question=question, docs=doc_results)
+        # use the configured role to find the prompt and populate with the context and session history as required
+        completed_prompt = agent_role.get_prompt(context_results, session_history, agent_config.role)
 
-    # send to the AI bot
-    answer_str = ''
-    for chunk in get_llm().stream(qa_prompt):
-        answer_str += chunk.content
+        llm_result = agent_llm.run_inference(completed_prompt)
+
+        logging.info(f'Answer: {llm_result["answer"]} - session {llm_result["session_token"]}',)
+        #answer.set(json.dumps(llm_result))
+    else:
+        answer_str = 'No question found, please supply a question'
+        logging.info('Answer: %s',answer_str)
+        #answer.set(json.dumps({"answer":answer_str,"session_state":False}))
 
 
-    logging.info('Answer: %s',answer_str)
-    answer.set(f'{answer_str}')
+# @app.event_hub_message_trigger(arg_name="azeventhub", event_hub_name="deepthoughtoutput",
+#                                connection="DeepThoughtEvents_RootManageSharedAccessKey_EVENTHUB") 
+# def eventhub_output(azeventhub: func.EventHubEvent):
+#     try:
+#         body = azeventhub.get_body().decode('utf-8')
+#     except:
+#         body = "Invalid"
+    
+#     logging.info('[OUTPUT]: %s',body)
 
-    return func.HttpResponse(answer_str)
 
-@app.event_hub_message_trigger(arg_name="azeventhub", event_hub_name="deepthoughtoutput",
-                               connection="DeepThoughtEvents_RootManageSharedAccessKey_EVENTHUB") 
-def eventhub_output(azeventhub: func.EventHubEvent):
 
-    logging.info('[output]: %s',azeventhub.get_body().decode('utf-8'))
+# @app.schedule(schedule="0 */5 * * * *", arg_name="mytimer", run_on_startup=True) 
+# def test_function(mytimer: func.TimerRequest) -> None:
+#     logging.info('*** TIMER FUNCTION **** ')
+

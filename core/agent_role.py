@@ -31,19 +31,18 @@ class AgentRole:
         # transform the search results into json payload
         context_results = []
         for doc in context:
-            doc_source = {**doc.metadata, 'page_content': doc.page_content}
+            doc_source = {**doc.metadata, 'page_content': doc.text}
             context_results.append(doc_source)
 
         # session history
         session_results = []
         for doc in session_history:
-            doc_source = {**doc.metadata, 'page_content': doc.page_content}
+            doc_source = {**doc['_source']}
             session_results.append(doc_source)
 
         # create the prompt template
         template = jinja2.Template(role_prompt)
-        # TODO: need to include context & session results
-        completed_prompt_template = template.render(question=self.__agent_config.question, docs=context_results)
+        completed_prompt_template = template.render(question=self.__agent_config.question, docs=context_results, history=session_results)
 
         return completed_prompt_template
 

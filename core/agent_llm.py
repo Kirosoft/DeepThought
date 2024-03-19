@@ -11,7 +11,7 @@ class AgentLLM:
         # connect to elastic and intialise a connection to the vector store
         self.__db = Elasticsearch(cloud_id=self.__agent_config.ELASTIC_CLOUD_ID, api_key=self.__agent_config.ELASTIC_API_KEY)
 
-    def run_inference(self, completed_prompt) -> object:
+    def run_inference(self, completed_prompt:str, question:str) -> object:
         result = {}
         
         # send to the AI bot
@@ -34,7 +34,7 @@ class AgentLLM:
             index=self.__agent_config.ES_INDEX_HISTORY,
             document={
                 "session_token": self.__agent_config.session_token,
-                "prompt": completed_prompt,
+                "question": question,
                 "answer": answer_str
             }
         )

@@ -1,6 +1,7 @@
 from langchain_community.vectorstores import ElasticsearchStore
 from utils.elasticsearch_client import elasticsearch_client
 from langchain.embeddings import OpenAIEmbeddings
+import logging
 
 from core.agent_config import AgentConfig
 
@@ -19,9 +20,9 @@ class AgentMemory:
             embedding=OpenAIEmbeddings(openai_api_key = self.__agent_config.OPENAI_API_KEY, 
             model = self.__agent_config.EMBEDDING_MODEL)
         )
-        # use the input question to do a lookup similarity search in elastic
-        # TODO: is this needed?
-        self.__store.client.indices.refresh(index=self.__agent_config.INDEX)
+        # # use the input question to do a lookup similarity search in elastic
+        # # TODO: is this needed?
+        # self.__store.client.indices.refresh(index=self.__agent_config.INDEX)
 
     def use_context_search(self) -> bool:
         return self.__agent_config.include_context_search
@@ -38,10 +39,15 @@ class AgentMemory:
     
     def get_session_history(self, session_token:str):
         if self.use_session_history():
-            result = self.__store.client.search(index=self.__agent_config.ES_INDEX_HISTORY, query={"match": {"session_token": session_token}})
-            if result['hits']['total']['value'] > 0:
-                return result["hits"]['hits']
-            else:
+            try:
+                result = self.__store.client.search(index=self.__agent_config.ES_INDEX_HISTORY, query={"match": {"session_token": session_token}})
+                if result['hits']['total']['value'] > 0:
+                    return result["hits"]['hits']
+                else:
+                    return []
+            except:
+                logging.warning(f'Error trying to read history from {self.__agent_config.ES_INDEX_HISTORY}')
+
                 return []
         else:
             return []

@@ -78,4 +78,9 @@ Remember, this is important: the AI developer will not have access to client's i
 Note: after the client reads the specification you create, the client might have additional comments or suggestions. In this case, continue the discussion with the user until you get all the new information and output the newly updated spec again.
 Note: When the user types FINISHED then output the full spec and indicate this task is complete by saying "**FINISHED**" thanks!
 
+{% for qa in history -%}
+{{qa.question}}
+{{qa.answer}}
+{% endfor -%}
+
 

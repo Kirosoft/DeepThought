@@ -31,7 +31,7 @@ class AgentRole:
         # transform the search results into json payload
         context_results = []
         for doc in context:
-            doc_source = {**doc.metadata, 'page_content': doc.text}
+            doc_source = {**doc.metadata, 'page_content': doc.page_content}
             context_results.append(doc_source)
 
         # session history

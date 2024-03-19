@@ -50,7 +50,9 @@ class AgentConfig:
         self.session_state=self.body.get("session_state", False) 
 
         # use the supplied session token or generate a new one
-        self.session_token=self.body.get("session_token", ''.join(random.choices(string.ascii_letters + string.digits, k=self.SESSION_ID_CHARS)))       
+        self.session_token=self.body.get("session_token","")  
+        if (len(self.session_token) < self.SESSION_ID_CHARS):
+            self.session_token = ''.join(random.choices(string.ascii_letters + string.digits, k=self.SESSION_ID_CHARS))
 
         # context search
         self.include_context_search=self.body.get("include_context_search", False)

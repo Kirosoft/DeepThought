@@ -26,15 +26,15 @@ def core_llm_agent(azeventhub: func.EventHubEvent):  # , answer: func.Out[str]
         agent_llm = AgentLLM(agent_config)
 
         # retrieve any context results
-        context_results = agent_memory.get_context(agent_config.question) if agent_memory.use_context_search() else ""
+        context_results = agent_memory.get_context(agent_config.question) if agent_role.use_context_search() else ""
 
         # retrieve any session history
-        session_history = agent_memory.get_session_history(agent_config.session_token) if agent_memory.use_session_history() else []
+        session_history = agent_memory.get_session_history(agent_config.session_token) if agent_role.use_session_history() else []
 
         # use the configured role to find the prompt and populate with the context and session history as required
-        completed_prompt = agent_role.get_prompt(context_results, session_history, agent_config.role)
+        completed_prompt, tools = agent_role.get_completed_prompt(context_results, session_history, agent_config.role)
 
-        llm_result = agent_llm.run_inference(completed_prompt, agent_config.question)
+        llm_result = agent_llm.run_inference(completed_prompt, agent_config.question, agent_config.role, tools)
 
         logging.info(f'Answer: {llm_result["answer"]} - session {llm_result["session_token"]}')
         #answer.set('test')

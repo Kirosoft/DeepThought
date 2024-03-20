@@ -24,8 +24,6 @@ class AgentMemory:
         # # TODO: is this needed?
         # self.__store.client.indices.refresh(index=self.__agent_config.INDEX)
 
-    def use_context_search(self) -> bool:
-        return self.__agent_config.include_context_search
 
     def use_session_history(self) -> bool:
         return self.__agent_config.session_state

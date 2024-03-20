@@ -1,7 +1,7 @@
 from core.agent_config import AgentConfig
 from utils.llm_integrations import get_llm
 from elasticsearch import Elasticsearch
-
+from datetime import datetime
 class AgentLLM:
     def __init__(self, agent_config:AgentConfig):
         self.__agent_config = agent_config
@@ -11,12 +11,13 @@ class AgentLLM:
         # connect to elastic and intialise a connection to the vector store
         self.__db = Elasticsearch(cloud_id=self.__agent_config.ELASTIC_CLOUD_ID, api_key=self.__agent_config.ELASTIC_API_KEY)
 
-    def run_inference(self, completed_prompt:str, question:str) -> object:
+    def run_inference(self, completed_prompt:str, question:str, role:str, tools: list) -> object:
         result = {}
         
         # send to the AI bot
         answer_str = ''
-        for chunk in get_llm().stream(completed_prompt):
+        llm = get_llm()
+        for chunk in llm.stream(completed_prompt):
             answer_str += chunk.content
 
         result["answer"] = answer_str
@@ -35,7 +36,9 @@ class AgentLLM:
             document={
                 "session_token": self.__agent_config.session_token,
                 "question": question,
-                "answer": answer_str
+                "answer": answer_str,
+                "timestamp": datetime.now(),
+                "role":role
             }
         )
                         

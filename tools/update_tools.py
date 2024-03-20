@@ -15,7 +15,7 @@ ELASTIC_CLOUD_ID = settings["Values"]["ELASTIC_CLOUD_ID"]
 ELASTIC_API_KEY = settings["Values"]["ELASTIC_API_KEY"]
 
 # settings
-ES_INDEX_ROLES = settings["Values"]["ES_INDEX_ROLES"]
+ES_INDEX_TOOLS = settings["Values"]["ES_INDEX_TOOLS"]
 
 print(f"Elastic cloud id {ELASTIC_CLOUD_ID}")
 db = Elasticsearch(cloud_id=ELASTIC_CLOUD_ID, api_key=ELASTIC_API_KEY)
@@ -33,11 +33,11 @@ def index_docs_elastic(directory_path, extension):
         prompt_name = Path(file_path).stem
 
         db.index(
-            index=ES_INDEX_ROLES,
+            index=ES_INDEX_TOOLS,
             id=prompt_name,
             document={
                 "filename": file_path,
-                "prompt": prompt[0].page_content
+                "tool": prompt[0].page_content
             },
         )
         print(f"{file_path} imported ")
@@ -46,12 +46,12 @@ def index_docs_elastic(directory_path, extension):
 
 if (len(sys.argv) > 1):
     local_path = sys.argv[1]
-    print(f"Scanning roles: {local_path}")
+    print(f"Scanning tools: {local_path}")
 
     # a second argument means skip the indexing phase
     #if (len(sys.argv) < 3):
     # read the local .prompt files and index into elastic
-    index_docs_elastic(local_path, '.prompt')
+    index_docs_elastic(local_path, '.tool')
     
     print("Done")
 else:

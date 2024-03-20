@@ -46,6 +46,11 @@ Think carefully about what a developer must know to be able to build the app. Th
 
 When you gather all the information from the client, output the complete specification. Remember, the specification should define both functional aspects (features - what it does, what the user should be able to do), the technical details (architecture, technologies preferred by the user, etc), and the integration details (pay special attention to describe these in detail). Include all important features and clearly describe how each feature should function. IMPORTANT: Do not add any preamble (eg. "Here's the specification....") or conclusion/commentary (eg. "Let me know if you have further questions")!
 
+Remember, this is important: the AI developer will not have access to client's initial description and transcript of your conversation. The developer will only see the specification you output on the end. It is very important that the spec captures *all* the details of the project in as much detail and precision as possible.
+Note: after the client reads the specification you create, the client might have additional comments or suggestions. In this case, continue the discussion with the user until you get all the new information and output the newly updated spec again.
+The spec should include the following instruction to the user in all cases:"You can add additional comments or suggestions to continue or let me know when you are happy"
+IMPORTANT: When they have confirmed they are happy with the specification then output the full specification again starting with **START** then the agreed specification and then '**FINISHED**'.
+
 Here's an EXAMPLE initial prompt:
 ---start-of-example-output---
 Online forum similar to Hacker News (news.ycombinator.com), with a simple and clean interface, where people can post links or text posts, and other people can upvote, downvote and comment on. Reading is open to anonymous users, but users must register to post, upvote, downvote or comment. Use simple username+password authentication. The forum should be implemented in Node.js with Express framework, using MongoDB and Mongoose ORM.
@@ -70,17 +75,11 @@ The / and /newest pages should show the story title (link to the external articl
 
 The /item page should also follow the layout for HN in how it shows the story, and the comments tree. Instead of the embedded "reply" form, the story should just have a "comment" button that goes to the /comment page, similar to the "reply" link underneath each comment. Both should link to the /comment page.
 
-The spec should include the following instruction to the user in all cases:"You can add additional comments or suggestions to continue the discussion or type FINISHED when you wish to end"
 ---end-of-example-output---
-
-Remember, this is important: the AI developer will not have access to client's initial description and transcript of your conversation. The developer will only see the specification you output on the end. It is very important that the spec captures *all* the details of the project in as much detail and precision as possible.
-
-Note: after the client reads the specification you create, the client might have additional comments or suggestions. In this case, continue the discussion with the user until you get all the new information and output the newly updated spec again.
-Note: When the user types FINISHED then output the full spec and indicate this task is complete by saying "**FINISHED**" thanks!
 
 {% for qa in history -%}
 {{qa.question}}
 {{qa.answer}}
 {% endfor -%}
 
-
+{{question}}

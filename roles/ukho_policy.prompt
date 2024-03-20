@@ -28,11 +28,5 @@ PASSAGE:
 {% endfor -%}
 ----
 
-{% for qa in history -%}
-{{qa.question}}
-{{qa.answer}}
-{% endfor -%}
-
-
 Question: {{ question }}
 Response:

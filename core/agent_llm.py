@@ -16,29 +16,33 @@ class AgentLLM:
         
         # send to the AI bot
         answer_str = ''
-        llm = get_llm()
-        for chunk in llm.stream(completed_prompt):
-            answer_str += chunk.content
 
-        result["answer"] = answer_str
+        llm = get_llm().bind_functions(tools)
+        llm_result = llm.invoke([completed_prompt])
+
+        result["function_call"] = llm_result.additional_kwargs
+        result["response"] = llm_result.response_metadata
+        result["answer"] = llm_result.content
         result["session_token"] = self.__agent_config.session_token
 
         # if we are in a session then determine if it is finished or not
-        if (self.__agent_config.session_state):
-            if answer_str.__contains__("FINISHED"):
-                result["session_state"] = False
-            else:
-                result["session_state"] = True
+        if answer_str.__contains__("FINISHED"):
+            result["session_state"] = False
+        else:
+            result["session_state"] = True
 
         # write the answer_str into elastic for the session history
         self.__db.index(
             index=self.__agent_config.ES_INDEX_HISTORY,
             document={
-                "session_token": self.__agent_config.session_token,
+                "session_token": self.__agent_config.session_token, 
                 "question": question,
-                "answer": answer_str,
+                "answer": llm_result.content,
                 "timestamp": datetime.now(),
-                "role":role
+                "role":role,
+                "tools": [tool["name"] for tool in tools],
+                "response": llm_result.response_metadata,
+                "function_call": llm_result.additional_kwargs
             }
         )
                         

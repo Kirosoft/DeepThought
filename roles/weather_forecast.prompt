@@ -1,0 +1,9 @@
+[[get_n_day_weather_forecast,get_current_weather]]
+Don't make assumptions about what values to plug into functions. Ask for clarification if a user request is ambiguous.
+
+{% for qa in history -%}
+{{qa.question}}
+{{qa.answer}}
+{% endfor -%}
+
+{{ question }}

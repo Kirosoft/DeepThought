@@ -2,6 +2,7 @@ import jinja2
 from elasticsearch import Elasticsearch
 from urllib.parse import unquote
 import logging
+import json
 
 from core.agent_config import AgentConfig
 
@@ -16,13 +17,15 @@ class AgentRole:
         self.db = Elasticsearch(cloud_id=self.__agent_config.ELASTIC_CLOUD_ID, api_key=self.__agent_config.ELASTIC_API_KEY)
 
     def __get_role_prompt(self, role: str) -> str:
-        # determine role
-        result = self.db.get(index=self.__agent_config.ES_INDEX_ROLES, id = role)
+        
+        if not hasattr(self, 'role_prompt'):
+            # determine role
+            result = self.db.get(index=self.__agent_config.ES_INDEX_ROLES, id = role)
 
-        if not result["_source"]:
-            result = self.db.get(index=self.__agent_config.ES_INDEX_ROLES, id = "default_role")
+            if not result["_source"]:
+                result = self.db.get(index=self.__agent_config.ES_INDEX_ROLES, id = "default_role")
 
-        self.role_prompt = unquote(result["_source"]["prompt"])
+            self.role_prompt = unquote(result["_source"]["prompt"])
 
         return self.role_prompt
 
@@ -31,24 +34,37 @@ class AgentRole:
     def use_context_search(self, role):
         role_prompt = self.__get_role_prompt(role)
 
-        return role_prompt.contains("{% for doc in docs -%}")
+        return role_prompt.find("{% for doc in docs -%}") != -1
+
+    # Automatically detect if session history is used via role prompt template
+    # showing it is expecting some data
+    def use_session_history(self, role):
+        role_prompt = self.__get_role_prompt(role)
+
+        return role_prompt.find("{% for qa in history -%}") != -1
 
     # the first part of the temmplate can specify tools to be used
     # the tool names are comma seperated between [[ ]]
     # e.g. [[ tool1, tool2, tool3]]
     def __parse_tools(self, role_prompt):
+        self.tools = []
         role_parts = role_prompt.split("]]")
 
-        if (len(role_parts) == 0):
+        if (len(role_parts) == 1):
             return role_prompt
         else:
-            if (len(role_parts > 1)):
-                logging.warning("Unexpected format found trying to parse tools")
+            if (len(role_parts) != 2):
+                logging.warning(f"Unexpected format found trying to parse tools {role_parts}")
             
             try:
-                self.tools = role_parts[0].substring(2, ).split(",")
+                tool_names = role_parts[0][2:].split(",")
+
+                result = self.db.mget(index=self.__agent_config.ES_INDEX_TOOLS, docs=[{"_id":tool} for tool in tool_names])
+
+                self.tools = [json.loads(doc["_source"]["tool"].replace("\n",""))["function"] for doc in result["docs"]]
+
             except:
-                logging.error("Error found parsing tools list. Check syntax is correct.")
+                logging.error(f"Error found parsing tools list. Check syntax is correct. {role_parts[0][2:]}")
 
             return role_parts[1]
 

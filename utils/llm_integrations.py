@@ -8,7 +8,7 @@ LLM_TYPE = os.getenv("LLM_TYPE", "openai")
 def init_openai_chat(temperature):
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
     OPENAI_MODEL_NAME = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
-    return ChatOpenAI(openai_api_key=OPENAI_API_KEY, streaming=True, temperature=temperature, model=OPENAI_MODEL_NAME)
+    return ChatOpenAI(openai_api_key=OPENAI_API_KEY, streaming=False, temperature=temperature, model=OPENAI_MODEL_NAME)
 def init_vertex_chat(temperature):
     VERTEX_PROJECT_ID = os.getenv("VERTEX_PROJECT_ID")
     VERTEX_REGION = os.getenv("VERTEX_REGION", "us-central1")

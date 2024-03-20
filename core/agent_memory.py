@@ -7,7 +7,6 @@ from core.agent_config import AgentConfig
 
 class AgentMemory:
     def __init__(self, agent_config:AgentConfig):
-        self.__include_context_search = agent_config.include_context_search
         self.__agent_config = agent_config
 
         self.__init_store()
@@ -20,32 +19,20 @@ class AgentMemory:
             embedding=OpenAIEmbeddings(openai_api_key = self.__agent_config.OPENAI_API_KEY, 
             model = self.__agent_config.EMBEDDING_MODEL)
         )
-        # # use the input question to do a lookup similarity search in elastic
-        # # TODO: is this needed?
-        # self.__store.client.indices.refresh(index=self.__agent_config.INDEX)
-
-
-    def use_session_history(self) -> bool:
-        return self.__agent_config.session_state
 
     def get_context(self, question: str):
         # context search
-        if self.use_context_search():
-            return self.__store.similarity_search(question, k = self.__agent_config.ES_NUM_DOCS)
-        else:
-            return []
+        context_results =  self.__store.similarity_search(question, k = self.__agent_config.ES_NUM_DOCS)
+        return context_results
     
     def get_session_history(self, session_token:str):
-        if self.use_session_history():
-            try:
-                result = self.__store.client.search(index=self.__agent_config.ES_INDEX_HISTORY, query={"match": {"session_token": session_token}})
-                if result['hits']['total']['value'] > 0:
-                    return result["hits"]['hits']
-                else:
-                    return []
-            except:
-                logging.warning(f'Error trying to read history from {self.__agent_config.ES_INDEX_HISTORY}')
-
+        try:
+            result = self.__store.client.search(index=self.__agent_config.ES_INDEX_HISTORY, query={"match": {"session_token": session_token}})
+            if result['hits']['total']['value'] > 0:
+                return result["hits"]['hits']
+            else:
                 return []
-        else:
+        except:
+            logging.warning(f'Error trying to read history from {self.__agent_config.ES_INDEX_HISTORY}')
+
             return []

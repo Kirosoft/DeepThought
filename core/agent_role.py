@@ -48,6 +48,7 @@ class AgentRole:
     # e.g. [[ tool1, tool2, tool3]]
     def __parse_tools(self, role_prompt):
         self.tools = []
+        self.routing = []
         role_parts = role_prompt.split("]]")
 
         if (len(role_parts) == 1):
@@ -57,11 +58,15 @@ class AgentRole:
                 logging.warning(f"Unexpected format found trying to parse tools {role_parts}")
             
             try:
-                tool_names = role_parts[0][2:].split(",")
+                routes_or_tools = role_parts[0][2:].split(",")
 
-                result = self.db.mget(index=self.__agent_config.ES_INDEX_TOOLS, docs=[{"_id":tool} for tool in tool_names])
+                tool_list = [tool.strip() for tool in routes_or_tools if tool[0].strip() != '@']
+                self.routing = [route.strip()[1:] for route in routes_or_tools if route[0].strip() == '@']
 
-                self.tools = [json.loads(doc["_source"]["tool"].replace("\n",""))["function"] for doc in result["docs"]]
+                # find and parse the tools
+                if len(tool_list) > 0:
+                    result = self.db.mget(index=self.__agent_config.ES_INDEX_TOOLS, docs=[{"_id":tool} for tool in tool_list])
+                    self.tools = [json.loads(doc["_source"]["tool"].replace("\n",""))["function"] for doc in result["docs"]]
 
             except:
                 logging.error(f"Error found parsing tools list. Check syntax is correct. {role_parts[0][2:]}")
@@ -95,5 +100,5 @@ class AgentRole:
         template = jinja2.Template(role_prompt)
         completed_prompt_template = template.render(question=self.__agent_config.question, docs=context_results, history=session_results)
 
-        return completed_prompt_template, self.tools
+        return completed_prompt_template, self.tools, self.routing
 

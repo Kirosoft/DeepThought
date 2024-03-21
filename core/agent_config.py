@@ -28,7 +28,7 @@ class AgentConfig:
         # AI config
         self.OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
         self.EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL")
-        self.MAX_SESSION_TOKENS = os.getenv("MAX_SESSION_TOKENS", 4096)
+        self.MAX_SESSION_TOKENS = int(os.getenv("MAX_SESSION_TOKENS", "4096"))
 
         # Elastic search config
         self.ES_NUM_DOCS = int(os.getenv("ES_NUM_DOCS", "10"))

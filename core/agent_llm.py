@@ -11,7 +11,7 @@ class AgentLLM:
         # connect to elastic and intialise a connection to the vector store
         self.__db = Elasticsearch(cloud_id=self.__agent_config.ELASTIC_CLOUD_ID, api_key=self.__agent_config.ELASTIC_API_KEY)
 
-    def run_inference(self, completed_prompt:str, question:str, role:str, tools: list) -> object:
+    def run_inference(self, completed_prompt:str, question:str, role:str, tools: list, routing: list) -> object:
         result = {}
         
         # send to the AI bot
@@ -26,7 +26,8 @@ class AgentLLM:
         result["session_token"] = self.__agent_config.session_token
 
         # if we are in a session then determine if it is finished or not
-        if answer_str.__contains__("FINISHED"):
+        # TODO: not sure if this is needed. Maybe function calling replaces?
+        if answer_str.__contains__("**START**"):
             result["session_state"] = False
         else:
             result["session_state"] = True
@@ -42,7 +43,8 @@ class AgentLLM:
                 "role":role,
                 "tools": [tool["name"] for tool in tools],
                 "response": llm_result.response_metadata,
-                "function_call": llm_result.additional_kwargs
+                "function_call": llm_result.additional_kwargs,
+                "routing": routing
             }
         )
                         

@@ -2,7 +2,8 @@
 
 Functional agentic framework
 
-# Features
+
+# Template Features
 
 * Context search by template specification. e.g. {% for doc in docs -%}
 
@@ -44,6 +45,11 @@ Don't make assumptions about what values to plug into functions. Ask for clarifi
 {{ question }}
 ```
 
+# Routing hints - you can indicate which agents might be able to help with a response e.g. [[tool1,tool2,@rolename1,@rolename2]]
+
+Where @rolename1 is a registered agent in the system
+
+
 ## Example request
 
 First request (no session token):-
@@ -75,3 +81,7 @@ python roles/update_roles.py "<path-to-roles-directory>"
 python tools/update_tools.py "<path-to-tools-directory>"
 ```
 
+# TODO:
+
+* Build a message routing framework
+* Model overrides from templates

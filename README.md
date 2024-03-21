@@ -45,7 +45,7 @@ Don't make assumptions about what values to plug into functions. Ask for clarifi
 {{ question }}
 ```
 
-# Routing hints - you can indicate which agents might be able to help with a response e.g. [[tool1,tool2,@rolename1,@rolename2]]
+* Routing hints - you can indicate which agents might be able to help with a response e.g. [[tool1,tool2,@rolename1,@rolename2]]
 
 Where @rolename1 is a registered agent in the system
 

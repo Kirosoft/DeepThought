@@ -1,0 +1,11 @@
+{
+  "$schema": "https://aka.ms/azure/static-web-apps-cli/schema",
+  "configurations": {
+    "front-end": {
+      "appLocation": ".",
+      "outputLocation": ".",
+      "appName": "front-end",
+      "resourceGroup": "front-end-rg"
+    }
+  }
+}

@@ -1,0 +1,24 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat with Azure Event Hubs</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Your HTML content will go here -->
+    <script src="app.js"></script>
+
+<!-- Add this inside the <body> tag -->
+    <div class="container">
+        <select id="eventHubSelector" class="form-control my-3">
+            <!-- Options will be dynamically added here -->
+        </select>
+        <div id="chatWindow" class="border rounded p-3" style="height: 300px; overflow-y: scroll;">
+            <!-- Chat messages will appear here -->
+        </div>
+        <input type="text" id="messageInput" class="form-control my-3" placeholder="Type a message...">
+        <button id="sendMessage" class="btn btn-primary">Send</button>
+    </div>
+</body>
+</html>

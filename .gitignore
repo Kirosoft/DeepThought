@@ -30,6 +30,7 @@ MANIFEST
 # front-end
 front_end/dist/
 front_end/node_modules
+front_end\src\configuration.js
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -137,3 +138,4 @@ __blobstorage__
 __queuestorage__
 __azurite_db*__.json
 .python_packages
+front_end/src/configuration.js

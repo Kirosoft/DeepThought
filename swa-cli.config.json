@@ -1,0 +1,12 @@
+{
+  "$schema": "https://aka.ms/azure/static-web-apps-cli/schema",
+  "configurations": {
+    "deep-thought": {
+      "appLocation": "front_end",
+      "apiLocation": ".",
+      "outputLocation": ".",
+      "apiLanguage": "python",
+      "apiVersion": "3.8"
+    }
+  }
+}

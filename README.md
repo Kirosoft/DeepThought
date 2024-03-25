@@ -2,6 +2,9 @@
 
 Functional agentic framework
 
+> [!IMPORTANT]  
+> This project is currently in a very early development/experimental stage. There are a lot of unimplemented/broken features at the moment. 
+
 
 # Template Features
 

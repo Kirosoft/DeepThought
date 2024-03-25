@@ -12,7 +12,9 @@ const sendElement = document.getElementById("send");
 const receiveElement = document.getElementById("receive");
 
 sendElement.addEventListener("click", () => {
+  console.log("test send 3")
   send();
+
 });
 
 receiveElement.addEventListener("click", () => {

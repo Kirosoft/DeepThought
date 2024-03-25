@@ -7,11 +7,14 @@
 */
 
 const { EventHubProducerClient } = require("@azure/event-hubs");
-const { InteractiveBrowserCredential } = require("@azure/identity");
+const { AzureSASCredential, AzureNamedKeyCredential } = require("@azure/core-auth");
+const crypto = require('crypto');
+
 const {
   appClientId,
   appTenantId,
   eventHubName,
+  connectionString,
   fullyQualifiedNamespace
 } = require("./configuration");
 
@@ -19,15 +22,34 @@ const contentContainer = document.getElementById("sendContent");
 function outputLog(text) {
   const currentContent = contentContainer.value;
   contentContainer.value = `${currentContent}${text}\n`;
+  console.log(text);
 }
 
-async function send() {
-  const credential = new InteractiveBrowserCredential({
-    tenantId: appTenantId,
-    clientId: appClientId
-  });
+function createSharedAccessToken(uri, saName, saKey) { 
+  if (!uri || !saName || !saKey) { 
+          throw "Missing required parameter"; 
+      } 
+  var encoded = encodeURIComponent(uri); 
+  var now = new Date(); 
+  var week = 60*60*24*7;
+  var ttl = Math.round(now.getTime() / 1000) + week;
+  var signature = encoded + '\n' + ttl; 
+  var hash = crypto.createHmac('sha256', saKey).update(signature, 'utf8').digest('base64'); 
+  return 'SharedAccessSignature sr=' + encoded + '&sig=' +  
+      encodeURIComponent(hash) + '&se=' + ttl + '&skn=' + saName; 
+}
 
-  const producer = new EventHubProducerClient(fullyQualifiedNamespace, eventHubName, credential);
+
+async function send() {
+
+  console.log("test sender 2")
+
+  var token = createSharedAccessToken(fullyQualifiedNamespace, "RootManageSharedAccessKey","JUectEsS1vEKno+u9CazZAtKRLrGIqZBi+AEhCJax/k=");
+
+  //const producer = new EventHubProducerClient(connectionString, eventHubName,new AzureNamedKeyCredential("RootManagedSharedAccessKey","JUectEsS1vEKno+u9CazZAtKRLrGIqZBi+AEhCJax/k="));
+  const producer = new EventHubProducerClient(connectionString, eventHubName,new AzureSASCredential(token));
+
+  //const producer = new EventHubProducerClient(fullyQualifiedNamespace, eventHubName, credential);
 
   const eventsToSend = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"];
   try {
@@ -86,7 +108,7 @@ async function send() {
       throw new Error(`Not all messages were sent (${numEventsSent}/${eventsToSend.length})`);
     }
   } catch (err) {
-    outputLog("Error when creating & sending a batch of events: ", err);
+    outputLog(`Error when creating & sending a batch of events: ${err}`);
   }
   await producer.close();
 }

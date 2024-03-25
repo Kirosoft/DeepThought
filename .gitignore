@@ -139,3 +139,4 @@ __queuestorage__
 __azurite_db*__.json
 .python_packages
 front_end/src/configuration.js
+front_end/src/configuration.js

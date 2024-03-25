@@ -7,6 +7,7 @@ const config = {
   output: {
     path: path.resolve(__dirname, "dist"),
     filename: "app.js",
+    publicPath: '',
   },
   plugins: [
     new webpack.ProvidePlugin({
@@ -14,16 +15,16 @@ const config = {
     }),
     new webpack.ProvidePlugin({
       Buffer: ["buffer", "Buffer"],
-    }),
+    })
   ],
   module: {
     rules: [
         {
-            test: /\.m?js/,
+            test: /\.(m?js)$/,
             type: "javascript/auto",
           },
           {
-            test: /\.m?js/,
+            test: /\.(m?js)$/,
             resolve: {
               fullySpecified: false,
             },
@@ -36,7 +37,10 @@ const config = {
       buffer: require.resolve("buffer/"),
       os: require.resolve("os-browserify"),
       path: require.resolve("path-browserify"),
-      process: require.resolve('process/browser')
+      process: require.resolve('process/browser'),
+      crypto: require.resolve('crypto-browserify'),
+      stream: require.resolve("stream-browserify"),
+      vm: require.resolve("vm-browserify")
     },
   },
 };

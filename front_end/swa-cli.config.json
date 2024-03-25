@@ -3,9 +3,10 @@
   "configurations": {
     "front-end": {
       "appLocation": ".",
-      "outputLocation": ".",
-      "appName": "front-end",
-      "resourceGroup": "front-end-rg"
+      "outputLocation": "dist",
+      "appBuildCommand": "npm run build-dev",
+      "run": "npm run start",
+      "appDevserverUrl": "127.0.0.1:8080"
     }
   }
 }

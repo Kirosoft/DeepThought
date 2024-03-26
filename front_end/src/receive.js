@@ -12,13 +12,14 @@
 */
 
 const { EventHubConsumerClient } = require("@azure/event-hubs");
-const { InteractiveBrowserCredential } = require("@azure/identity");
+const { AzureSASCredential, AzureNamedKeyCredential } = require("@azure/core-auth");
+const crypto = require('crypto');
+
 const {
-  appClientId,
-  appTenantId,
   consumerGroup,
   eventHubName,
-  fullyQualifiedNamespace
+  fullyQualifiedNamespace,
+  connectionString,
 } = require("./configuration.js");
 
 const contentContainer = document.getElementById("receiveContent");
@@ -27,18 +28,27 @@ function outputLog(text) {
   contentContainer.value = `${currentContent}${text}\n`;
 }
 
-async function receive() {
-  const credential = new InteractiveBrowserCredential({
-    tenantId: appTenantId,
-    clientId: appClientId
-  });
+function createSharedAccessToken(uri, saName, saKey) { 
+  if (!uri || !saName || !saKey) { 
+          throw "Missing required parameter"; 
+      } 
+  var encoded = encodeURIComponent(uri); 
+  var now = new Date(); 
+  var week = 60*60*24*7;
+  var ttl = Math.round(now.getTime() / 1000) + week;
+  var signature = encoded + '\n' + ttl; 
+  var hash = crypto.createHmac('sha256', saKey).update(signature, 'utf8').digest('base64'); 
+  return 'SharedAccessSignature sr=' + encoded + '&sig=' +  
+      encodeURIComponent(hash) + '&se=' + ttl + '&skn=' + saName; 
+}
 
-  const consumerClient = new EventHubConsumerClient(
-    consumerGroup,
-    fullyQualifiedNamespace,
-    eventHubName,
-    credential
-  );
+
+async function receive() {
+
+  var token = createSharedAccessToken(fullyQualifiedNamespace, "RootManageSharedAccessKey","JUectEsS1vEKno+u9CazZAtKRLrGIqZBi+AEhCJax/k=");
+  const consumerClient = new EventHubConsumerClient(consumerGroup, connectionString, eventHubName, new AzureSASCredential(token));
+
+
   const partitionIds = await consumerClient.getPartitionIds();
   outputLog(`Preparing to read events from partitions: ${partitionIds.join(", ")}`);
 

@@ -2,6 +2,20 @@
 
 Functional agentic framework
 
+<img src="_d376e6fa-4fea-409b-a841-00e47f35bdad.jpeg"  height="500">
+<br>
+
+
+# Features
+
+* Cloud first functional agent framework
+* Stateless agent implementation with templated roles
+* Flexible tool/skills model
+* Build interactive session roles (either agent to agent of agent to human)
+* Support for context based search (RAG)
+* Dynamic workflow between agents
+
+
 > [!IMPORTANT]  
 > This project is currently in a very early development/experimental stage. There are a lot of unimplemented/broken features at the moment. 
 

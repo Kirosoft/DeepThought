@@ -11,8 +11,6 @@ const { AzureSASCredential, AzureNamedKeyCredential } = require("@azure/core-aut
 const crypto = require('crypto');
 
 const {
-  appClientId,
-  appTenantId,
   eventHubName,
   connectionString,
   fullyQualifiedNamespace
@@ -42,14 +40,8 @@ function createSharedAccessToken(uri, saName, saKey) {
 
 async function send() {
 
-  console.log("test sender 2")
-
   var token = createSharedAccessToken(fullyQualifiedNamespace, "RootManageSharedAccessKey","JUectEsS1vEKno+u9CazZAtKRLrGIqZBi+AEhCJax/k=");
-
-  //const producer = new EventHubProducerClient(connectionString, eventHubName,new AzureNamedKeyCredential("RootManagedSharedAccessKey","JUectEsS1vEKno+u9CazZAtKRLrGIqZBi+AEhCJax/k="));
   const producer = new EventHubProducerClient(connectionString, eventHubName,new AzureSASCredential(token));
-
-  //const producer = new EventHubProducerClient(fullyQualifiedNamespace, eventHubName, credential);
 
   const eventsToSend = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"];
   try {

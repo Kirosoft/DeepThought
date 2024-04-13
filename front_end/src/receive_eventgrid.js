@@ -43,7 +43,7 @@ function createSharedAccessToken(uri, saName, saKey) {
 }
 
 
-async function receive() {
+async function receive_eventgrid() {
 
   var token = createSharedAccessToken(fullyQualifiedNamespace, "RootManageSharedAccessKey","JUectEsS1vEKno+u9CazZAtKRLrGIqZBi+AEhCJax/k=");
   const consumerClient = new EventHubConsumerClient(consumerGroup, connectionString, eventHubName, new AzureSASCredential(token));
@@ -73,5 +73,5 @@ async function receive() {
 }
 
 module.exports = {
-  receive
+  receive_eventgrid
 };

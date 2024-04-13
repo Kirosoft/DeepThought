@@ -4,7 +4,7 @@ Functional agentic framework
 
 <img src="_d376e6fa-4fea-409b-a841-00e47f35bdad.jpeg"  height="500">
 <br>
-
+"Deep Thought announced that the new machine would be so large, it would resemble a planet, and be of such complexity that organic life itself would become part of its operating matrix." - Douglas Adams, Hitch HIkers Guide To The Galaxy
 
 # Features
 

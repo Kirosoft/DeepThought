@@ -38,7 +38,7 @@ function createSharedAccessToken(uri, saName, saKey) {
 }
 
 
-async function send() {
+async function send_eventhub() {
 
   var token = createSharedAccessToken(fullyQualifiedNamespace, "RootManageSharedAccessKey","JUectEsS1vEKno+u9CazZAtKRLrGIqZBi+AEhCJax/k=");
   const producer = new EventHubProducerClient(connectionString, eventHubName,new AzureSASCredential(token));
@@ -106,5 +106,5 @@ async function send() {
 }
 
 module.exports = {
-  send
+  send_eventhub
 };

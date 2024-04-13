@@ -6,5 +6,9 @@
   "azureFunctions.projectRuntime": "~4",
   "debug.internalConsoleOptions": "neverOpen",
   "azureFunctions.projectLanguageModel": 2,
-  "terminal.integrated.env.windows": { "PYTHONPATH": "${workspaceFolder}" }
+  "terminal.integrated.env.windows": {
+    "PYTHONPATH": "${workspaceFolder}"
+  },
+  "appService.defaultWebAppToDeploy": "undefined/subscriptions/ba6f6c8d-be11-413b-8b9c-28f19e980f87/resourceGroups/appsvc_linux_centralus/providers/Microsoft.Web/sites/DeepThoughtStudio",
+  "appService.deploySubpath": "DeepThoughtStudio"
 }

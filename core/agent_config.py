@@ -52,11 +52,11 @@ class AgentConfig:
         if (len(self.session_token) < self.SESSION_ID_CHARS):
             self.session_token = ''.join(random.choices(string.ascii_letters + string.digits, k=self.SESSION_ID_CHARS))
 
-    def __get_question(self):
-        self.question = self.body.get('question', '')
-        return self.question
+    def __get_input(self):
+        self.input = self.body.get('input', '')
+        return self.input
 
     def is_valid(self):
-        question = self.__get_question() 
-        return True if question is not None and question != '' else False
+        input = self.__get_input() 
+        return True if input is not None and input != '' else False
     

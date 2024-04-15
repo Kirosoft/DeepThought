@@ -112,6 +112,12 @@ https://learn.microsoft.com/en-us/azure/azure-functions/functions-run-local?tabs
 For VSCode install the Azure Functions extension: ms-azuretools.vscode-azurefunctions
 For local running you will also need to install Azurite Blob Serive (running on port 10000)
 
+Download and install CosmoDB emulator
+
+https://learn.microsoft.com/en-us/azure/cosmos-db/how-to-develop-emulator?tabs=windows%2Ccsharp&pivots=api-nosql
+https://aka.ms/cosmosdb-emulator
+
+
 ## Configuration of services and keys
 
 Setup the secret tokens in the local.settings.json file:

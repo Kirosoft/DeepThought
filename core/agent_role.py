@@ -98,7 +98,7 @@ class AgentRole:
         # create the prompt template
         # TODO: We need to be careful to need exceed the token length. We may need a summarizing step here
         template = jinja2.Template(role_prompt)
-        completed_prompt_template = template.render(question=self.__agent_config.question, docs=context_results, history=session_results)
+        completed_prompt_template = template.render(question=self.__agent_config.input, docs=context_results, history=session_results)
 
         return completed_prompt_template, self.tools, self.routing
 

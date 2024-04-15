@@ -1,0 +1,136 @@
+import azure.cosmos.cosmos_client as cosmos_client
+import numpy as np
+import hashlib
+import datetime
+import codecs
+import base64
+
+# Define the Cosmos DB endpoint and credentials
+endpoint = "https://localhost:8085"
+key = "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw=="
+
+# Define the database and container names
+database_name = "core-memory"
+container_name = "cog1"
+
+# Create a Cosmos DB client
+client = cosmos_client.CosmosClient(endpoint, {"masterKey": key})
+
+
+# Create a Cosmos DB container object
+container = client.get_database_client(database_name).get_container_client(container_name)
+
+# Define the cosine similarity UDF
+udf_definition = {
+    "id": "cosineSimilarity",
+    "serverScript": """
+        function cosineSimilarity(v1, v2) {
+            var dotProduct = 0;
+            var norm1 = 0;
+            var norm2 = 0;
+            for (var i = 0; i < v1.length; i++) {
+                dotProduct += v1[i] * v2[i];
+                norm1 += v1[i] * v1[i];
+                norm2 += v2[i] * v2[i];
+            }
+            norm1 = Math.sqrt(norm1);
+            norm2 = Math.sqrt(norm2);
+            var similarity = dotProduct / (norm1 * norm2);
+            return similarity;
+        }
+    """
+}
+
+try:
+    container.scripts.delete_user_defined_function("cosineSimilarity")
+except:
+    print("unable to delete existing user defined function")
+          
+container.scripts.create_user_defined_function(udf_definition)
+
+
+hash_size = 5
+num_hashes = 5
+seed = 4000
+
+# Set the random seed for reproducibility
+np.random.seed(seed)
+# generate a random hash seed for each hash function
+hash_seeds = np.random.randint(0, 2**31-1, size=num_hashes)
+
+def embedding_to_lsh(embedding, num_planes=10, seed=123):
+    
+    # Generate a set of random planes (vectors) for the projection
+    planes = np.random.normal(size=(num_planes, len(embedding)))
+    
+    # Project the embedding onto each plane and binarize the results
+    projections = np.dot(planes, embedding)
+    binary_projections = (projections >= 0).astype(int)
+    
+    # Convert the binary projections to a string hash
+    hash_str = ''.join(str(bit) for bit in binary_projections)
+    
+    # Return the hash as a string
+    return hash_str
+
+
+# delete all the existing vectors
+for item in container.query_items("SELECT * FROM cog1", enable_cross_partition_query=True):
+    container.delete_item(item["id"], partition_key=item["partition_key"])
+
+
+# Define the number of vectors to store
+num_vectors = 10
+
+# Define the dimensionality of each vector
+vector_dimension = 4000
+
+# Generate 10 random embedding vectors
+vectors = np.random.rand(num_vectors, vector_dimension)
+
+#  Insert the vectors into the container
+for i in range(num_vectors):
+    # Define the target embedding to search for
+    target_embedding = vectors[i]
+
+    # create parition keys on the has using 63 bits of precision
+    hash = embedding_to_lsh(target_embedding,63, seed)
+    partition_key = int(hash, 2)
+
+    # create index key using 
+    hash = embedding_to_lsh(target_embedding,1024, seed)
+    row_key = int(hash, 2).to_bytes(-(-len(hash) // 8), byteorder='big')
+    # encode the int array into a base64 string
+    encoded = base64.b64encode(row_key).decode('utf-8').replace('/','-').replace('=','_')
+
+    # Define the item to upsert
+    item = {
+        "id": encoded,
+        "name": f"fancy item stuff here {i}",
+        "partition_key": partition_key,
+        "ttl": 3600,
+        "vector": target_embedding.tolist()
+    }
+    container.upsert_item(body=item)
+
+
+# Define the SQL query
+query = "SELECT top @top c.vector, udf.cosineSimilarity(c.vector, @query_vector) as similarity FROM cog1 c where udf.cosineSimilarity(c.vector, @query_vector) >= @dist_val"
+
+# Define the query parameters
+parameters = [
+    {"name": "@query_vector", "value": vectors[0].tolist()},
+    {"name": "@dist_val", "value": 0.5},
+    {"name": "@top", "value": 5}
+]
+# Execute the query and retrieve the results
+results = container.query_items(
+    query=query,
+    parameters=parameters,
+    enable_cross_partition_query=True
+)
+
+# Print the top 5 results
+for i, item in enumerate(results):
+    print("Result {}: similarity={}".format(i+1, item["similarity"]))
+

@@ -144,3 +144,5 @@ DeepThoughtStudio/node_modules/.bin/*
 DeepThoughtStudio/node_modules/*
 
 .vscode/settings.json
+
+Todo.md

@@ -102,3 +102,48 @@ python tools/update_tools.py "<path-to-tools-directory>"
 
 * Build a message routing framework
 * Model overrides from templates
+
+# Installation
+
+Download and install Azure Core Tools runtime (Python)
+
+https://learn.microsoft.com/en-us/azure/azure-functions/functions-run-local?tabs=windows%2Cisolated-process%2Cnode-v4%2Cpython-v2%2Chttp-trigger%2Ccontainer-apps&pivots=programming-language-python
+
+For VSCode install the Azure Functions extension: ms-azuretools.vscode-azurefunctions
+For local running you will also need to install Azurite Blob Serive (running on port 10000)
+
+## Configuration of services and keys
+
+Setup the secret tokens in the local.settings.json file:
+
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "python",
+    "AzureWebJobsFeatureFlags": "EnableWorkerIndexing",
+
+    "ELASTIC_CLOUD_ID":"<CloudId>",
+    "ELASTIC_API_KEY":"<ApiKey>",
+    "ES_INDEX":"embedding_test_index",
+    "ES_INDEX_ROLES": "deepthought_roles",
+    "ES_INDEX_HISTORY": "deepthought_history",
+    "ES_INDEX_TOOLS": "deepthought_tools",
+    "ES_NUM_DOCS": "5",
+
+    "LLM_TYPE":"openai",
+    "OPENAI_API_KEY":"<your api key for open-ai>",
+    "OPENAI_MODEL":"gpt-4-turbo-preview",
+    "EMBEDDING_MODEL":"text-embedding-3-small",
+    "MAX_SESSION_TOKENS": "4096"
+  }
+}
+
+## running (see .vscode/settings.json)
+
+.venv\Scripts\activate ; func host start 
+
+## other tools
+
+Installation of mqttx app (https://mqttx.app/) for local testing 
+

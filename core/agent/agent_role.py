@@ -2,8 +2,9 @@ import jinja2
 from urllib.parse import unquote
 import logging
 
-from core.agent_config import AgentConfig
+from core.agent.agent_config import AgentConfig
 from core.db.agent_db_base import AgentDBBase
+
 class AgentRole:
 
     def __init__(self, agent_config : AgentConfig):
@@ -18,10 +19,10 @@ class AgentRole:
         
         if not hasattr(self, 'role_prompt'):
             # determine role
-            result = self.db.get(index=self.__agent_config.ES_INDEX_ROLES, id = role)
+            result = self.db.get(index=self.__agent_config.INDEX_ROLES, id = role)
 
             if not result["_source"]:
-                result = self.db.get(index=self.__agent_config.ES_INDEX_ROLES, id = "default_role")
+                result = self.db.get(index=self.__agent_config.INDEX_ROLES, id = "default_role")
 
             self.role_prompt = unquote(result["_source"]["prompt"])
 
@@ -63,7 +64,7 @@ class AgentRole:
 
                 # find and parse the tools
                 if len(tool_list) > 0:
-                    self.tools = self.db.multi_get(index=self.__agent_config.ES_INDEX_TOOLS, docs=[{"_id":tool} for tool in tool_list])
+                    self.tools = self.db.multi_get(index=self.__agent_config.INDEX_TOOLS, docs=[{"_id":tool} for tool in tool_list])
 
             except:
                 logging.error(f"Error found parsing tools list. Check syntax is correct. {role_parts[0][2:]}")

@@ -1,6 +1,6 @@
 
-from . import AgentDBBase
-from core.agent_config import AgentConfig
+from core.agent.agent_config import AgentConfig
+from core.db.agent_db_base import AgentDBBase
 
 import azure.cosmos.cosmos_client as cosmos_client
 from azure.cosmos import PartitionKey
@@ -78,3 +78,6 @@ class AgentDBCosmos(AgentDBBase):
         doc["ttl"] = ttl
 
         self.container.upsert_item(body=doc)
+
+
+

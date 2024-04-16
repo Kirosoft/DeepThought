@@ -1,20 +1,21 @@
 import os
 import types
-from core.agent_config import AgentConfig
+from core.agent.agent_config import AgentConfig
 from openai import OpenAI
 
-llm_types = types.SimpleNamespace()
-llm_types.OPENAI = "openai"
-llm_types.LLAMA3 = "llama3"
+embedding_types = types.SimpleNamespace()
+embedding_types.OPENAI = "openai"
+embedding_types.LLAMA3 = "llama3"
 
-class LLMBase:
+class EmbeddingeddingBase:
     def __init__(self, agent_config:AgentConfig, model:str):
-        self.model = self.__init_llm(model)
-        self.agent_cofnig = agent_config
+        self.model = self.__init_embedding(model)
+        self.agent_config = agent_config
 
-    def __init_llm(self, model:str, temperature):
-        match model:
-            case llm_types.OPENAI:
+    def __init_embedding(self, embedding_type:str, model:str, temperature):
+        match embedding_type:
+            case embedding_types.OPENAI:
                 client =  OpenAI(api_key=self.agent_config.OPENAI_API_KEY)
-                
                 completion = client.chat.completions(streaming=False, temperature=temperature, model=model)
+                return completion
+

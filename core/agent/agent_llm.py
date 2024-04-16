@@ -1,7 +1,7 @@
-from core.agent_config import AgentConfig
-from utils.llm_integrations import get_llm
-from elasticsearch import Elasticsearch
+from core.agent.agent_config import AgentConfig
+from core.llm.llm_base import LLMBase
 from datetime import datetime
+
 class AgentLLM:
     def __init__(self, agent_config:AgentConfig):
         self.__agent_config = agent_config
@@ -9,7 +9,7 @@ class AgentLLM:
 
     def __init_store(self):
         # connect to elastic and intialise a connection to the vector store
-        self.__db = Elasticsearch(cloud_id=self.__agent_config.ELASTIC_CLOUD_ID, api_key=self.__agent_config.ELASTIC_API_KEY)
+        self.__db = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_HISTORY)
 
     def run_inference(self, completed_prompt:str, question:str, role:str, tools: list, routing: list, model) -> object:
         result = {}

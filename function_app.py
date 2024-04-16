@@ -4,10 +4,10 @@ import datetime
 import json
 
 # Local 
-from core.agent_llm import AgentLLM
-from core.agent_role import AgentRole
-from core.agent_config import AgentConfig
-from core.agent_memory import AgentMemory
+from core.agent.agent_llm import AgentLLM
+from core.agent.agent_role import AgentRole
+from core.agent.agent_config import AgentConfig
+from core.agent.agent_memory import AgentMemory
 
 app = func.FunctionApp()
 
@@ -20,7 +20,7 @@ def core_llm_agent(req: func.HttpRequest) -> func.HttpResponse:  # , answer: fun
 
     logging.info('core_llm_agent trigger from event hub input')
 
-    agent_config = AgentConfig(req .get_body())
+    agent_config = AgentConfig(req.get_body())
      
     if agent_config.is_valid():
         logging.info('core_llm_agent processed an event: %s',agent_config.input)
@@ -71,30 +71,30 @@ def core_llm_agent(req: func.HttpRequest) -> func.HttpResponse:  # , answer: fun
 
 
 
-@app.route(route="http_trigger", auth_level=func.AuthLevel.ANONYMOUS)
-def http_trigger(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info('Python HTTP trigger function processed a request.')
+# @app.route(route="http_trigger", auth_level=func.AuthLevel.ANONYMOUS)
+# def http_trigger(req: func.HttpRequest) -> func.HttpResponse:
+#     logging.info('Python HTTP trigger function processed a request.')
 
-    name = req.params.get('name')
-    if not name:
-        try:
-            req_body = req.get_json()
-        except ValueError:
-            pass
-        else:
-            name = req_body.get('name')
+#     name = req.params.get('name')
+#     if not name:
+#         try:
+#             req_body = req.get_json()
+#         except ValueError:
+#             pass
+#         else:
+#             name = req_body.get('name')
 
-    if name:
-        return func.HttpResponse(f"Hello, {name}. This HTTP triggered function executed successfully.")
-    else:
-        return func.HttpResponse(
-             "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response.",
-             status_code=200
-        )
+#     if name:
+#         return func.HttpResponse(f"Hello, {name}. This HTTP triggered function executed successfully.")
+#     else:
+#         return func.HttpResponse(
+#              "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response.",
+#              status_code=200
+#         )
 
 
-@app.queue_trigger(arg_name="azqueue", queue_name="main-queue",
-                               connection="868e5d_STORAGE") 
-def queue_trigger(azqueue: func.QueueMessage):
-    logging.info('Python Queue trigger processed a message: %s',
-                azqueue.get_body().decode('utf-8'))
+# @app.queue_trigger(arg_name="azqueue", queue_name="main-queue",
+#                                connection="868e5d_STORAGE") 
+# def queue_trigger(azqueue: func.QueueMessage):
+#     logging.info('Python Queue trigger processed a message: %s',
+#                 azqueue.get_body().decode('utf-8'))

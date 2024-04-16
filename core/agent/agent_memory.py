@@ -1,6 +1,6 @@
 import logging
 
-from core.agent_config import AgentConfig
+from core.agent.agent_config import AgentConfig
 from core.db.agent_db_base import AgentDBBase
 
 class AgentMemory:
@@ -22,17 +22,17 @@ class AgentMemory:
 
     def get_context(self, question: str):
         # context search
-        context_results =  self.__store.similarity_search(question, k = self.__agent_config.ES_NUM_DOCS)
+        context_results =  self.__store.similarity_search(question, k = self.__agent_config.TOP_K_DOCS)
         return context_results
     
     def get_session_history(self, session_token:str):
         try:
-            result = self.__store.client.search(index=self.__agent_config.ES_INDEX_HISTORY, query={"match": {"session_token": session_token}})
+            result = self.__store.client.search(index=self.__agent_config.INDEX_HISTORY, query={"match": {"session_token": session_token}})
             if result['hits']['total']['value'] > 0:
                 return result["hits"]['hits']
             else:
                 return []
         except:
-            logging.warning(f'Error trying to read history from {self.__agent_config.ES_INDEX_HISTORY}')
+            logging.warning(f'Error trying to read history from {self.__agent_config.INDEX_HISTORY}')
 
             return []

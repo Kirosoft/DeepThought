@@ -1,6 +1,4 @@
-from agent_db_elastic import AgentDBElastic
-from agent_db_cosmos import AgentDBCosmos
-from core.agent_config import AgentConfig
+from core.agent.agent_config import AgentConfig
 import types
 
 # for now define supported DB types here
@@ -24,7 +22,7 @@ class AgentDBBase:
             case db_types.ELASTIC:
                 return AgentDBElastic()
             case _:
-                raise Exception("Unknown database type: ${dbtype} requested")
+                raise Exception(f"Unknown database type: ${dbtype} requested")
 
     def multi_get(self):
         pass
@@ -35,3 +33,5 @@ class AgentDBBase:
     def index(self, doc:object, ttl:int):
         pass
 
+from core.db.agent_db_elastic import AgentDBElastic
+from core.db.agent_db_cosmos import AgentDBCosmos

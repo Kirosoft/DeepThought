@@ -1,9 +1,7 @@
-from langchain_community.vectorstores import ElasticsearchStore
-from utils.elasticsearch_client import elasticsearch_client
-from langchain.embeddings import OpenAIEmbeddings
 import logging
 
 from core.agent_config import AgentConfig
+from core.db.agent_db_base import AgentDBBase
 
 class AgentMemory:
     def __init__(self, agent_config:AgentConfig):
@@ -13,12 +11,14 @@ class AgentMemory:
 
     def __init_store(self):
         # connect to elastic and intialise a connection to the vector store
-        self.__store = ElasticsearchStore(
-            es_connection=elasticsearch_client,
-            index_name=self.__agent_config.INDEX,
-            embedding=OpenAIEmbeddings(openai_api_key = self.__agent_config.OPENAI_API_KEY, 
-            model = self.__agent_config.EMBEDDING_MODEL)
-        )
+        self.__store = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_HISTORY)
+
+        # self.__store = ElasticsearchStore(
+        #     es_connection=elasticsearch_client,
+        #     index_name=self.__agent_config.INDEX,
+        #     embedding=OpenAIEmbeddings(openai_api_key = self.__agent_config.OPENAI_API_KEY, 
+        #     model = self.__agent_config.EMBEDDING_MODEL)
+        # )
 
     def get_context(self, question: str):
         # context search

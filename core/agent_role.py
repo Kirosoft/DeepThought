@@ -1,11 +1,9 @@
 import jinja2
-from elasticsearch import Elasticsearch
 from urllib.parse import unquote
 import logging
-import json
 
 from core.agent_config import AgentConfig
-
+from core.db.agent_db_base import AgentDBBase
 class AgentRole:
 
     def __init__(self, agent_config : AgentConfig):
@@ -14,7 +12,7 @@ class AgentRole:
 
     def __init_store(self):
         # connect to elastic and intialise a connection to the vector store
-        self.db = Elasticsearch(cloud_id=self.__agent_config.ELASTIC_CLOUD_ID, api_key=self.__agent_config.ELASTIC_API_KEY)
+        self.db = AgentDBBase(self.__agent_config)
 
     def __get_role_prompt(self, role: str) -> str:
         
@@ -65,8 +63,7 @@ class AgentRole:
 
                 # find and parse the tools
                 if len(tool_list) > 0:
-                    result = self.db.mget(index=self.__agent_config.ES_INDEX_TOOLS, docs=[{"_id":tool} for tool in tool_list])
-                    self.tools = [json.loads(doc["_source"]["tool"].replace("\n",""))["function"] for doc in result["docs"]]
+                    self.tools = self.db.multi_get(index=self.__agent_config.ES_INDEX_TOOLS, docs=[{"_id":tool} for tool in tool_list])
 
             except:
                 logging.error(f"Error found parsing tools list. Check syntax is correct. {role_parts[0][2:]}")

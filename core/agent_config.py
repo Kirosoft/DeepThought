@@ -28,17 +28,24 @@ class AgentConfig:
         # AI config
         self.OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
         self.EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL")
+        
         self.MAX_SESSION_TOKENS = int(os.getenv("MAX_SESSION_TOKENS", "4096"))
 
-        # Elastic search config
-        self.ES_NUM_DOCS = int(os.getenv("ES_NUM_DOCS", "10"))
-        self.INDEX = os.getenv("ES_INDEX", "workplace-app-docs")
-        self.ES_INDEX_ROLES = os.getenv("ES_INDEX_ROLES", "ai_roles")
-        self.ES_INDEX_HISTORY = os.getenv("ES_INDEX_HISTORY", "ai_history")
-        self.ES_INDEX_TOOLS = os.getenv("ES_INDEX_TOOLS", "ai_tools")
+        # database agnostic settings
+        self.INDEX_ROLES = os.getenv("INDEX_ROLES", "ai_roles")
+        self.INDEX_HISTORY = os.getenv("INDEX_HISTORY", "ai_history")
+        self.INDEX_TOOLS = os.getenv("INDEX_TOOLS", "ai_tools")
+        self.DATABASE_NAME = os.getnv("DATABASE_NAME","")
+        self.TOP_K_DOCS = int(os.getenv("TOP_K_DOCS", "10"))
+        self.DB_TYPE = os.getenv("DB_TYPE")
 
-        self.ELASTIC_CLOUD_ID = os.getenv("ELASTIC_CLOUD_ID")
-        self.ELASTIC_API_KEY = os.getenv("ELASTIC_API_KEY")
+        # elastic specific settings
+        self.ELASTIC_CLOUD_ID = os.getenv("ELASTIC_CLOUD_ID","")
+        self.ELASTIC_API_KEY = os.getenv("ELASTIC_API_KEY","")
+
+        # cosmos specific settings
+        self.COSMOS_ENDPOINT = os.getenv("COSMOS_ENDPOINT","")
+        self.COSMOS_KEY = os.getenv("COSMOS_KEY","")
 
     # Setup the needed properties
     # If they were not supplied then provide suitable defaults

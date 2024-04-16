@@ -34,9 +34,8 @@ class AgentLLM:
 
         # write the answer_str into elastic for the session history
         self.__db.index(
-            index=self.__agent_config.ES_INDEX_HISTORY,
             document={
-                "session_token": self.__agent_config.session_token, 
+                "id": self.__agent_config.session_token, 
                 "question": question,
                 "answer": llm_result.content,
                 "timestamp": datetime.now(),

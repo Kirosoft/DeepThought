@@ -41,7 +41,7 @@ def embedding_to_lsh(embedding, num_planes=10, seed=123):
     return hash_str
 
 def get_content(url, path):
-    result = requests.get(url, auth=("kirosoft","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"))
+    result = requests.get(url, auth=(agent_config.GITHUB_USER,agent_config.GITHUB_KEY))
 
     if result.status_code == 200:
         data = json.loads(result.content)

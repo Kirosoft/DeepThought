@@ -23,7 +23,7 @@ udf_definition = {
             }
             norm1 = Math.sqrt(norm1);
             norm2 = Math.sqrt(norm2);
-            var similarity = dotProduct / (norm1 * norm2);
+            var similarity = Math.round((dotProduct / (norm1 * norm2))*100);
             return similarity;
         }
     """
@@ -61,15 +61,16 @@ class AgentDBCosmos(AgentDBBase):
     def multi_get(self, docs:list[object]):
         self.container.query_items(f"""SELECT * FROM {self.__index} as C where C.id in ({','.join(docs)})""", enable_cross_partition_query=True)
 
-    def similarity_search(self, input_vector):
+    def similarity_search(self, input_vector, distance_threshold=0.5):
         # Define the SQL query
-        query = f"SELECT top @top c.embedding, udf.cosineSimilarity(c.embedding, @query_embedding) as similarity, c.path as path FROM {self.__index} c where udf.cosineSimilarity(c.embedding, @query_embedding) >= @dist_val ORDER BY c.similarity DESC"
+        #query = f"SELECT top @top c.embedding, udf.cosineSimilarity(c.embedding, @query_embedding) as udf_similarity, c.path as path FROM {self.__index} c where c.udf_similarity >= @dist_val ORDER BY c.udf_similarity DESC"
+        query = f"SELECT c.embedding, c.path as path, s as udf_similarity FROM {self.__index} c JOIN (SELECT VALUE udf.cosineSimilarity(c.embedding, @query_embedding)) s WHERE s >= @dist_val " 
 
         # Define the query parameters
         parameters = [
             {"name": "@query_embedding", "value": input_vector},
-            {"name": "@dist_val", "value": 0.25},
-            {"name": "@top", "value": 5}
+            {"name": "@dist_val", "value": distance_threshold},
+            # {"name": "@top", "value": 5}
         ]
         # Execute the query and retrieve the results
         results = self.container.query_items(
@@ -77,8 +78,8 @@ class AgentDBCosmos(AgentDBBase):
             parameters=parameters,
             enable_cross_partition_query=True
         )
-
-        return results
+        sorted_list =sorted([y for y in results], key=lambda x: x["udf_similarity"], reverse=True)
+        return sorted_list[:self.__agent_config.TOP_K_DOCS]
     
     def index(self, id:str, doc:object, ttl=-1):
 

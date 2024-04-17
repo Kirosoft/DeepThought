@@ -66,13 +66,14 @@ def process_content(url, content, path):
         doc["path"] = path
         doc["embedding"] = vector
         doc["content"] = chunk
+
         hash = embedding_to_lsh(vector,256)
         row_key = int(hash, 2).to_bytes(-(-len(hash) // 8), byteorder='big')
         # encode the int array into a base64 string
         encoded = base64.b64encode(row_key).decode('utf-8').replace('/','-').replace('=','_')
+        doc["encoded"] = encoded
 
         db.index(id=encoded, doc=doc)
-
 
 def test_query():
 
@@ -80,11 +81,11 @@ def test_query():
     result=embedding.get_embedding(txt)
     vector = result.data[0].embedding
 
-    results = db.similarity_search(vector)
+    results = db.similarity_search(vector, 0.40)
 
     # Print the top 5 results
-    for i, item in enumerate(results):
-        print(f'Result {i+1}: similarity={item["similarity"]} path={item["path"]}')
+    for item in results:
+        print(f'Result similarity={item["udf_similarity"]} path={item["path"]}')
 
 def do_import():
     url = "https://api.github.com/repos/ukho/docs/git/trees/main?recursive=1"  # The basic URL to use the GitHub API
@@ -97,5 +98,7 @@ def do_import():
         if file_type.lower() == ".md":
             txt = get_content(file["url"], file["path"])
 
+
+#do_import()
 
 test_query()

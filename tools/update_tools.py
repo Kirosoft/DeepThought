@@ -6,19 +6,17 @@ from elasticsearch import Elasticsearch
 from langchain_community.document_loaders import TextLoader
 from pathlib import Path
 import json
+from core.db.agent_db_base import AgentDBBase
+from core.agent.agent_config import AgentConfig
 
+# take the local settgins file and convert it into environemnt variables
 settings = json.loads(TextLoader(join(os.getcwd(), 'local.settings.json'), encoding="utf-8").load()[0].page_content)
 
+for setting in settings["Values"]:
+    os.environ[setting]=settings["Values"][setting]
 
-# secrets
-ELASTIC_CLOUD_ID = settings["Values"]["ELASTIC_CLOUD_ID"]
-ELASTIC_API_KEY = settings["Values"]["ELASTIC_API_KEY"]
-
-# settings
-ES_INDEX_TOOLS = settings["Values"]["ES_INDEX_TOOLS"]
-
-print(f"Elastic cloud id {ELASTIC_CLOUD_ID}")
-db = Elasticsearch(cloud_id=ELASTIC_CLOUD_ID, api_key=ELASTIC_API_KEY)
+agent_config = AgentConfig()
+db = AgentDBBase(agent_config, agent_config.INDEX_TOOLS)
 
 def index_docs_elastic(directory_path, extension):
     file_list = find_in_files(directory_path, extension)
@@ -33,16 +31,13 @@ def index_docs_elastic(directory_path, extension):
         prompt_name = Path(file_path).stem
 
         db.index(
-            index=ES_INDEX_TOOLS,
             id=prompt_name,
-            document={
+            doc={
                 "filename": file_path,
                 "tool": prompt[0].page_content
             },
         )
         print(f"{file_path} imported ")
-
-
 
 if (len(sys.argv) > 1):
     local_path = sys.argv[1]

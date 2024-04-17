@@ -1,4 +1,5 @@
 from core.agent.agent_config import AgentConfig
+from core.db.agent_db_base import AgentDBBase
 from core.llm.llm_base import LLMBase
 from datetime import datetime
 
@@ -33,7 +34,7 @@ class AgentLLM:
             result["session_state"] = True
 
         # write the answer_str into elastic for the session history
-        self.__db.index(
+        self.__db.__index(
             document={
                 "id": self.__agent_config.session_token, 
                 "question": question,

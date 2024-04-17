@@ -6,7 +6,7 @@ import logging
 # Helper class to gather all properties and settings expected when procesing
 # a payload from the EventHub
 class AgentConfig:
-    def __init__(self, input_body:bytes):
+    def __init__(self, input_body:bytes = None):
         # sanitise the input
         if input_body is None:
             self.body = '{}'
@@ -14,15 +14,14 @@ class AgentConfig:
             body_str = input_body.decode('utf-8')
             try:
                 self.body = json.loads(body_str)
+                self.__setup_vars()
             except:
                 # invalid json supplied
                 logging.error(f'invalid json payload {body_str}')
-
                 self.body = {}
 
         self.SESSION_ID_CHARS = 16
         self.__init_env_vars()
-        self.__setup_vars()
 
     def __init_env_vars(self):
         # AI config
@@ -35,6 +34,8 @@ class AgentConfig:
         self.INDEX_ROLES = os.getenv("INDEX_ROLES", "ai_roles")
         self.INDEX_HISTORY = os.getenv("INDEX_HISTORY", "ai_history")
         self.INDEX_TOOLS = os.getenv("INDEX_TOOLS", "ai_tools")
+        self.INDEX_CONTEXT = os.getenv("INDEX_Context", "ai_context")
+
         self.DATABASE_NAME = os.getenv("DATABASE_NAME","")
         self.TOP_K_DOCS = int(os.getenv("TOP_K_DOCS", "10"))
         self.DB_TYPE = os.getenv("DB_TYPE")
@@ -47,6 +48,10 @@ class AgentConfig:
         self.COSMOS_ENDPOINT = os.getenv("COSMOS_ENDPOINT","https://localhost:8081")
         self.COSMOS_KEY = os.getenv("COSMOS_KEY","C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==")
 
+        # github creds
+        self.GITHUB_USER = os.getenv("GITHUB_USER")
+        self.GITHUB_KEY = os.getenv("GITHUB_KEY")
+        
     # Setup the needed properties
     # If they were not supplied then provide suitable defaults
     def __setup_vars(self):

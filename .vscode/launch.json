@@ -2,6 +2,22 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Import roles",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "./roles/update_roles.py",
+            "args":["f:/deepthought/roles/"],
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Import tools",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "./tools/update_tools.py",
+            "args":["f:/deepthought/tools/"],
+            "console": "integratedTerminal"
+        },
+        {
             "name": "Azure Functions",
             "type": "python",
             "request": "attach",

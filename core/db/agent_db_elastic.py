@@ -6,7 +6,7 @@ from core.db.agent_db_base import AgentDBBase
 class AgentDBElastic(AgentDBBase):
     def init_db(self, index:str):
         self.db = Elasticsearch(cloud_id=self.__agent_config.ELASTIC_CLOUD_ID, api_key=ELASTIC_API_KEY)
-        self.index = index
+        self.__index = index
         
     # def init_db_wth_embedding(self, index:str):
     #     self.index = index
@@ -28,14 +28,14 @@ class AgentDBElastic(AgentDBBase):
         return context_results
 
     def multi_get(self, docs:list[object]):
-        result = self.db.mget(self.index, docs)
+        result = self.db.mget(self.__index, docs)
         return [json.loads(doc["_source"]["tool"].replace("\n",""))["function"] for doc in result["docs"]]
 
     def get(self, id):
-        result = self.db.get(self.index,id)
+        result = self.db.get(self.__index,id)
         return [json.loads(doc["_source"]["tool"].replace("\n",""))["function"] for doc in result["docs"]]
 
-    def index(self, doc:object, ttl:int):
+    def __index(self, doc:object, ttl:int):
         return self.db.index(index=self.self.index, document= doc)
 
 

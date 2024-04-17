@@ -13,18 +13,19 @@ class AgentRole:
 
     def __init_store(self):
         # connect to elastic and intialise a connection to the vector store
-        self.db = AgentDBBase(self.__agent_config)
+        self.db_roles = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_ROLES)
+        self.db_tools = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_TOOLS)
 
     def __get_role_prompt(self, role: str) -> str:
         
         if not hasattr(self, 'role_prompt'):
             # determine role
-            result = self.db.get(index=self.__agent_config.INDEX_ROLES, id = role)
+            result = self.db_roles.get(id = role)
 
-            if not result["_source"]:
-                result = self.db.get(index=self.__agent_config.INDEX_ROLES, id = "default_role")
+            if result is None:
+                result = self.db_roles.get(index=self.__agent_config.INDEX_ROLES, id = "default_role")
 
-            self.role_prompt = unquote(result["_source"]["prompt"])
+            self.role_prompt = unquote(result["prompt"])
 
         return self.role_prompt
 
@@ -64,7 +65,7 @@ class AgentRole:
 
                 # find and parse the tools
                 if len(tool_list) > 0:
-                    self.tools = self.db.multi_get(index=self.__agent_config.INDEX_TOOLS, docs=[{"_id":tool} for tool in tool_list])
+                    self.tools = self.db_tools.multi_get(index=self.__agent_config.INDEX_TOOLS, docs=[{"_id":tool} for tool in tool_list])
 
             except:
                 logging.error(f"Error found parsing tools list. Check syntax is correct. {role_parts[0][2:]}")

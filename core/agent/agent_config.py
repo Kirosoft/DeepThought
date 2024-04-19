@@ -27,8 +27,12 @@ class AgentConfig:
     def __init_env_vars(self):
         # AI config
         self.OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-        self.EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL")
-        
+        self.OPENAI_MODEL = os.getenv("OPENAI_MODEL")
+        self.OPENAI_EMBEDDING_MODEL = os.getenv("OPENAI_EMBEDDING_MODEL")
+
+        self.LLM_TYPE = os.getenv("LLM_TYPE")
+        self.EMEBDDING_TYPE = os.getenv("EMBEDDING_TYPE")
+
         self.MAX_SESSION_TOKENS = int(os.getenv("MAX_SESSION_TOKENS", "4096"))
 
         # database agnostic settings
@@ -56,6 +60,7 @@ class AgentConfig:
         # LLAMA3
         self.OLLAMA_ENDPOINT = os.getenv("OLLAMA_ENDPOINT")
         self.OLLAMA_MODEL = os.getenv("OLLAMA_MODEL")
+        self.OLLAMA_EMBEDDING_MODEL = os.getenv("OLLAMA_EMBEDDING_MODEL")
 
     # Setup the needed properties
     # If they were not supplied then provide suitable defaults
@@ -68,6 +73,8 @@ class AgentConfig:
         self.session_token=self.body.get("session_token","")  
         if (len(self.session_token) < self.SESSION_ID_CHARS):
             self.session_token = ''.join(random.choices(string.ascii_letters + string.digits, k=self.SESSION_ID_CHARS))
+
+        self.parent_role=self.body.get("parent_role","")  
 
     def __get_input(self):
         self.input = self.body.get('input', '')

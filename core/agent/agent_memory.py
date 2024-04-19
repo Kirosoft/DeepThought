@@ -17,7 +17,7 @@ class AgentMemory:
     # similarity search in the conext db
     def get_context(self, question: str):
         # context search
-        context_results =  self.__context_store.similarity_search(question, 0.7)
+        context_results =  self.__context_store.similarity_search(question, 0.25, 5)
         return context_results
     
     # match * search in the session db

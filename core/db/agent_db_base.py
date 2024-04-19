@@ -31,8 +31,8 @@ class AgentDBBase:
     def get(self, id):
         return self.db_handler.get(id)
 
-    def multi_get(self, id):
-        self.db_handler.multi_get(id)
+    def multi_get(self, docs):
+        return self.db_handler.multi_get(docs)
 
     def similarity_search(self, input, distance_threshold=0.5, top_k = 5):
         return self.db_handler.similarity_search(input, distance_threshold, top_k)

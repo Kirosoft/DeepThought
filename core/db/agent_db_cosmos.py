@@ -1,6 +1,7 @@
 
 from core.agent.agent_config import AgentConfig
 from core.db.agent_db_base import AgentDBBase
+from core.llm.embedding_base import EmbeddingBase
 
 import azure.cosmos.cosmos_client as cosmos_client
 from azure.cosmos import PartitionKey
@@ -91,6 +92,8 @@ class AgentDBCosmos(AgentDBBase):
         self.__index = index
 
     def init_db(self):
+        self.embedding = EmbeddingBase(self.__agent_config)
+
         # Create a Cosmos DB client
         self.client = cosmos_client.CosmosClient(self.__agent_config.COSMOS_ENDPOINT, {"masterKey": self.__agent_config.COSMOS_KEY})
         self.client.create_database_if_not_exists(self.__agent_config.DATABASE_NAME)
@@ -120,23 +123,29 @@ class AgentDBCosmos(AgentDBBase):
         return data
 
     def multi_get(self, docs:list[object]):
-        self.container.query_items(f"""SELECT * FROM {self.__index} as C where C.id in ({','.join(docs)})""", enable_cross_partition_query=True)
+        query = f"SELECT C.id,C.tool FROM {self.__index} C where C.id in ('{','.join(docs)}')"
+        result = self.container.query_items(query, enable_cross_partition_query=True, partition_key=self.partition_key)
+        return result
 
-    def similarity_search(self, input_vector, distance_threshold=0.5, top_k = 5):
-        parameters = [
-            {"name": "input_vector", "value": ["test"]},
-            {"name": "max_dist", "value": distance_threshold},
-            {"name": "top_k", "value": 5}
-        ]
+    def similarity_search_vector(self, input_vector, distance_threshold=0.5, top_k = 5):
+
         parameters = [
             input_vector,
             distance_threshold,
             top_k
         ]
-
-        result = self.container.scripts.execute_stored_procedure(sproc="spSimilaritySearch",params=parameters, partition_key=self.partition_key) 
-
+        
+        try:
+            result = self.container.scripts.execute_stored_procedure(sproc="spSimilaritySearch",params=parameters, partition_key=self.partition_key) 
+        except Exception as err:
+            result = "[]"
+        
         return json.loads(result)
+
+    def similarity_search(self, input:str, distance_threshold=0.5, top_k = 5):
+        result=self.embedding.get_embedding(input)
+        vector = result.data[0].embedding
+        return self.similarity_search_vector(vector, distance_threshold, top_k)
 
     def index(self, id:str, doc:object, ttl=-1):
 

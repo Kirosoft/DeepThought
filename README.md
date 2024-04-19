@@ -2,7 +2,7 @@
 
 Functional agentic framework
 
-<img src="_d376e6fa-4fea-409b-a841-00e47f35bdad.jpeg"  height="500">
+<img src="./images/_d376e6fa-4fea-409b-a841-00e47f35bdad.jpeg"  height="500">
 <br>
 "Deep Thought announced that the new machine would be so large, it would resemble a planet, and be of such complexity that organic life itself would become part of its operating matrix." - Douglas Adams, Hitch HIkers Guide To The Galaxy
 
@@ -102,8 +102,8 @@ python tools/update_tools.py "<path-to-tools-directory>"
 
 * Build a message routing framework<br>
 * Model overrides from templates<br>
-* Fully local run installation instructions
-* Add support for local AI model - LLama3 - Inprogress<br>
+* Fully local run installation instructions<br/>
+* Add support for local AI model - LLama3 - DONE<br>
 <strike>* Add support for a local and cloud vector/nosql database option - CosmosDB - DONE</strike>
 
 # Installation

@@ -1,6 +1,7 @@
 import jinja2
 from urllib.parse import unquote
 import logging
+from datetime import datetime
 
 from core.agent.agent_config import AgentConfig
 from core.db.agent_db_base import AgentDBBase
@@ -15,6 +16,7 @@ class AgentRole:
         # connect to elastic and intialise a connection to the vector store
         self.db_roles = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_ROLES)
         self.db_tools = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_TOOLS)
+        self.db_session = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_HISTORY)
 
     def __get_role_prompt(self, role: str) -> str:
         
@@ -65,10 +67,10 @@ class AgentRole:
 
                 # find and parse the tools
                 if len(tool_list) > 0:
-                    self.tools = self.db_tools.multi_get(index=self.__agent_config.INDEX_TOOLS, docs=[{"_id":tool} for tool in tool_list])
+                    self.tools = self.db_tools.multi_get(docs=tool_list)
 
-            except:
-                logging.error(f"Error found parsing tools list. Check syntax is correct. {role_parts[0][2:]}")
+            except Exception as err:
+                logging.error(f"Error {err} found parsing tools list. Check syntax is correct. {role_parts[0][2:]}")
 
             return role_parts[1]
 
@@ -85,13 +87,13 @@ class AgentRole:
         # transform the search results into json payload
         context_results = []
         for doc in context:
-            doc_source = {**doc.metadata, 'page_content': doc.page_content}
+            doc_source = {**doc, 'page_content': doc["content"]}
             context_results.append(doc_source)
 
         # session history
         session_results = []
         for doc in session_history:
-            doc_source = {**doc['_source']}
+            doc_source = {**doc}
             session_results.append(doc_source)
 
         # create the prompt template
@@ -100,4 +102,30 @@ class AgentRole:
         completed_prompt_template = template.render(question=self.__agent_config.input, docs=context_results, history=session_results)
 
         return completed_prompt_template, self.tools, self.routing
+
+
+    def save_session(self, llm_result):
+        result = {}
+
+#        result["function_call"] = llm_result.additional_kwargs
+#       result["response"] = llm_result.response_metadata
+        result["answer"] = llm_result['message']['content']
+        result["session_token"] = self.__agent_config.session_token
+        self.db_session.index(
+            id = self.__agent_config.session_token,
+            doc={
+                "id": self.__agent_config.session_token, 
+                "input": self.__agent_config.input,
+                "answer": llm_result['message']['content'],
+                "timestamp": datetime.now().isoformat(),
+                "role":self.__agent_config.role,
+                "tools": [tool["name"] for tool in self.tools],
+#                "response": llm_result.response_metadata,
+#                "function_call": llm_result.additional_kwargs,
+#                "routing": self.routing,
+                "parent_role":self.__agent_config.parent_role
+            }
+        )
+
+        return result
 

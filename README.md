@@ -100,8 +100,10 @@ python tools/update_tools.py "<path-to-tools-directory>"
 
 # TODO:
 
-* Build a message routing framework
-* Model overrides from templates
+* Build a message routing framework<br>
+* Model overrides from templates<br>
+* Add support for local AI model - LLama3 - Inprogress<br>
+<strike>* Add support for a local and cloud vector/nosql database option - CosmosDB - DONE</strike>
 
 # Installation
 

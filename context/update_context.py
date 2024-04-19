@@ -80,8 +80,6 @@ def test_query():
     txt = "what is the policy on code pairing"
     result=embedding.get_embedding(txt)
     vector = result.data[0].embedding
-    for i, val in enumerate(vector):
-        print(f"{val},", end='')
 
     results = db.similarity_search(vector, 0.20)
 

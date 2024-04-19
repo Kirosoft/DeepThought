@@ -2,6 +2,7 @@ import os
 import types
 from core.agent.agent_config import AgentConfig
 from openai import OpenAI
+from ollama import Client
 
 llm_types = types.SimpleNamespace()
 llm_types.OPENAI = "openai"
@@ -17,5 +18,5 @@ class LLMBase:
                 client =  OpenAI(api_key=self.agent_config.OPENAI_API_KEY)
                 completion = client.chat.completions(streaming=False, temperature=temperature, model=model)
             case llm_types.LLAMA3:
-                client =  OpenAI(api_key=self.agent_config.OPENAI_API_KEY)
-                completion = client.chat.completions(streaming=False, temperature=temperature, model=model)
+                client = Client(host=self.agent_config.OLLAMA_ENDPOINT)
+                completion = client.chat.completions(model='llama3', messages=[{'role': 'user','content': message}], temperature=temperature)

@@ -7,6 +7,8 @@ import logging
 # a payload from the EventHub
 class AgentConfig:
     def __init__(self, input_body:bytes = None):
+        self.SESSION_ID_CHARS = 16
+
         # sanitise the input
         if input_body is None:
             self.body = '{}'
@@ -15,12 +17,11 @@ class AgentConfig:
             try:
                 self.body = json.loads(body_str)
                 self.__setup_vars()
-            except:
+            except Exception as err:
                 # invalid json supplied
-                logging.error(f'invalid json payload {body_str}')
+                logging.error(f'invalid json payload {body_str} {err}')
                 self.body = {}
 
-        self.SESSION_ID_CHARS = 16
         self.__init_env_vars()
 
     def __init_env_vars(self):
@@ -52,6 +53,10 @@ class AgentConfig:
         self.GITHUB_USER = os.getenv("GITHUB_USER")
         self.GITHUB_KEY = os.getenv("GITHUB_KEY")
         
+        # LLAMA3
+        self.OLLAMA_ENDPOINT = os.getenv("OLLAMA_ENDPOINT")
+        self.OLLAMA_MODEL = os.getenv("OLLAMA_MODEL")
+
     # Setup the needed properties
     # If they were not supplied then provide suitable defaults
     def __setup_vars(self):

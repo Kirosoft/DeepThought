@@ -102,6 +102,7 @@ python tools/update_tools.py "<path-to-tools-directory>"
 
 * Build a message routing framework<br>
 * Model overrides from templates<br>
+* Fully local run installation instructions
 * Add support for local AI model - LLama3 - Inprogress<br>
 <strike>* Add support for a local and cloud vector/nosql database option - CosmosDB - DONE</strike>
 
@@ -128,6 +129,18 @@ https://localhost:8081/_explorer/index.html
 
 Account name: devstoreaccount1
 Account key: Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==
+
+
+## LLM 
+
+OLLAMA installation:<br>
+
+https://ollama.com/download
+
+Install a model e.g.  llama3:<br>
+
+https://ollama.com/library/llama3
+
 
 ## Configuration of services and keys
 

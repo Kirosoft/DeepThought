@@ -33,6 +33,11 @@ udf_definition = {
 similarity_search = """
 function similarity_search(input_vector, max_dist, top_k) {
     var collection = getContext().getCollection();
+    if (typeof input_vector === "string") input_vector = JSON.parse(input_vector);
+    if (typeof max_dist === "string") max_dist = JSON.parse(max_dist);
+    if (typeof top_k === "string") top_k = JSON.parse(top_k);
+ 
+    console.log(`input_vector: ${input_vector}`);
     console.log(`max_dist: ${max_dist}`);
     console.log(`top_k: ${top_k}`);
     var params = [{
@@ -61,7 +66,7 @@ function similarity_search(input_vector, max_dist, top_k) {
         // else take 1st element from feed
         if (!feed || !feed.length) {
             var response = getContext().getResponse();
-            response.setBody('no docs found: '+query);
+            response.setBody(`no docs found: ${query} ${input_vector} ${max_dist} ${top_k}`);
         }
         else {
             var response = getContext().getResponse();
@@ -117,41 +122,21 @@ class AgentDBCosmos(AgentDBBase):
     def multi_get(self, docs:list[object]):
         self.container.query_items(f"""SELECT * FROM {self.__index} as C where C.id in ({','.join(docs)})""", enable_cross_partition_query=True)
 
-    def similarity_search(self, input_vector, distance_threshold=0.5):
-        # Define the SQL query
-        #query = f"SELECT top @top c.embedding, udf.cosineSimilarity(c.embedding, @query_embedding) as udf_similarity, c.path as path FROM {self.__index} c where c.udf_similarity >= @dist_val ORDER BY c.udf_similarity DESC"
-        # query = f"SELECT c.embedding, c.path as path, (SELECT VALUE udf.cosineSimilarity(c.embedding, @query_embedding)) as udf_similarity FROM {self.__index} c  WHERE c.udf_similarity >= @dist_val " 
-
-        # # Define the query parameters
-        # parameters = [
-        #     {"name": "@query_embedding", "value": input_vector},
-        #     {"name": "@dist_val", "value": distance_threshold},
-        #     # {"name": "@top", "value": 5}
-        # ]
-
+    def similarity_search(self, input_vector, distance_threshold=0.5, top_k = 5):
         parameters = [
             {"name": "input_vector", "value": ["test"]},
             {"name": "max_dist", "value": distance_threshold},
             {"name": "top_k", "value": 5}
         ]
         parameters = [
-            ["0.15,0.23"],
+            input_vector,
             distance_threshold,
-            5
+            top_k
         ]
 
         result = self.container.scripts.execute_stored_procedure(sproc="spSimilaritySearch",params=parameters, partition_key=self.partition_key) 
 
-        # Execute the query and retrieve the results
-        # results = self.container.query_items(
-        #     query=query,
-        #     parameters=parameters,
-        #     enable_cross_partition_query=True
-        # )
-        # sorted_list =sorted([y for y in results], key=lambda x: x["udf_similarity"], reverse=True)
-        # return sorted_list[:self.__agent_config.TOP_K_DOCS]
-    
-        return result
+        return json.loads(result)
 
     def index(self, id:str, doc:object, ttl=-1):
 

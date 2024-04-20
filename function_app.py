@@ -41,14 +41,14 @@ def core_llm_agent(req: func.HttpRequest) -> func.HttpResponse:  # , answer: fun
         #llm_result = agent_llm.run_inference(completed_prompt, agent_config.input, agent_config.role, tools, routing)
         llm_result = llm.inference(completed_prompt, tools)
 
-        result = agent_role.save_session(llm_result)
+        agent_memory.save_session_history(llm_result)
 
         # TODO: should we execute tool
         # 1) push the tool execute to the Q
         # 2) Push the response to the Q
-        logging.info(f'Answer: {result["answer"]} - session {result["session_token"]}')
+        logging.info(f'Answer: {llm_result["answer"]} - session {llm_result["session_token"]}')
         #answer.set('test')
-        return func.HttpResponse(result["answer"], status_code=200)
+        return func.HttpResponse(llm_result["answer"], status_code=200)
     else:
         answer_str = 'No question found, please supply a question'
         logging.info('Answer: %s',answer_str)

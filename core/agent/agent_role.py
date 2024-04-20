@@ -104,28 +104,4 @@ class AgentRole:
         return completed_prompt_template, self.tools, self.routing
 
 
-    def save_session(self, llm_result):
-        result = {}
-
-#        result["function_call"] = llm_result.additional_kwargs
-#       result["response"] = llm_result.response_metadata
-        result["answer"] = llm_result['message']['content']
-        result["session_token"] = self.__agent_config.session_token
-        self.db_session.index(
-            id = self.__agent_config.session_token,
-            doc={
-                "id": self.__agent_config.session_token, 
-                "input": self.__agent_config.input,
-                "answer": llm_result['message']['content'],
-                "timestamp": datetime.now().isoformat(),
-                "role":self.__agent_config.role,
-                "tools": [tool["name"] for tool in self.tools],
-#                "response": llm_result.response_metadata,
-#                "function_call": llm_result.additional_kwargs,
-#                "routing": self.routing,
-                "parent_role":self.__agent_config.parent_role
-            }
-        )
-
-        return result
-
+ 

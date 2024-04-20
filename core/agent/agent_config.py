@@ -62,6 +62,11 @@ class AgentConfig:
         self.OLLAMA_MODEL = os.getenv("OLLAMA_MODEL")
         self.OLLAMA_EMBEDDING_MODEL = os.getenv("OLLAMA_EMBEDDING_MODEL")
 
+        # GROK
+        self.GROK_ENDPOINT = os.getenv("GROK_ENDPOINT")
+        self.GROK_MODEL = os.getenv("GROK_MODEL")
+        self.GROK_API_KEY = os.getenv("GROK_API_KEY")
+
     # Setup the needed properties
     # If they were not supplied then provide suitable defaults
     def __setup_vars(self):

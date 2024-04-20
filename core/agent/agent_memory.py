@@ -32,3 +32,10 @@ class AgentMemory:
             logging.warning(f'Error trying to read history from {self.__agent_config.INDEX_HISTORY}')
 
             return []
+
+    def save_session_history(self, doc):
+
+        self.__history_store.index(
+            id = self.__agent_config.session_token,
+            doc=doc
+        )

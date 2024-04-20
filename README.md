@@ -8,8 +8,9 @@ Functional agentic framework
 
 # Features
 
-* Cloud first functional agent framework
-* Stateless agent implementation with templated roles
+* Code free agent framework
+* Fully deployed locally or at scale in the cloud
+* Recursive agent implementation with Domain Speciifc Language (DSL) built into the template
 * Flexible tool/skills model
 * Build interactive session roles (either agent to agent of agent to human)
 * Support for context based search (RAG)
@@ -17,8 +18,10 @@ Functional agentic framework
 
 
 > [!IMPORTANT]  
-> This project is currently in a very early development/experimental stage. There are a lot of unimplemented/broken features at the moment. 
-
+<bold>
+This project is currently in a very early development/experimental stage. <br/>
+There are a lot of unimplemented/broken features at the moment. <br/>
+</bold>
 
 # Template Features
 
@@ -103,7 +106,8 @@ python tools/update_tools.py "<path-to-tools-directory>"
 * Build a message routing framework<br>
 * Model overrides from templates<br>
 * Fully local run installation instructions<br/>
-* Add support for local AI model - LLama3 - DONE<br>
+* Add support for Grok<br/>
+<strike>* Add support for local AI model - LLama3 - DONE<br></strike>
 <strike>* Add support for a local and cloud vector/nosql database option - CosmosDB - DONE</strike>
 
 # Installation

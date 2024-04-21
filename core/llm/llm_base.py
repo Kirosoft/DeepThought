@@ -72,7 +72,7 @@ class LLMBase:
     #                "function_call": llm_result.additional_kwargs,
     #                "routing": self.routing,
                     "parent_role":self.agent_config.parent_role,
-                    "session_token":self.agent_config.session_token
+                    "session_token":self.agent_config.session_tokenxreal
                 }
                 return doc
 

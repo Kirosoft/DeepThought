@@ -102,3 +102,11 @@ def core_llm_agent(req: func.HttpRequest) -> func.HttpResponse:  # , answer: fun
 # def queue_trigger(azqueue: func.QueueMessage):
 #     logging.info('Python Queue trigger processed a message: %s',
 #                 azqueue.get_body().decode('utf-8'))
+
+
+
+@app.queue_trigger(arg_name="azqueue", queue_name="main",
+                               connection="AzureWebJobsStorage") 
+def queue_trigger(azqueue: func.QueueMessage):
+    logging.info('Python Queue trigger processed a message: %s',
+                azqueue.get_body().decode('utf-8'))

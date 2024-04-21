@@ -6,6 +6,7 @@ from core.agent.agent_config import AgentConfig
 import json
 from langchain_community.document_loaders import TextLoader
 from os.path import join
+import base64
 
 # take the local settgins file and convert it into environemnt variables
 settings = json.loads(TextLoader(join(os.getcwd(), 'local.settings.json'), encoding="utf-8").load()[0].page_content)
@@ -20,22 +21,23 @@ try:
     # Quickstart code goes here
     connect_str = os.getenv('QUEUE_STORAGE_CONNECTION_STRING')
 
-    # With connection string
-    # client = QueueClient(
-    #     "DefaultEndpointsProtocol=https;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;QueueEndpoint=https://127.0.0.1:10001/devstoreaccount1;", "main"
-    # )
-    #client = QueueClient("https://127.0.0.1:10001/devstoreaccount1/main", DefaultAzureCredential())
-    #client = QueueClient(devsettings=true)
-    # With account name and key
-    # client = QueueClient(
-    #     "https://127.0.0.1:10001/devstoreaccount1/queue-name",
-    #     StorageSharedKeyCredential("devstoreaccount1", "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==")
-    # )
-
     connection_string = "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;"
 
     # Initialize the QueueServiceClient
     queue_service_client = QueueServiceClient.from_connection_string(connection_string)
+    queue_client = queue_service_client.get_queue_client("main");
+    document = {
+        "id": 123,
+        "name": "John Doe",
+        "email": "john.doe@example.com"
+    }
+
+    # Convert the document to a JSON string
+    message = base64.b64encode(json.dumps(document).encode('utf-8')).decode('utf-8')
+
+    # Send the message
+    queue_client.send_message(message)
+    print("Message added to the queue:", message)
 
 except Exception as ex:
     print('Exception:')

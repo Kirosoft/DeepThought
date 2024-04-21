@@ -53,6 +53,9 @@ class AgentConfig:
         self.COSMOS_ENDPOINT = os.getenv("COSMOS_ENDPOINT","https://localhost:8081")
         self.COSMOS_KEY = os.getenv("COSMOS_KEY","C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==")
 
+        # queue storage
+        self.QUEUE_STORAGE_CONNECTION_STRING = os.getenv("QUEUE_STORAGE_CONNECTION_STRING"),
+
         # github creds
         self.GITHUB_USER = os.getenv("GITHUB_USER")
         self.GITHUB_KEY = os.getenv("GITHUB_KEY")

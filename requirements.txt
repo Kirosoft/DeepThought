@@ -4,6 +4,8 @@
 
 azure-functions
 azure-cosmos
+azure.identity
+azure.storage.queue
 
 # core dependencies
 elasticsearch

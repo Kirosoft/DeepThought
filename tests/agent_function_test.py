@@ -5,6 +5,14 @@ import json
 from langchain_community.document_loaders import TextLoader
 from os.path import join
 from core import process_request
+import logging
+import urllib3
+
+urllib3.disable_warnings()
+
+# Create a logger for the 'azure' SDK
+logger = logging.getLogger('azure')
+logger.setLevel(logging.ERROR)
 
 # take the local settgins file and convert it into environemnt variables
 settings = json.loads(TextLoader(join(os.getcwd(), 'local.settings.json'), encoding="utf-8").load()[0].page_content)

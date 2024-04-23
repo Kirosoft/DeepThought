@@ -18,7 +18,7 @@ class AgentRole:
         # connect to elastic and intialise a connection to the vector store
         self.db_roles = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_ROLES)
         self.db_tools = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_TOOLS)
-        self.db_specifications = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_SPECIFICATIONS)
+        self.db_specs = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_SPECS)
         self.db_session = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_HISTORY)
 
     def __get_role(self, role: str) -> str:
@@ -33,17 +33,6 @@ class AgentRole:
             self.role = json.loads(unquote(result["prompt"]))
 
         return self.role
-
-    # rag mode:
-    #
-    # {% for doc in docs -%}
-    # ---
-    # NAME: {{ doc.filename }}
-    # PASSAGE:
-    # {{ doc.page_content }}
-    # ---
-
-    # {% endfor -%}
 
     def is_rag(self, role) -> bool:
         is_rag = False
@@ -60,12 +49,12 @@ class AgentRole:
 
     def parse_spec(self, spec) -> object:
 
-        cleaned_spec = unquote(spec["specification"])
+        cleaned_spec = unquote(spec["spec"])
 
         try:
             json_spec = json.loads(cleaned_spec)
         except Exception as err:
-            print(f"Unable to parse specification {spec} spec {err}")
+            print(f"Unable to parse spec {spec} spec {err}")
 
         return json_spec
     
@@ -81,19 +70,15 @@ class AgentRole:
 
         return json_tool
 
-    def __get_specifications(self, role) -> list[object]:
-        specifications = []
+    def __get_specs(self, spec_names) -> list[str]:
+        specs = []
 
         try:
-            specification_names = role["specifications"]
-
-            specs = self.db_specifications.multi_get(specification_names)
-
-            specifications = [self.parse_spec(spec) for spec in specs]
+            specs = [spec['specification'].strip() for spec in list(self.db_specs.multi_get(spec_names))]
 
         except Exception as err:
-            print(f"Unable to find specifications {err}")
-        return specifications
+            print(f"Unable to find specs {err}")
+        return specs
     
     def __get_tools(self, role) -> list[object]:
         tool_defs = []
@@ -121,12 +106,18 @@ class AgentRole:
         options = {}
 
         if (self.__is_valid_role(role)):
+            
+            # user can override the examples 
+            output_format_json = self.__get_specs(role['output_format']) if 'output_format' in role else []
 
             # construct the system prompt
+            # TODO: detect if the output is a spec and prompt the whole spec as JSON {spec}
             system_prompt = f"""
-                {role["description"]}
-                {role["role"]}
-                {role["output"]}
+                {role["description"]}\n
+                {role["role"]}\n
+                {f"Expected input: {role['expected_input']}" if role['expected_input'] != "" else ""}
+                {f"output format: The JSON object must use the schema [{','.join(output_format_json)}]" if len(output_format_json) != 0 else ""}
+                {f"Example output: {role['examples']}" if role['examples'] != "" else ""}
             """            
 
             # build the function message
@@ -139,6 +130,7 @@ class AgentRole:
             messages.append({"role":"system", "content":system_prompt})
 
             # session history
+            # TODO: does the session history need to be sequenced to replay in the right order?
             if (not self.__agent_config.new_session):
                 session_results = self.agent_memory.get_session_history(self.__agent_config.session_token)
                 for session in session_results:
@@ -152,13 +144,12 @@ class AgentRole:
             }
             messages.append(user_prompt)
 
-            specifications = self.__get_specifications(role)
             tools  = self.__get_tools(role)
 
             if "options" in role and "model_override" in role["options"]:
                 options["model_override"] = role["options"]["model_override"]
 
-        return {"messages":messages, "tools":tools, "specifications":specifications, "options":options}
+        return {"messages":messages, "tools":tools, "options":options}
 
 
  

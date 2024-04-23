@@ -6,6 +6,7 @@ from ollama import Client
 from groq import Groq
 from datetime import datetime
 import random, string
+import json
 
 llm_types = types.SimpleNamespace()
 llm_types.OPENAI = "openai"
@@ -79,14 +80,20 @@ class LLMBase:
 
             case llm_types.GROQ:
                 client = Groq(api_key=self.agent_config.GROK_API_KEY)
-                completion = client.chat.completions.create(model=llm_model, messages=completed_prompt["messages"], tools=completed_prompt["tools"])
-
+                completion = client.chat.completions.create(model=llm_model, messages=completed_prompt["messages"], tools=completed_prompt["tools"], response_format= {"type": "json_object"})
+                
+                # todo: assumes the answer object schema
+                answer_obj = json.loads(completion.choices[0].message.content)
+                if not "answer_type" in answer_obj:
+                    # TODO: hack because the property moved
+                    answer_obj = answer_obj["answer"]
                 doc={
                     "id": ''.join(random.choices(string.ascii_letters + string.digits, k=self.agent_config.SESSION_ID_CHARS)), 
                     "input": self.agent_config.input,
                     "finish_reason": completion.choices[0].finish_reason,
                     "tool_calls":  [] if completion.choices[0].finish_reason != "tool_calls" else str(completion.choices[0].message.tool_calls),
-                    "answer": completion.choices[0].message.content,
+                    "answer_type": "" if completion.choices[0].finish_reason == "tool_calls" else answer_obj["answer_type"],
+                    "answer": "" if completion.choices[0].finish_reason == "tool_calls" else answer_obj["answer"],
                     "timestamp": datetime.now().isoformat(),
                     "role":self.agent_config.role,
                     "parent_role":self.agent_config.parent_role,

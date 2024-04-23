@@ -39,7 +39,7 @@ class AgentConfig:
         self.INDEX_HISTORY = os.getenv("INDEX_HISTORY", "ai_history")
         self.INDEX_TOOLS = os.getenv("INDEX_TOOLS", "ai_tools")
         self.INDEX_CONTEXT = os.getenv("INDEX_CONTEXT", "ai_context")
-        self.INDEX_SPECIFICATIONS = os.getenv("INDEX_SPECIFICATIONS", "ai_specifications")
+        self.INDEX_SPECS = os.getenv("INDEX_SPECS", "ai_specs")
 
         self.DATABASE_NAME = os.getenv("DATABASE_NAME","")
         self.TOP_K_DOCS = int(os.getenv("TOP_K_DOCS", "10"))
@@ -69,6 +69,10 @@ class AgentConfig:
         self.GROK_ENDPOINT = os.getenv("GROK_ENDPOINT")
         self.GROK_MODEL = os.getenv("GROK_MODEL")
         self.GROK_API_KEY = os.getenv("GROK_API_KEY")
+
+        # SERPER
+        self.SERPER_API_KEY = os.getenv("SERPER_API_KEY")
+
 
     # Setup the needed properties
     # If they were not supplied then provide suitable defaults

@@ -23,8 +23,8 @@ There are a lot of unimplemented/broken features at the moment. <br/>
 
 # Terminology
 
-Tools - 3rd party functions to perform specific tasks e.g. scrape a web page etc
-Specification - Used to define the JSON output format from an AI conversation aka 'Functions'
+Functions/Tools - 3rd party functions to perform specific tasks e.g. scrape a web page etc
+Specification - Used to define the JSON output format from an AI conversation (not used like 'functions')
 
 # Template Features
 
@@ -59,14 +59,17 @@ Problems:
 
 Features:
 
+* allow all role fields to be overriden from input<br>
+* run a role purely from the payload input<br>
 * Build a message routing framework<br>
-* Support JSON schema specification outputs
-* develop a multie role agent demo
-<strike>* LLM Model overrides from templates e.g. change the llm model based on the role<br></<strike>
-<Strike>* rework function calling - now known as tools</strike>
+* develop a multie role agent demo<br>
+
+<Strike>* Support JSON schema specification outputs<br></strike>
+<strike>* LLM Model overrides from templates e.g. change the llm model based on the role<br></strike>
+<Strike>* rework function calling - now known as tools<br></strike>
 <Strike>* Add support for Grok<br/></strike>
 <strike>* Add support for local AI model - LLama3 - DONE<br></strike>
-<strike>* Add support for a local and cloud vector/nosql database option - CosmosDB - DONE</strike>
+<strike>* Add support for a local and cloud vector/nosql database option - CosmosDB - DONE<br></strike>
 
 # Installation
 

@@ -1,14 +1,7 @@
 import azure.functions as func
 import logging
-import datetime
-import json
 
-# Local 
-#from core.agent.agent_llm import AgentLLM
-from core.agent.agent_role import AgentRole
-from core.agent.agent_config import AgentConfig
-from core.agent.agent_memory import AgentMemory
-from core.llm.llm_base import LLMBase
+from core import process_request
 
 app = func.FunctionApp()
 
@@ -21,40 +14,20 @@ def core_llm_agent(req: func.HttpRequest) -> func.HttpResponse:  # , answer: fun
 
     logging.info('core_llm_agent trigger from event hub input')
 
-    agent_config = AgentConfig(req.get_body())
-     
-    if agent_config.is_valid():
-        logging.info('core_llm_agent processed an event: %s',agent_config.input)
-        agent_memory = AgentMemory(agent_config)
-        agent_role = AgentRole(agent_config)
-        llm = LLMBase(agent_config)
+    result = process_request(req.get_body.decode('utf-8'))
 
-        # retrieve any context results
-        context_results = agent_memory.get_context(agent_config.input) if agent_role.use_context_search(agent_config.role) else ""
-
-        # retrieve any session history
-        session_history = agent_memory.get_session_history(agent_config.session_token) if agent_role.use_session_history(agent_config.role) else []
-
-        # use the configured role to find the prompt and populate with the context and session history as required
-        completed_prompt, tools, routing = agent_role.get_completed_prompt(context_results, session_history, agent_config.role)
-
-        #llm_result = agent_llm.run_inference(completed_prompt, agent_config.input, agent_config.role, tools, routing)
-        llm_result = llm.inference(completed_prompt, tools)
-
-        agent_memory.save_session_history(llm_result)
-
+    if (result != None):
         # TODO: should we execute tool
         # 1) push the tool execute to the Q
         # 2) Push the response to the Q
-        logging.info(f'Answer: {llm_result["answer"]} - session {llm_result["session_token"]}')
         #answer.set('test')
-        return func.HttpResponse(llm_result["answer"], status_code=200)
+        logging.info('Answer: %s',result["answer"])
     else:
         answer_str = 'No question found, please supply a question'
         logging.info('Answer: %s',answer_str)
         return func.HttpResponse(answer_str)
         #answer.set('error')
-
+    
  
 # @app.event_hub_message_trigger(arg_name="azeventhub", event_hub_name="deepthoughtoutput",
 #                                connection="DeepThoughtEvents_RootManageSharedAccessKey_EVENTHUB") 
@@ -104,9 +77,21 @@ def core_llm_agent(req: func.HttpRequest) -> func.HttpResponse:  # , answer: fun
 #                 azqueue.get_body().decode('utf-8'))
 
 
-
+ 
 @app.queue_trigger(arg_name="azqueue", queue_name="main",
                                connection="AzureWebJobsStorage") 
 def queue_trigger(azqueue: func.QueueMessage):
-    logging.info('Python Queue trigger processed a message: %s',
-                azqueue.get_body().decode('utf-8'))
+    body = azqueue.get_body().decode('utf-8')
+    logging.info('Python Queue trigger processed a message: %s', body)
+
+    result = process_request(body)
+
+    # TODO: should we execute tool
+    # 1) push the tool execute to the Q
+    # 2) Push the response to the Q
+    #answer.set('test')
+    if (result != None):
+        logging.info(f'Answer: {result["answer"]} session: {result["session_token"]}')
+    else:
+        answer_str = 'No question found, please supply a question'
+        logging.info('Answer: %s',answer_str)

@@ -123,7 +123,13 @@ class AgentDBCosmos(AgentDBBase):
         return data
 
     def multi_get(self, docs:list[object]):
-        query = f"SELECT C.id,C.tool FROM {self.__index} C where C.id in ('{','.join(docs)}')"
+        query = f"SELECT * FROM {self.__index} C where C.id in ('{','.join(docs)}')"
+        result = self.container.query_items(query, enable_cross_partition_query=True, partition_key=self.partition_key)
+        return result
+
+
+    def get_session(self, session_token:str):
+        query = f"SELECT * FROM {self.__index} C where C.session_token = '{session_token}'"
         result = self.container.query_items(query, enable_cross_partition_query=True, partition_key=self.partition_key)
         return result
 

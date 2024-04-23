@@ -8,14 +8,12 @@ Functional agentic framework
 
 # Features
 
-* Code free agent framework
+* Code free AI agent framework to orchestrate business flows
 * Fully deployed locally or at scale in the cloud
 * Recursive agent implementation with Domain Speciifc Language (DSL) built into the template
-* Flexible tool/skills model
-* Build interactive session roles (either agent to agent of agent to human)
+* Self learning role/tool/specifications 
 * Support for context based search (RAG)
 * Dynamic workflow between agents
-
 
 > [!IMPORTANT]  
 <bold>
@@ -23,70 +21,16 @@ This project is currently in a very early development/experimental stage. <br/>
 There are a lot of unimplemented/broken features at the moment. <br/>
 </bold>
 
+# Terminology
+
+Tools - 3rd party functions to perform specific tasks e.g. scrape a web page etc
+Specification - Used to define the JSON output format from an AI conversation aka 'Functions'
+
 # Template Features
-
-* Context search by template specification. e.g. {% for doc in docs -%}
-
-```
-{% for doc in docs -%}
----
-NAME: {{ doc.filename }}
-PASSAGE:
-{{ doc.page_content }}
----
-
-{% endfor -%}
-----
-```
-
-* Session history (aka Chat or Agent mode) by template specification e.g. {% for qa in history -%}
-
-```
-{% for qa in history -%}
-{{qa.question}}
-{{qa.answer}}
-{% endfor -%}
-
-{{ question }}
-
-```
-
-* Functional calling by template specification. Use [[tool1, tool2 ... tooln]] to specifiy available tools from the tool database
-
-```
-[[get_n_day_weather_forecast,get_current_weather]]
-Don't make assumptions about what values to plug into functions. Ask for clarification if a user request is ambiguous.
-
-{% for qa in history -%}
-{{qa.question}}
-{{qa.answer}}
-{% endfor -%}
-
-{{ question }}
-```
-
-* Routing hints - you can indicate which agents might be able to help with a response e.g. [[tool1,tool2,@rolename1,@rolename2]]
-
-Where @rolename1 is a registered agent in the system
 
 
 ## Example request
 
-First request (no session token):-
-
-```
-{
-    "input": "{\"SystemProperties\":{},\"question\":\"plymouth in celcius\", \"role\":\"weather_forecast\", \"session_token\":\"\"}"
-}
-```
-
-subsequent, request top continue the conversation - with the session token:
-
-```
-{
-    "input": "{\"SystemProperties\":{},\"question\":\"follow up question\", \"role\":\"weather_forecast\", \"session_token\":\HqvYXY4B97jYMDJrrnqz"\"}"
-}
-```
 
 
 ## Update roles database
@@ -103,10 +47,24 @@ python tools/update_tools.py "<path-to-tools-directory>"
 
 # TODO:
 
-* Build a message routing framework<br>
-* Model overrides from templates<br>
+
+Docs:
+
 * Fully local run installation instructions<br/>
-* Add support for Grok<br/>
+
+Problems:
+
+* fix the ollama sdk to support function calling
+* Local cosmodb init is slow ... 
+
+Features:
+
+* Build a message routing framework<br>
+* Support JSON schema specification outputs
+* develop a multie role agent demo
+<strike>* LLM Model overrides from templates e.g. change the llm model based on the role<br></<strike>
+<Strike>* rework function calling - now known as tools</strike>
+<Strike>* Add support for Grok<br/></strike>
 <strike>* Add support for local AI model - LLama3 - DONE<br></strike>
 <strike>* Add support for a local and cloud vector/nosql database option - CosmosDB - DONE</strike>
 

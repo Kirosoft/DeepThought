@@ -1,6 +1,7 @@
 {
     "version": "0.2.0",
     "configurations": [
+        
         {
             "name": "Import roles",
             "type": "debugpy",
@@ -15,6 +16,14 @@
             "request": "launch",
             "program": "./tools/update_tools.py",
             "args":["f:/deepthought/tools/"],
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Import specifications",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "./specifications/update_specifications.py",
+            "args":["f:/deepthought/specifications/"],
             "console": "integratedTerminal"
         },
         {

@@ -22,20 +22,18 @@ class AgentMemory:
     
     # match * search in the session db
     def get_session_history(self, session_token:str):
+        result = []
+
         try:
-            result = self.__history_store.client.search(index=self.__agent_config.INDEX_HISTORY, query={"match": {"session_token": session_token}})
-            if result['hits']['total']['value'] > 0:
-                return result["hits"]['hits']
-            else:
-                return []
+            result = self.__history_store.get_session(session_token)
         except:
             logging.warning(f'Error trying to read history from {self.__agent_config.INDEX_HISTORY}')
 
-            return []
+        return result
 
     def save_session_history(self, doc):
 
         self.__history_store.index(
-            id = self.__agent_config.session_token,
+            id = doc['id'],
             doc=doc
         )

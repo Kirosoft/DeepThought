@@ -5,6 +5,7 @@ from openai import OpenAI
 from ollama import Client
 from groq import Groq
 from datetime import datetime
+import random, string
 
 llm_types = types.SimpleNamespace()
 llm_types.OPENAI = "openai"
@@ -26,7 +27,12 @@ class LLMBase:
             case llm_types.GROQ:
                 return self.agent_config.GROK_MODEL
             
-    def inference(self, message:str, tools:list[object], llm_type:str = "", llm_model:str = "", temperature = 0.0):
+    def inference(self, completed_prompt:object, llm_type:str = "", llm_model:str = "", temperature = 0.0):
+
+        if "options" in completed_prompt and "model_override" in completed_prompt["options"]:
+            option_parts=completed_prompt["options"]["model_override"].split(":")
+            llm_type = option_parts[0]
+            llm_model = option_parts[1]
 
         llm_type = self.agent_config.LLM_TYPE if llm_type == "" else llm_type
         llm_model = self.get_model(llm_type) if llm_model == "" else llm_model
@@ -36,17 +42,14 @@ class LLMBase:
                 client =  OpenAI(api_key=self.agent_config.OPENAI_API_KEY)
                 completion = client.chat.completions(streaming=False, temperature=temperature, model=llm_model)
 
-                # TODO: fix this
                 doc={
-                    "id": self.agent_config.session_token, 
+                    "id": ''.join(random.choices(string.ascii_letters + string.digits, k=self.agent_config.SESSION_ID_CHARS)), 
                     "input": self.agent_config.input,
-                    "answer": completion.choices[0].message.content,
+                    "finish_reason": completion.choices[0].finish_reason,
+                    "tool_calls":  [] if completion.choices[0].finish_reason != "tool_calls" else str(completion.choices[0].message.tool_calls),
+                    "answer": completion['message']['content'],
                     "timestamp": datetime.now().isoformat(),
                     "role":self.agent_config.role,
-    #                "tools": [tool["name"] for tool in self.tools],
-                    "response": completion.response_metadata,
-                    "function_call": completion.additional_kwargs,
-    #                "routing": self.routing,
                     "parent_role":self.agent_config.parent_role,
                     "session_token":self.agent_config.session_token
                 }
@@ -59,37 +62,33 @@ class LLMBase:
                     "seed": 101,
                     "temperature": temperature
                     }
-                completion = client.chat(model=llm_model, messages=[{'role': 'assistant','content': message,"options":options}])
+                completion = client.chat(model=llm_model, messages=completed_prompt["messages"], tools=completed_prompt["tools"], options=options)
 
                 doc={
-                    "id": self.agent_config.session_token, 
+                    "id": ''.join(random.choices(string.ascii_letters + string.digits, k=self.agent_config.SESSION_ID_CHARS)), 
                     "input": self.agent_config.input,
+                    "finish_reason": completion.choices[0].finish_reason,
+                    "tool_calls":  [] if completion.choices[0].finish_reason != "tool_calls" else str(completion.choices[0].message.tool_calls),
                     "answer": completion['message']['content'],
                     "timestamp": datetime.now().isoformat(),
                     "role":self.agent_config.role,
-    #                "tools": [tool["name"] for tool in self.tools],
-    #                "response": llm_result.response_metadata,
-    #                "function_call": llm_result.additional_kwargs,
-    #                "routing": self.routing,
                     "parent_role":self.agent_config.parent_role,
-                    "session_token":self.agent_config.session_tokenxreal
+                    "session_token":self.agent_config.session_token
                 }
                 return doc
 
             case llm_types.GROQ:
                 client = Groq(api_key=self.agent_config.GROK_API_KEY)
-                completion = client.chat.completions.create(model=llm_model, messages=[{'role': 'system','content': message}])
+                completion = client.chat.completions.create(model=llm_model, messages=completed_prompt["messages"], tools=completed_prompt["tools"])
 
                 doc={
-                    "id": self.agent_config.session_token, 
+                    "id": ''.join(random.choices(string.ascii_letters + string.digits, k=self.agent_config.SESSION_ID_CHARS)), 
                     "input": self.agent_config.input,
+                    "finish_reason": completion.choices[0].finish_reason,
+                    "tool_calls":  [] if completion.choices[0].finish_reason != "tool_calls" else str(completion.choices[0].message.tool_calls),
                     "answer": completion.choices[0].message.content,
                     "timestamp": datetime.now().isoformat(),
                     "role":self.agent_config.role,
-    #                "tools": [tool["name"] for tool in self.tools],
-    #                "response": llm_result.response_metadata,
-    #                "function_call": llm_result.additional_kwargs,
-    #                "routing": self.routing,
                     "parent_role":self.agent_config.parent_role,
                     "session_token":self.agent_config.session_token
                 }

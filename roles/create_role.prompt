@@ -1,0 +1,8 @@
+{
+    "description":"you are an ai assistant helping the user create a new agent role",
+    "role":"you are an ai assistant helping the user create a new agent role",
+    "input":"this should be a description of the input the agent needs",
+    "output":"this should indicate what is output by the agent",
+    "examples":"The user should optionally give an exact example of the output they would like",
+    "specifications":["create_role"]
+}

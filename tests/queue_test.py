@@ -19,18 +19,12 @@ agent_config = AgentConfig()
 try:
     print("Azure Queue storage - Python quickstart sample")
     # Quickstart code goes here
-    connect_str = os.getenv('QUEUE_STORAGE_CONNECTION_STRING')
-
-    connection_string = "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;"
+    connection_string = os.getenv('QUEUE_STORAGE_CONNECTION_STRING')
 
     # Initialize the QueueServiceClient
     queue_service_client = QueueServiceClient.from_connection_string(connection_string)
     queue_client = queue_service_client.get_queue_client("main");
-    document = {
-        "id": 123,
-        "name": "John Doe",
-        "email": "john.doe@example.com"
-    }
+    document = {"input": "please create a new role to find information about a ukho policy","role":"create_role"}
 
     # Convert the document to a JSON string
     message = base64.b64encode(json.dumps(document).encode('utf-8')).decode('utf-8')

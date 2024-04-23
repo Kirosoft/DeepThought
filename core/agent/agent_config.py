@@ -6,20 +6,19 @@ import logging
 # Helper class to gather all properties and settings expected when procesing
 # a payload from the EventHub
 class AgentConfig:
-    def __init__(self, input_body:bytes = None):
+    def __init__(self, input_body:str = None):
         self.SESSION_ID_CHARS = 16
 
         # sanitise the input
         if input_body is None:
             self.body = '{}'
         else:
-            body_str = input_body.decode('utf-8')
             try:
-                self.body = json.loads(body_str)
+                self.body = json.loads(input_body)
                 self.__setup_vars()
             except Exception as err:
                 # invalid json supplied
-                logging.error(f'invalid json payload {body_str} {err}')
+                logging.error(f'invalid json payload {input_body} {err}')
                 self.body = {}
 
         self.__init_env_vars()
@@ -35,11 +34,12 @@ class AgentConfig:
 
         self.MAX_SESSION_TOKENS = int(os.getenv("MAX_SESSION_TOKENS", "4096"))
 
-        # database agnostic settings
+        # database tables
         self.INDEX_ROLES = os.getenv("INDEX_ROLES", "ai_roles")
         self.INDEX_HISTORY = os.getenv("INDEX_HISTORY", "ai_history")
         self.INDEX_TOOLS = os.getenv("INDEX_TOOLS", "ai_tools")
-        self.INDEX_CONTEXT = os.getenv("INDEX_Context", "ai_context")
+        self.INDEX_CONTEXT = os.getenv("INDEX_CONTEXT", "ai_context")
+        self.INDEX_SPECIFICATIONS = os.getenv("INDEX_SPECIFICATIONS", "ai_specifications")
 
         self.DATABASE_NAME = os.getenv("DATABASE_NAME","")
         self.TOP_K_DOCS = int(os.getenv("TOP_K_DOCS", "10"))
@@ -80,8 +80,11 @@ class AgentConfig:
         # use the supplied session token or generate a new one
         self.session_token=self.body.get("session_token","")  
         if (len(self.session_token) < self.SESSION_ID_CHARS):
+            self.new_session = True
             self.session_token = ''.join(random.choices(string.ascii_letters + string.digits, k=self.SESSION_ID_CHARS))
-
+        else:
+            self.new_session = False
+            
         self.parent_role=self.body.get("parent_role","")  
 
     def __get_input(self):

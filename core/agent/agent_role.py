@@ -1,107 +1,164 @@
-import jinja2
 from urllib.parse import unquote
 import logging
 from datetime import datetime
 
 from core.agent.agent_config import AgentConfig
 from core.db.agent_db_base import AgentDBBase
+from core.agent.agent_memory import AgentMemory
+import json
 
 class AgentRole:
 
     def __init__(self, agent_config : AgentConfig):
         self.__agent_config = agent_config
+        self.agent_memory = AgentMemory(agent_config)
         self.__init_store()
 
     def __init_store(self):
         # connect to elastic and intialise a connection to the vector store
         self.db_roles = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_ROLES)
         self.db_tools = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_TOOLS)
+        self.db_specifications = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_SPECIFICATIONS)
         self.db_session = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_HISTORY)
 
-    def __get_role_prompt(self, role: str) -> str:
+    def __get_role(self, role: str) -> str:
         
-        if not hasattr(self, 'role_prompt'):
+        if not hasattr(self, 'role'):
             # determine role
             result = self.db_roles.get(id = role)
 
             if result is None:
                 result = self.db_roles.get(index=self.__agent_config.INDEX_ROLES, id = "default_role")
 
-            self.role_prompt = unquote(result["prompt"])
+            self.role = json.loads(unquote(result["prompt"]))
 
-        return self.role_prompt
+        return self.role
 
-    # Automatically detect if a context search by the role prompt template
-    # showing it is expecting some data
-    def use_context_search(self, role):
-        role_prompt = self.__get_role_prompt(role)
+    # rag mode:
+    #
+    # {% for doc in docs -%}
+    # ---
+    # NAME: {{ doc.filename }}
+    # PASSAGE:
+    # {{ doc.page_content }}
+    # ---
 
-        return role_prompt.find("{% for doc in docs -%}") != -1
+    # {% endfor -%}
 
-    # Automatically detect if session history is used via role prompt template
-    # showing it is expecting some data
-    def use_session_history(self, role):
-        role_prompt = self.__get_role_prompt(role)
+    def is_rag(self, role) -> bool:
+        is_rag = False
 
-        return role_prompt.find("{% for qa in history -%}") != -1
+        try:
+            is_rag = role["options"]["rag_mode"]
+        except Exception as err:
+            logging.info(f"Rag option not set {err}")
 
-    # the first part of the temmplate can specify tools to be used
-    # the tool names are comma seperated between [[ ]]
-    # e.g. [[ tool1, tool2, tool3]]
-    def __parse_tools(self, role_prompt):
-        self.tools = []
-        self.routing = []
-        role_parts = role_prompt.split("]]")
+        return is_rag
+        
+    def __is_valid_role(self, role) -> bool:
+        return True
 
-        if (len(role_parts) == 1):
-            return role_prompt
-        else:
-            if (len(role_parts) != 2):
-                logging.warning(f"Unexpected format found trying to parse tools {role_parts}")
-            
-            try:
-                routes_or_tools = role_parts[0][2:].split(",")
+    def parse_spec(self, spec) -> object:
 
-                tool_list = [tool.strip() for tool in routes_or_tools if tool[0].strip() != '@']
-                self.routing = [route.strip()[1:] for route in routes_or_tools if route[0].strip() == '@']
+        cleaned_spec = unquote(spec["specification"])
 
-                # find and parse the tools
-                if len(tool_list) > 0:
-                    self.tools = self.db_tools.multi_get(docs=tool_list)
+        try:
+            json_spec = json.loads(cleaned_spec)
+        except Exception as err:
+            print(f"Unable to parse specification {spec} spec {err}")
 
-            except Exception as err:
-                logging.error(f"Error {err} found parsing tools list. Check syntax is correct. {role_parts[0][2:]}")
+        return json_spec
+    
+    def parse_tool(self, tool) -> object:
 
-            return role_parts[1]
+        cleaned_tool = unquote(tool["tool"])
+
+        try:
+            json_tool = json.loads(cleaned_tool)
+        except Exception as err:
+            print(f"Unable to parse tool {tool} error {err}")
+            json_tool = None
+
+        return json_tool
+
+    def __get_specifications(self, role) -> list[object]:
+        specifications = []
+
+        try:
+            specification_names = role["specifications"]
+
+            specs = self.db_specifications.multi_get(specification_names)
+
+            specifications = [self.parse_spec(spec) for spec in specs]
+
+        except Exception as err:
+            print(f"Unable to find specifications {err}")
+        return specifications
+    
+    def __get_tools(self, role) -> list[object]:
+        tool_defs = []
+
+        try:
+            tool_names = role["tools"]
+
+            tools = self.db_tools.multi_get(tool_names)
+
+            tool_defs = [self.parse_tool(tool) for tool in tools]
+
+        except Exception as err:
+            print(f"Unable to find tool {tools} definition {err}")
+        
+        return tool_defs
 
     # loads the role prompt from the database
     # populates the template with context data based on the the supplied user input 'question'
     # the context data search is driven by the template format expecting context data
     # for example the template includes the '{% for doc in docs -%}' expecting data
     # should be inserted
-    def get_completed_prompt(self, context, session_history, role) -> str:
-        role_prompt = self.__get_role_prompt(role)
+    def get_completed_prompt(self, role_name:str) -> object:
+        role = self.__get_role(role_name)
+        messages = []
+        options = {}
 
-        role_prompt = self.__parse_tools(role_prompt)
+        if (self.__is_valid_role(role)):
 
-        # transform the search results into json payload
-        context_results = []
-        for doc in context:
-            doc_source = {**doc, 'page_content': doc["content"]}
-            context_results.append(doc_source)
+            # construct the system prompt
+            system_prompt = f"""
+                {role["description"]}
+                {role["role"]}
+                {role["output"]}
+            """            
 
-        # session history
-        session_results = []
-        for doc in session_history:
-            doc_source = {**doc}
-            session_results.append(doc_source)
+            # build the function message
+            # transform the search results into json payload
+            if self.is_rag(role):
+                for doc in self.agent_memory.get_context(self.__agent_config.input):
+                    system_prompt += f"NAME: {doc['path']}"
+                    system_prompt += f"CONTENT: {doc['content']}"
 
-        # create the prompt template
-        # TODO: We need to be careful to need exceed the token length. We may need a summarizing step here
-        template = jinja2.Template(role_prompt)
-        completed_prompt_template = template.render(question=self.__agent_config.input, docs=context_results, history=session_results)
+            messages.append({"role":"system", "content":system_prompt})
 
-        return completed_prompt_template, self.tools, self.routing
+            # session history
+            if (not self.__agent_config.new_session):
+                session_results = self.agent_memory.get_session_history(self.__agent_config.session_token)
+                for session in session_results:
+                    messages.append({"role":"user", "content":session["input"]})
+                    messages.append({"role":"system", "content":session["answer"]})
+
+            # consuct the latest input as the last message
+            user_prompt = {
+                "role":"user",
+                "content": self.__agent_config.input
+            }
+            messages.append(user_prompt)
+
+            specifications = self.__get_specifications(role)
+            tools  = self.__get_tools(role)
+
+            if "options" in role and "model_override" in role["options"]:
+                options["model_override"] = role["options"]["model_override"]
+
+        return {"messages":messages, "tools":tools, "specifications":specifications, "options":options}
 
 
  

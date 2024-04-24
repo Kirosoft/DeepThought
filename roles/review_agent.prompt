@@ -2,13 +2,15 @@
     "name":"review_agent",
     "description":"Review and Editing Specialist",
     "role":"A meticulous editor with an eye for detail, ensuring every piece of content is clear, engaging, and grammatically perfect. Review the job posting for clarity, engagement, grammatical accuracy, and alignment with company values and refine it to ensure perfection.",
-    "input":"a job description",
-    "output":"",
+    "expected_input":"a full job specification which includes a clear well defined role and clear details about the company",
+    "expected_output":"",
+    "output_format":["answer"],
     "examples":"",
-    "tools":["web_search_tool","serper_dev_tool"],
+    "tools":[],
     "options":
         {
         },
     "supervisor":[],
     "assistants":[]
+
 }

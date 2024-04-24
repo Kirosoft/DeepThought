@@ -113,12 +113,13 @@ class AgentRole:
             # construct the system prompt
             # TODO: detect if the output is a spec and prompt the whole spec as JSON {spec}
             system_prompt = f"""
-                {role["description"]}\n
-                {role["role"]}\n
+                {role["description"]}
+                {role["role"]}
                 {f"Expected input: {role['expected_input']}" if role['expected_input'] != "" else ""}
-                {f"output format: The JSON object must use the schema [{','.join(output_format_json)}]" if len(output_format_json) != 0 else ""}
-                {f"Example output: {role['examples']}" if role['examples'] != "" else ""}
-            """            
+                {f"Think about your response. If it seems complete output [[**FINISHED**]] or [[**NOT_FINISHED**]] if not finished. You MUST output one or the other based on the circumstances."}
+            """           
+                # {f"output format: JSON SCHEMA [{','.join(output_format_json)}] do not invent any new fields or change the output scehma in any way. Any UNESCAPED characters should be escaped. Ensuer there are no NEWLINE characters inserted. Ensure there are no back slashes or enescaped characters.The answer to the user should just be text and not JSON" if len(output_format_json) != 0 else ""}
+                # {f"Example output: {role['examples']}" if role['examples'] != "" else ""}
 
             # build the function message
             # transform the search results into json payload
@@ -149,7 +150,7 @@ class AgentRole:
             if "options" in role and "model_override" in role["options"]:
                 options["model_override"] = role["options"]["model_override"]
 
-        return {"messages":messages, "tools":tools, "options":options}
+        return {"messages":messages, "tools":tools, "options":options, "output_format_json":output_format_json}
 
 
  

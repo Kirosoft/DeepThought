@@ -1,6 +1,6 @@
 import azure.functions as func
 import logging
-
+import json
 from core import process_request
 
 app = func.FunctionApp()
@@ -14,19 +14,16 @@ def core_llm_agent(req: func.HttpRequest) -> func.HttpResponse:  # , answer: fun
 
     logging.info('core_llm_agent trigger from event hub input')
 
-    result = process_request(req.get_body.decode('utf-8'))
+    result = process_request(req.get_body().decode('utf-8'))
 
     if (result != None):
-        # TODO: should we execute tool
-        # 1) push the tool execute to the Q
-        # 2) Push the response to the Q
-        #answer.set('test')
         logging.info('Answer: %s',result["answer"])
+        response_str = json.dumps(result, ensure_ascii=False).encode('utf8')
+        return func.HttpResponse(response_str, status_code=200)
     else:
-        answer_str = 'No question found, please supply a question'
+        answer_str = {"answer":"No question found, please supply a question", "answer_type":"error"}
         logging.info('Answer: %s',answer_str)
         return func.HttpResponse(answer_str)
-        #answer.set('error')
     
  
 # @app.event_hub_message_trigger(arg_name="azeventhub", event_hub_name="deepthoughtoutput",

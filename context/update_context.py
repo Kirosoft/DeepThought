@@ -21,22 +21,22 @@ for setting in settings["Values"]:
     os.environ[setting]=settings["Values"][setting]
 
 agent_config = AgentConfig()
-db = AgentDBBase(agent_config, agent_config.INDEX_CONTEXT)
-embedding = EmbeddingBase(agent_config, agent_config.EMBEDDING_MODEL)
+db = AgentDBBase(agent_config, agent_config.INDEX_CONTEXT, "/context")
+embedding = EmbeddingBase(agent_config)
 
 
 def embedding_to_lsh(embedding, num_planes=10, seed=123):
-    
+
     # Generate a set of random planes (vectors) for the projection
     planes = np.random.normal(size=(num_planes, len(embedding)))
-    
+
     # Project the embedding onto each plane and binarize the results
     projections = np.dot(planes, embedding)
     binary_projections = (projections >= 0).astype(int)
-    
+
     # Convert the binary projections to a string hash
     hash_str = ''.join(str(bit) for bit in binary_projections)
-    
+
     # Return the hash as a string
     return hash_str
 
@@ -50,7 +50,7 @@ def get_content(url, path):
             print(decoded_content)
             process_content(url, str(decoded_content), path)
     else:
-        print(f"failed to fetch {url} Error: {result.status_code}")    
+        print(f"failed to fetch {url} Error: {result.status_code}")
 
 
 def process_content(url, content, path):
@@ -78,10 +78,10 @@ def process_content(url, content, path):
 def test_query():
 
     txt = "what is the policy on code pairing"
-    result=embedding.get_embedding(txt)
-    vector = result.data[0].embedding
+    # result=embedding.get_embedding(txt)
+    # vector = result.data[0].embedding
 
-    results = db.similarity_search(vector, 0.20)
+    results = db.similarity_search(txt, 0.20)
 
     # Print the top 5 results
     for item in results:

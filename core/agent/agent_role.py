@@ -16,10 +16,10 @@ class AgentRole:
 
     def __init_store(self):
         # connect to elastic and intialise a connection to the vector store
-        self.db_roles = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_ROLES)
-        self.db_tools = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_TOOLS)
-        self.db_specs = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_SPECS)
-        self.db_session = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_HISTORY)
+        self.db_roles = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_ROLES, "/roles")
+        self.db_tools = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_TOOLS, "/tools")
+        self.db_specs = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_SPECS, "/specs")
+        self.db_session = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_HISTORY, "/history")
 
     def __get_role(self, role: str) -> str:
         
@@ -116,10 +116,10 @@ class AgentRole:
                 {role["description"]}
                 {role["role"]}
                 {f"Expected input: {role['expected_input']}" if role['expected_input'] != "" else ""}
-                {f"Think about your response. If it seems complete output [[**FINISHED**]] or [[**NOT_FINISHED**]] if not finished. You MUST output one or the other based on the circumstances."}
+                {f"Think about your response. If all the INPUT was provided and the OUTPUT seems complete, OUTPUT [[**FINISHED**]] OR [[**NOT_FINISHED**]] if not finished. You *MUST* output one or the other based on the circumstances."}
+                {f"Example output: {role['examples']}" if role['examples'] != "" else ""}
+                {f"output format: JSON SCHEMA [{','.join(output_format_json)}] do not invent any new fields or change the output scehma in any way. Any UNESCAPED characters should be escaped. Ensuer there are no NEWLINE characters inserted. Ensure there are no back slashes or enescaped characters.The answer to the user should just be text and not JSON" if len(output_format_json) != 0 else ""}
             """           
-                # {f"output format: JSON SCHEMA [{','.join(output_format_json)}] do not invent any new fields or change the output scehma in any way. Any UNESCAPED characters should be escaped. Ensuer there are no NEWLINE characters inserted. Ensure there are no back slashes or enescaped characters.The answer to the user should just be text and not JSON" if len(output_format_json) != 0 else ""}
-                # {f"Example output: {role['examples']}" if role['examples'] != "" else ""}
 
             # build the function message
             # transform the search results into json payload

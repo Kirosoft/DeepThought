@@ -8,6 +8,9 @@ from pathlib import Path
 import json
 from core.db.agent_db_base import AgentDBBase
 from core.agent.agent_config import AgentConfig
+import urllib3
+
+urllib3.disable_warnings()
 
 # take the local settgins file and convert it into environemnt variables
 settings = json.loads(TextLoader(join(os.getcwd(), 'local.settings.json'), encoding="utf-8").load()[0].page_content)
@@ -16,7 +19,7 @@ for setting in settings["Values"]:
     os.environ[setting]=settings["Values"][setting]
 
 agent_config = AgentConfig()
-db = AgentDBBase(agent_config, agent_config.INDEX_ROLES)
+db = AgentDBBase(agent_config, agent_config.INDEX_ROLES, "/roles")
 
 def index_docs_elastic(directory_path, extension):
     file_list = find_in_files(directory_path, extension)

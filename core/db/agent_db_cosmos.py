@@ -25,7 +25,7 @@ udf_definition = {
             }
             norm1 = Math.sqrt(norm1);
             norm2 = Math.sqrt(norm2);
-            var similarity = Math.round((dotProduct / (norm1 * norm2))*100);
+            var similarity = dotProduct / (norm1 * norm2);
             return similarity;
         }
     """
@@ -91,15 +91,17 @@ class AgentDBCosmos(AgentDBBase):
         self.__agent_config = agent_config
         self.__index = index
 
-    def init_db(self):
+    def init_db(self, partition_key):
         self.embedding = EmbeddingBase(self.__agent_config)
 
         # Create a Cosmos DB client
-        self.client = cosmos_client.CosmosClient(self.__agent_config.COSMOS_ENDPOINT, {"masterKey": self.__agent_config.COSMOS_KEY})
+        #self.client = cosmos_client.CosmosClient(HOST, {'masterKey': MASTER_KEY}, user_agent="CosmosDBPythonQuickstart", user_agent_overwrite=True)
+
+        self.client = cosmos_client.CosmosClient(self.__agent_config.COSMOS_ENDPOINT, {"masterKey": self.__agent_config.COSMOS_KEY}, user_agent="deepthought_import_roles", user_agent_overwrite=True)
         self.client.create_database_if_not_exists(self.__agent_config.DATABASE_NAME)
         self.database = self.client.get_database_client(self.__agent_config.DATABASE_NAME)
-        self.partition_key = "/partition_key"
-        self.database.create_container_if_not_exists(self.__index, PartitionKey(path=self.partition_key))
+        self.partition_key = partition_key
+        self.database.create_container_if_not_exists(self.__index, PartitionKey(path='/partition_key'))
         self.container = self.database.get_container_client(self.__index)
 
         # make sure the UDF is registered
@@ -116,9 +118,9 @@ class AgentDBCosmos(AgentDBBase):
     def get(self, id:str):
         try:
             data = self.container.read_item(item=id, partition_key=self.partition_key)
-        except:
+        except Exception  as err:
             data = None
-            logging.warning(f"Could not find {id} in ${self.index} with partition_key {self.partition_key}")
+            logging.warning(f"{err} Could not find {id} in ${self.index} with partition_key {self.partition_key}")
 
         return data
 

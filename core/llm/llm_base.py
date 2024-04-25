@@ -80,27 +80,25 @@ class LLMBase:
 
             case llm_types.GROQ:
                 client = Groq(api_key=self.agent_config.GROK_API_KEY)
-                #completion = client.chat.completions.create(model=llm_model, messages=completed_prompt["messages"], tools=completed_prompt["tools"], response_format= {"type": "json_object", "schema": completed_prompt["output_format_json"]})
                 completion = client.chat.completions.create(model=llm_model, messages=completed_prompt["messages"], tools=completed_prompt["tools"])
                 
                 # todo: assumes the answer object schema
                 answer = completion.choices[0].message.content
-                #answer_obj = json.loads(completion.choices[0].message.content)
                 answer_type = ""
-                if answer.__contains__("**FINISHED**"):
+
+                if completion.choices[0].finish_reason =="tool_calls":
+                    answer_type ="tool_calls"
+                elif answer.__contains__("**FINISHED**"):
                     answer_type="complete"
                 else:
                     answer_type="user_input_needed"
 
-                # if not "answer_type" in answer_obj:
-                #     # TODO: hack because the property moved
-                #     answer_obj = answer_obj["answer"]
                 doc={
                     "id": ''.join(random.choices(string.ascii_letters + string.digits, k=self.agent_config.SESSION_ID_CHARS)), 
                     "input": self.agent_config.input,
                     "finish_reason": completion.choices[0].finish_reason,
                     "tool_calls":  [] if completion.choices[0].finish_reason != "tool_calls" else str(completion.choices[0].message.tool_calls),
-                    "answer_type": "" if completion.choices[0].finish_reason == "tool_calls" else answer_type,
+                    "answer_type": answer_type,
                     "answer": "" if completion.choices[0].finish_reason == "tool_calls" else answer,
                     "timestamp": datetime.now().isoformat(),
                     "role":self.agent_config.role,

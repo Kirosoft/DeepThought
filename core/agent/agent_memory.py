@@ -11,8 +11,8 @@ class AgentMemory:
 
     def __init_store(self):
         # connect to a db and intialise a connection to the vector store
-        self.__context_store = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_CONTEXT)
-        self.__history_store = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_HISTORY)
+        self.__context_store = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_CONTEXT, "/context")
+        self.__history_store = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_HISTORY, "/history")
 
     # similarity search in the conext db
     def get_context(self, question: str):

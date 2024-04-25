@@ -4,16 +4,41 @@ Functional agentic framework
 
 <img src="./images/_d376e6fa-4fea-409b-a841-00e47f35bdad.jpeg"  height="500">
 <br>
-"Deep Thought announced that the new machine would be so large, it would resemble a planet, and be of such complexity that organic life itself would become part of its operating matrix." - Douglas Adams, Hitch HIkers Guide To The Galaxy
+"Deep Thought announced that the new machine would be so large, it would resemble a planet, and be of such complexity that organic life itself would become part of its operating matrix." - Douglas Adams, Hitch Hikers Guide To The Galaxy
 
 # Features
 
 * Code free AI agent framework to orchestrate business flows
 * Fully deployed locally or at scale in the cloud
 * Recursive agent implementation with Domain Speciifc Language (DSL) built into the template
-* Self learning role/tool/specifications 
 * Support for context based search (RAG)
 * Dynamic workflow between agents
+
+# Agent Features
+
+* RAG Support using VectorDB
+* Multi-Agent session learning
+* Function calling support
+* JSON Output formatting
+* Reflective queries
+* Includes multi-shot learning
+* Change LLM model on a per agent basis
+
+# VectorDB Integrations
+
+ElasticCloud<br>
+CosmosDB (custom vector DB implementation)<br>
+
+# LLM Integrations
+
+OpenAI<Br>
+Ollama (local)<br>
+GroqCloud<br>
+
+# Demo
+
+Job posting agent
+
 
 > [!IMPORTANT]  
 <bold>
@@ -47,6 +72,11 @@ python tools/update_tools.py "<path-to-tools-directory>"
 
 # TODO:
 
+UI:
+
+Develop TTS and STT interface
+OR
+Develop flow based interface
 
 Docs:
 
@@ -59,11 +89,13 @@ Problems:
 
 Features:
 
+* Self learning role/tool/specifications 
 * allow all role fields to be overriden from input<br>
 * run a role purely from the payload input<br>
 * Build a message routing framework<br>
 * develop a multie role agent demo<br>
 
+<strike>* develop a job posting agent demo<br></strike>
 <Strike>* Support JSON schema specification outputs<br></strike>
 <strike>* LLM Model overrides from templates e.g. change the llm model based on the role<br></strike>
 <Strike>* rework function calling - now known as tools<br></strike>

@@ -5,7 +5,6 @@ from os.path import join
 from core import process_request
 import logging
 import urllib3
-from crewai_tools  import WebsiteSearchTool, SerperDevTool, FileReadTool
 
 urllib3.disable_warnings()
 
@@ -19,11 +18,12 @@ settings = json.loads(TextLoader(join(os.getcwd(), 'local.settings.json'), encod
 for setting in settings["Values"]:
     os.environ[setting]=settings["Values"][setting]
 
-
 ### AI ###
-searchTool = SerperDevTool()
-websiteSearchTool = WebsiteSearchTool()
-
+###########################################################################
+## Test for AI completion in the output
+## Test for input expectation to the model and will indicate if more input is needed (by add more_input to the output response
+## The session history is built across multiple agent interactions to get the result
+############################################################################
 document = {"input": "hello","role":"research_analyst"}
 result = process_request(json.dumps(document))
 print(result['answer'])
@@ -32,7 +32,7 @@ if result["finish_reason"] == "stop" and result['answer_type'] == "user_input_ne
 
     session_token = result["session_token"]
     # company culture
-    full_prompt = """Analyze the provided company website and the hiring manager's company's domain www.ukho.gov.uk. Focus on understanding the company's culture, values, and mission. Identify unique selling points and specific projects or achievements highlighted on the site. Compile a report summarizing these insights, specifically how they can be leveraged in a job posting to attract the right candidates."""
+    full_prompt = """Analyze the provided company website and the hiring manager's company's domain www.apple.co.uk. Focus on understanding the company's culture, values, and mission. Identify unique selling points and specific projects or achievements highlighted on the site. Compile a report summarizing these insights, specifically how they can be leveraged in a job posting to attract the right candidates."""
     document = {"input": full_prompt,"role":"research_analyst", "session_token": session_token}
     result = process_request(json.dumps(document))
 
@@ -46,8 +46,9 @@ if result["finish_reason"] == "stop" and result['answer_type'] == "user_input_ne
         print(result['answer'])
 
         if result["finish_reason"] == "stop":
-            document = {"input": f"please review and output the best job advert ever!","role":"review_agent", "session_token": session_token}
+            document = {"input": f"please review and output the best job advert ever!", "role":"review_agent", "session_token": session_token}
             result = process_request(json.dumps(document))
+            print("=========================================")
             print(result['answer'])
 
 else:

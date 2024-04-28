@@ -4,8 +4,8 @@
 
 azure-functions
 azure-cosmos
-azure.identity
-azure.storage.queue
+#azure.identity
+#azure.storage.queue
 
 # core dependencies
 elasticsearch
@@ -21,9 +21,9 @@ openai
 
 # BedRock dependencies
 boto3
-tiktoken
+tiktoken>=0.5.2,<0.6
 
-jinja2
+#jinja2
 python-dotenv
 
 requests
@@ -32,4 +32,4 @@ wget
 ollama
 groq
 
-crewai_tools
+#crewai_tools

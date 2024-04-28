@@ -2,6 +2,14 @@ import azure.functions as func
 import logging
 import json
 from core import process_request
+import urllib3
+
+
+urllib3.disable_warnings()
+
+# Create a logger for the 'azure' SDK
+logger = logging.getLogger('azure')
+logger.setLevel(logging.ERROR)
 
 app = func.FunctionApp()
 
@@ -12,7 +20,7 @@ app = func.FunctionApp()
 @app.route(auth_level=func.AuthLevel.ANONYMOUS)
 def core_llm_agent(req: func.HttpRequest) -> func.HttpResponse:  # , answer: func.Out[str]
 
-    logging.info('core_llm_agent trigger from event hub input')
+    logging.info('core_llm_agent trigger from http')
 
     result = process_request(req.get_body().decode('utf-8'))
 
@@ -25,7 +33,19 @@ def core_llm_agent(req: func.HttpRequest) -> func.HttpResponse:  # , answer: fun
         logging.info('Answer: %s',answer_str)
         return func.HttpResponse(answer_str)
     
- 
+
+
+
+@app.function_name(name="load_roles")
+@app.route(auth_level=func.AuthLevel.ANONYMOUS)
+def load_roles(req: func.HttpRequest) -> func.HttpResponse:  # , answer: func.Out[str]
+
+    logging.info('load roles function')
+
+    return func.HttpResponse("ok", status_code=200)
+    
+
+
 # @app.event_hub_message_trigger(arg_name="azeventhub", event_hub_name="deepthoughtoutput",
 #                                connection="DeepThoughtEvents_RootManageSharedAccessKey_EVENTHUB") 
 # def eventhub_output(azeventhub: func.EventHubEvent):
@@ -75,20 +95,20 @@ def core_llm_agent(req: func.HttpRequest) -> func.HttpResponse:  # , answer: fun
 
 
  
-@app.queue_trigger(arg_name="azqueue", queue_name="main",
-                               connection="AzureWebJobsStorage") 
-def queue_trigger(azqueue: func.QueueMessage):
-    body = azqueue.get_body().decode('utf-8')
-    logging.info('Python Queue trigger processed a message: %s', body)
+# @app.queue_trigger(arg_name="azqueue", queue_name="main",
+#                                connection="AzureWebJobsStorage") 
+# def queue_trigger(azqueue: func.QueueMessage):
+#     body = azqueue.get_body().decode('utf-8')
+#     logging.info('Python Queue trigger processed a message: %s', body)
 
-    result = process_request(body)
+#     result = process_request(body)
 
-    # TODO: should we execute tool
-    # 1) push the tool execute to the Q
-    # 2) Push the response to the Q
-    #answer.set('test')
-    if (result != None):
-        logging.info(f'Answer: {result["answer"]} session: {result["session_token"]}')
-    else:
-        answer_str = 'No question found, please supply a question'
-        logging.info('Answer: %s',answer_str)
+#     # TODO: should we execute tool
+#     # 1) push the tool execute to the Q
+#     # 2) Push the response to the Q
+#     #answer.set('test')
+#     if (result != None):
+#         logging.info(f'Answer: {result["answer"]} session: {result["session_token"]}')
+#     else:
+#         answer_str = 'No question found, please supply a question'
+#         logging.info('Answer: %s',answer_str)

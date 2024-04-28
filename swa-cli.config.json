@@ -2,11 +2,13 @@
   "$schema": "https://aka.ms/azure/static-web-apps-cli/schema",
   "configurations": {
     "deep-thought": {
-      "appLocation": "front_end",
-      "apiLocation": ".",
+      "appLocation": "DeepThoughtGraph",
+      "apiLocation": "",
       "outputLocation": ".",
       "apiLanguage": "python",
-      "apiVersion": "3.8"
+      "apiVersion": "3.8",
+      "appName": "deep-thought",
+      "resourceGroup": "deep-thought-rg"
     }
   }
 }

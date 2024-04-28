@@ -23,9 +23,10 @@ for setting in settings["Values"]:
 
 agent_config = AgentConfig()
 
-document = {"input": "what is the policy on code pairing","role":"ukho_policy", "name":"core_llm_agent"}
+document = {"input": "what are the usability standards","role":"ukho_policy", "name":"core_llm_agent"}
 
-url = "http://localhost:7071/api/core_llm_agent"
+#url = "http://localhost:7071/api/core_llm_agent"
+url="https://deepthought-app.azurewebsites.net/api/core_llm_agent"
 payload = json.dumps(document, ensure_ascii=False).encode('utf8')
 
 response = requests.post(url, payload)

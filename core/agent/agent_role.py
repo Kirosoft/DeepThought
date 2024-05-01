@@ -28,7 +28,7 @@ class AgentRole:
             result = self.db_roles.get(id = role)
 
             if result is None:
-                result = self.db_roles.get(index=self.__agent_config.INDEX_ROLES, id = "default_role")
+                result = self.db_roles.get(id = "default_role")
 
             self.role = json.loads(unquote(result["prompt"]))
 

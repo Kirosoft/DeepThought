@@ -87,20 +87,34 @@ sproc = {
 }
 
 class AgentDBCosmos(AgentDBBase):
-    def __init__(self, agent_config:AgentConfig, index:str):
+    def __init__(self, agent_config:AgentConfig, index:str, partition_key):
         self.__agent_config = agent_config
         self.__index = index
-
-    def init_db(self, partition_key):
         self.embedding = EmbeddingBase(self.__agent_config)
+        self.partition_key = partition_key
+        self.container = None
+
+    def init_db(self):
 
         # Create a Cosmos DB client
-        #self.client = cosmos_client.CosmosClient(HOST, {'masterKey': MASTER_KEY}, user_agent="CosmosDBPythonQuickstart", user_agent_overwrite=True)
-
         self.client = cosmos_client.CosmosClient(self.__agent_config.COSMOS_ENDPOINT, {"masterKey": self.__agent_config.COSMOS_KEY}, user_agent="deepthought_import_roles", user_agent_overwrite=True)
         self.client.create_database_if_not_exists(self.__agent_config.DATABASE_NAME)
         self.database = self.client.get_database_client(self.__agent_config.DATABASE_NAME)
-        self.partition_key = partition_key
+        self.container = None
+        return self.database
+    
+    def set_db(self, db):
+        self.database = db
+
+    def get_container(self):
+
+        if self.container is None:
+            return self.init_container()
+        else:
+            return self.container
+    
+    def init_container(self):
+
         self.database.create_container_if_not_exists(self.__index, PartitionKey(path='/partition_key'))
         self.container = self.database.get_container_client(self.__index)
 
@@ -115,9 +129,12 @@ class AgentDBCosmos(AgentDBBase):
         except:
             self.created_sproc = self.container.scripts.create_stored_procedure(body=sproc) 
 
+        return self.container
+
+
     def get(self, id:str):
         try:
-            data = self.container.read_item(item=id, partition_key=self.partition_key)
+            data = self.get_container().read_item(item=id, partition_key=self.partition_key)
         except Exception  as err:
             data = None
             logging.warning(f"{err} Could not find {id} in ${self.index} with partition_key {self.partition_key}")
@@ -126,13 +143,13 @@ class AgentDBCosmos(AgentDBBase):
 
     def multi_get(self, docs:list[object]):
         query = f"SELECT * FROM {self.__index} C where C.id in ('{','.join(docs)}')"
-        result = self.container.query_items(query, enable_cross_partition_query=True, partition_key=self.partition_key)
+        result = self.get_container().query_items(query, enable_cross_partition_query=True, partition_key=self.partition_key)
         return result
 
 
     def get_session(self, session_token:str):
         query = f"SELECT * FROM {self.__index} C where C.session_token = '{session_token}'"
-        result = self.container.query_items(query, enable_cross_partition_query=True, partition_key=self.partition_key)
+        result = self.get_container().query_items(query, enable_cross_partition_query=True, partition_key=self.partition_key)
         return result
 
     def similarity_search_vector(self, input_vector, distance_threshold=0.5, top_k = 5):
@@ -144,7 +161,7 @@ class AgentDBCosmos(AgentDBBase):
         ]
         
         try:
-            result = self.container.scripts.execute_stored_procedure(sproc="spSimilaritySearch",params=parameters, partition_key=self.partition_key) 
+            result = self.get_container().scripts.execute_stored_procedure(sproc="spSimilaritySearch",params=parameters, partition_key=self.partition_key) 
         except Exception as err:
             result = "[]"
         
@@ -161,7 +178,7 @@ class AgentDBCosmos(AgentDBBase):
         doc["partition_key"] = self.partition_key
         doc["ttl"] = ttl
 
-        self.container.upsert_item(body=doc)
+        self.get_container().upsert_item(body=doc)
 
 
 

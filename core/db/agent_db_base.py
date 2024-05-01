@@ -8,19 +8,28 @@ db_types.ELASTIC = "elastic"
 db_types.ELASTIC_VECTOR = "elastic_vector"
 
 class AgentDBBase:
+
+    __database = None
+
     def __init__(self, agent_config:AgentConfig, index:str, partition_key:str='partition_key'):
         self.db_type = agent_config.DB_TYPE
         self.__index = index
         self.__agent_config = agent_config
+        self.partition_key = partition_key
         self.db_handler = self.__get_db_handler__(self.db_type)
-        self.db_handler.init_db(partition_key)
+
+        if AgentDBBase.__database is None:
+            AgentDBBase.__database = self.db_handler.init_db()
+        else:
+            self.db_handler.set_db(AgentDBBase.__database)
+
 
     # inner factory to construct the database object
     def __get_db_handler__(self, dbtype:str):
 
         match dbtype:   
             case db_types.COSMOS:
-                return AgentDBCosmos(self.__agent_config, self.__index)
+                return AgentDBCosmos(self.__agent_config, self.__index, self.partition_key)
             case db_types.ELASTIC:
                 return AgentDBElastic()
             case db_types.ELASTIC_VECTOR:

@@ -52,6 +52,8 @@ class AgentDBBase:
     def index(self, id:str, doc:object, ttl:int = -1):
         self.db_handler.index(id, doc, ttl)
 
+    def delete_index(self):
+        self.db_handler.delete_index()
 
 from core.db.agent_db_elastic import AgentDBElastic
 from core.db.agent_db_cosmos import AgentDBCosmos

@@ -86,6 +86,72 @@ sproc = {
     'serverScript': similarity_search,
 }
 
+delete_index_sproc = """
+function deleteSproc(query) {
+    var collection = getContext().getCollection();
+    var collectionLink = collection.getSelfLink();
+    var response = getContext().getResponse();
+    var responseBody = {
+        deleted: 0,
+        continuation: ""
+    };
+
+    // Validate input.
+    if (!query) throw new Error("The query is undefined or null.");
+
+    tryQueryAndDelete();
+
+    function tryQueryAndDelete(continuation) {
+        var requestOptions = {
+            continuation: continuation, 
+            pageSize: 10
+        };
+
+        var isAccepted = collection.queryDocuments(collectionLink, query, requestOptions, function (err, documents, responseOptions) {
+            if (err) throw err;
+
+            if (documents.length > 0) {
+                tryDelete(documents);
+                if(responseOptions.continuation){
+                    tryQueryAndDelete(responseOptions.continuation);
+                }else{
+                    response.setBody(responseBody);
+                }
+
+            }
+        });
+
+        if (!isAccepted) {
+            response.setBody(responseBody);
+        }
+    }
+
+    function tryDelete(documents) {
+        if (documents.length > 0) {
+            var requestOptions = {etag: documents[0]._etag};
+
+            // Delete the document.
+            var isAccepted = collection.deleteDocument(
+                documents[0]._self, 
+                requestOptions, 
+                function (err, updatedDocument, responseOptions) {
+                    if (err) throw err;
+
+                    responseBody.deleted++;
+                    documents.shift();
+                    // Try updating the next document in the array.
+                    tryDelete(documents);
+                }
+            );
+
+            if (!isAccepted) {
+                response.setBody(responseBody);
+            }
+        } 
+    }
+}
+"""
+
 class AgentDBCosmos(AgentDBBase):
     def __init__(self, agent_config:AgentConfig, index:str, partition_key):
         self.__agent_config = agent_config
@@ -118,16 +184,25 @@ class AgentDBCosmos(AgentDBBase):
         self.database.create_container_if_not_exists(self.__index, PartitionKey(path='/partition_key'))
         self.container = self.database.get_container_client(self.__index)
 
-        # make sure the UDF is registered
-        try:
-            udf = self.container.scripts.get_user_defined_function("cosineSimilarity")
-        except:
-            self.container.scripts.create_user_defined_function(udf_definition)
+        if self.__agent_config.AzureDBSetupFunctions == "true":
+            # make sure the UDF is registered
+            try:
+                udf = self.container.scripts.get_user_defined_function("cosineSimilarity")
+            except:
+                self.container.scripts.create_user_defined_function(udf_definition)
 
-        try:
-            self.created_sproc = self.container.scripts.get_stored_procedure(sproc="spSimilaritySearch") 
-        except:
-            self.created_sproc = self.container.scripts.create_stored_procedure(body=sproc) 
+            try:
+                self.created_sproc = self.container.scripts.get_stored_procedure(sproc="spSimilaritySearch") 
+            except:
+                self.created_sproc = self.container.scripts.create_stored_procedure(body=sproc) 
+
+            try:
+                self.delete_sproc = self.container.scripts.get_stored_procedure(sproc="spDeleteSproc") 
+            except:
+                self.delete_sproc = self.container.scripts.create_stored_procedure(body={
+                                                                                    'id': 'spDeleteSproc',
+                                                                                    'serverScript': delete_index_sproc,
+                                                                                }) 
 
         return self.container
 
@@ -171,6 +246,22 @@ class AgentDBCosmos(AgentDBBase):
         result=self.embedding.get_embedding(input)
         vector = result.data[0].embedding
         return self.similarity_search_vector(vector, distance_threshold, top_k)
+
+    def delete_index(self):
+
+        query = "SELECT * FROM c where c.partition_key = '/context'"
+
+        parameters = [
+            query
+        ]
+        
+        try:
+            result = self.get_container().scripts.execute_stored_procedure(sproc="spDeleteSproc",params=parameters, partition_key=self.partition_key) 
+        except Exception as err:
+            result = "[]"
+        
+        return result
+
 
     def index(self, id:str, doc:object, ttl=-1):
 

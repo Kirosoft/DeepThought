@@ -33,3 +33,4 @@ ollama
 groq
 
 #crewai_tools
+numpy

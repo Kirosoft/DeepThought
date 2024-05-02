@@ -73,6 +73,8 @@ class AgentConfig:
         # SERPER
         self.SERPER_API_KEY = os.getenv("SERPER_API_KEY")
 
+        self.AzureDBSetupFunctions = os.getenv("AzureDBSetupFunctions", "false")
+
 
     # Setup the needed properties
     # If they were not supplied then provide suitable defaults

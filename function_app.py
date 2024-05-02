@@ -3,7 +3,7 @@ import logging
 import json
 from core import process_request
 import urllib3
-
+from context import do_import
 
 urllib3.disable_warnings()
 
@@ -34,16 +34,15 @@ def core_llm_agent(req: func.HttpRequest) -> func.HttpResponse:  # , answer: fun
         return func.HttpResponse(answer_str)
     
 
+@app.schedule(schedule="0 0 6 * * *", arg_name="mytimer", run_on_startup=True) 
+def scheduled_imports(mytimer: func.TimerRequest):
+    logging.info('*** Scheduler **** ')
+    try:
+        do_import("https://api.github.com/repos/ukho/docs/git/trees/main?recursive=1")
+    except Exception as err:
+        logging.info(f"do_import {err}")
 
-
-@app.function_name(name="load_roles")
-@app.route(auth_level=func.AuthLevel.ANONYMOUS)
-def load_roles(req: func.HttpRequest) -> func.HttpResponse:  # , answer: func.Out[str]
-
-    logging.info('load roles function')
-
-    return func.HttpResponse("ok", status_code=200)
-    
+    return 
 
 
 # @app.event_hub_message_trigger(arg_name="azeventhub", event_hub_name="deepthoughtoutput",
@@ -55,14 +54,6 @@ def load_roles(req: func.HttpRequest) -> func.HttpResponse:  # , answer: func.Ou
 #         body = "Invalid"
     
 #     logging.info('[OUTPUT]: %s',body)
-
-
-
-# @app.schedule(schedule="0 */5 * * * *", arg_name="mytimer", run_on_startup=True) 
-# def test_function(mytimer: func.TimerRequest) -> None:
-#     logging.info('*** TIMER FUNCTION **** ')
-
-
 
 
 # @app.route(route="http_trigger", auth_level=func.AuthLevel.ANONYMOUS)

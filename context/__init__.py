@@ -1,24 +1,31 @@
 import os
-import sys
 import json
 import requests
 import base64
+from os.path import join
+import pathlib
+
 from core.db.agent_db_base import AgentDBBase
 from core.agent.agent_config import AgentConfig
 from core.llm.embedding_base import EmbeddingBase
 
-from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.document_loaders import TextLoader
 from langchain_text_splitters import CharacterTextSplitter
-from os.path import join
 import numpy as np
-import pathlib
+import logging
+import urllib3
+
+urllib3.disable_warnings()
+
+# Create a logger for the 'azure' SDK
+logger = logging.getLogger('azure')
+logger.setLevel(logging.ERROR)
 
 # take the local settgins file and convert it into environemnt variables
-settings = json.loads(TextLoader(join(os.getcwd(), 'local.settings.json'), encoding="utf-8").load()[0].page_content)
+# settings = json.loads(TextLoader(join(os.getcwd(), 'local.settings.json'), encoding="utf-8").load()[0].page_content)
 
-for setting in settings["Values"]:
-    os.environ[setting]=settings["Values"][setting]
+# for setting in settings["Values"]:
+#     os.environ[setting]=settings["Values"][setting]
 
 agent_config = AgentConfig()
 db = AgentDBBase(agent_config, agent_config.INDEX_CONTEXT, "/context")
@@ -87,8 +94,11 @@ def test_query():
     for item in results:
         print(f'Result similarity={item["udf_similarity"]} path={item["path"]}')
 
-def do_import():
-    url = "https://api.github.com/repos/ukho/docs/git/trees/main?recursive=1"  # The basic URL to use the GitHub API
+def do_import(url):
+
+    # deletes everything with the matching partition_key
+    db.delete_index()
+
     r = requests.get(url, auth=(agent_config.GITHUB_USER, agent_config.GITHUB_KEY))
     res = r.json()
 
@@ -101,4 +111,4 @@ def do_import():
 
 #do_import()
 
-test_query()
+#test_query()

@@ -51,7 +51,9 @@ There are a lot of unimplemented/broken features at the moment. <br/>
 Functions/Tools - 3rd party functions to perform specific tasks e.g. scrape a web page etc
 Specification - Used to define the JSON output format from an AI conversation (not used like 'functions')
 
-# Template Features
+# Examples
+
+
 
 
 ## Example request
@@ -82,10 +84,13 @@ Docs:
 
 * Fully local run installation instructions<br/>
 
+
+System
+
+Support multiple users
+
 Problems:
 
-* fix the ollama sdk to support function calling
-* Local cosmodb init is slow ... 
 
 Features:
 
@@ -95,6 +100,8 @@ Features:
 * Build a message routing framework<br>
 * develop a multie role agent demo<br>
 
+<strike>* fix the ollama sdk to support function calling<br></strike>
+<Strike>* Local cosmodb init is slow ... <br></strike>
 <strike>* develop a job posting agent demo<br></strike>
 <Strike>* Support JSON schema specification outputs<br></strike>
 <strike>* LLM Model overrides from templates e.g. change the llm model based on the role<br></strike>

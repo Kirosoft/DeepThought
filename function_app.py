@@ -22,17 +22,59 @@ def core_llm_agent(req: func.HttpRequest) -> func.HttpResponse:  # , answer: fun
 
     logging.info('core_llm_agent trigger from http')
 
-    result = process_request(req.get_body().decode('utf-8'))
+        # You can dynamically set the allowed origins based on your requirements
+    allowed_origins = ["http://127.0.0.1:5500"]
 
-    if (result != None):
-        logging.info('Answer: %s',result["answer"])
-        response_str = json.dumps(result, ensure_ascii=False).encode('utf8')
-        return func.HttpResponse(response_str, status_code=200)
+    # Get the request origin
+    request_origin = req.headers.get('Origin')
+    if request_origin in allowed_origins:
+        response_headers = {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': request_origin,  # Echo the origin back
+            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type'
+        }
     else:
-        answer_str = {"answer":"No question found, please supply a question", "answer_type":"error"}
-        logging.info('Answer: %s',answer_str)
-        return func.HttpResponse(answer_str)
+        response_headers = {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': 'null',  # Disallow any origin not in allowed_origins
+            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type'
+        }
+
+    # Handle preflight requests
+    if req.method == "OPTIONS":
+        return func.HttpResponse(status_code=204, headers=response_headers)
     
+    if req.method == "POST":
+        try:
+            result = process_request(req.get_body().decode('utf-8'))
+
+            if (result != None):
+                logging.info('Answer: %s',result["answer"])
+                response_str = json.dumps(result, ensure_ascii=False).encode('utf8')
+                return func.HttpResponse(response_str, headers=response_headers, status_code=200)
+            else:
+                answer_str = {"answer":"No question found, please supply a question", "answer_type":"error"}
+                logging.info('Answer: %s',answer_str)
+
+                return func.HttpResponse(
+                    answer_str,
+                    status_code=200,
+                    headers=response_headers
+                )
+        except ValueError:
+            return func.HttpResponse(
+                "Invalid JSON",
+                status_code=400,
+                headers=response_headers
+            )
+        else:
+            return func.HttpResponse(
+                "Method not allowed",
+                status_code=405,
+                headers=response_headers
+            )
 
 @app.schedule(schedule="0 0 6 * * *", arg_name="mytimer", run_on_startup=True) 
 def scheduled_imports(mytimer: func.TimerRequest):

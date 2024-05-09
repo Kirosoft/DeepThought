@@ -40,6 +40,9 @@ class AgentConfig:
         self.INDEX_TOOLS = os.getenv("INDEX_TOOLS", "ai_tools")
         self.INDEX_CONTEXT = os.getenv("INDEX_CONTEXT", "ai_context")
         self.INDEX_SPECS = os.getenv("INDEX_SPECS", "ai_specs")
+        self.INDEX_USER = os.getenv("INDEX_USER", "ai_user")
+        self.DEFAULT_TENANT = os.getenv("DEFAULT_TENANT", "default")
+        self.SYSTEM_TENANT = os.getenv("SYSTEM_TENANT", "system")
 
         self.DATABASE_NAME = os.getenv("DATABASE_NAME","")
         self.TOP_K_DOCS = int(os.getenv("TOP_K_DOCS", "10"))

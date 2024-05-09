@@ -36,7 +36,7 @@ export class AgentNode  extends LGraphNode {
             method: 'POST',  // or 'GET' if no data needs to be sent
             headers: {
                 'Content-Type': 'application/json; charset=UTF-8',
-                //'Authorization': apiToken  // Include the API token in the Authorization header
+                'Authorization': apiToken  // Include the API token in the Authorization header
             },
             body: JSON.stringify(document)
         };

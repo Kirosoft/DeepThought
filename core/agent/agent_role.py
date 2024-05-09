@@ -9,13 +9,14 @@ import json
 
 class AgentRole:
 
-    def __init__(self, agent_config : AgentConfig):
+    def __init__(self, agent_config : AgentConfig, tenant, user_id):
         self.__agent_config = agent_config
-        self.agent_memory = AgentMemory(agent_config)
+        self.agent_memory = AgentMemory(agent_config, tenant, user_id)
         self.__init_store()
 
     def __init_store(self):
         # connect to elastic and intialise a connection to the vector store
+        # TODO: make sure the tenant and userid are used to form a hierarchical key
         self.db_roles = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_ROLES, "/roles")
         self.db_tools = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_TOOLS, "/tools")
         self.db_specs = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_SPECS, "/specs")

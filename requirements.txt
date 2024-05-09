@@ -34,3 +34,6 @@ groq
 
 #crewai_tools
 numpy
+
+# crypto
+pyjwt[crypto]

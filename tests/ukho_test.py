@@ -7,6 +7,7 @@ from os.path import join
 from core import process_request
 import logging
 import urllib3
+import jwt
 
 urllib3.disable_warnings()
 
@@ -24,7 +25,8 @@ agent_config = AgentConfig()
 
 document = {"input": "what is the policy on code pairing","role":"ukho_policy"}
 
-result = process_request(json.dumps(document))
+
+result = process_request(document)
 
 print(result)
 

@@ -180,7 +180,7 @@ class AgentDBCosmos(AgentDBBase):
             return self.container
     
     def init_container(self):
-
+        # This defines the location of the partition key 
         self.database.create_container_if_not_exists(self.__index, PartitionKey(path='/partition_key'))
         self.container = self.database.get_container_client(self.__index)
 

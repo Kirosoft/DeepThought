@@ -22,10 +22,10 @@ logger = logging.getLogger('azure')
 logger.setLevel(logging.ERROR)
 
 # take the local settgins file and convert it into environemnt variables
-# settings = json.loads(TextLoader(join(os.getcwd(), 'local.settings.json'), encoding="utf-8").load()[0].page_content)
+settings = json.loads(TextLoader(join(os.getcwd(), 'local.settings.json'), encoding="utf-8").load()[0].page_content)
 
-# for setting in settings["Values"]:
-#     os.environ[setting]=settings["Values"][setting]
+for setting in settings["Values"]:
+    os.environ[setting]=settings["Values"][setting]
 
 agent_config = AgentConfig()
 db = AgentDBBase(agent_config, agent_config.INDEX_CONTEXT, "/context")

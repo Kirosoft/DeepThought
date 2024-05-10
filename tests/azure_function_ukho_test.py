@@ -13,16 +13,6 @@ import datetime
 
 urllib3.disable_warnings()
 
-def create_jwt():
-    """Create a JWT with a specified expiration time and issued at timestamp."""
-    payload = {
-        'sub': '12345',  # Example user ID
-        'exp': datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=5),  # Token expires in 5 minutes
-        'iat': datetime.datetime.now(datetime.timezone.utc)
-    }
-    token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
-    return token
-
 # Create a logger for the 'azure' SDK
 logger = logging.getLogger('azure')
 logger.setLevel(logging.ERROR)
@@ -38,20 +28,19 @@ agent_config = AgentConfig()
 document = {"input": "what are the usability standards","role":"ukho_policy", "name":"core_llm_agent"}
 headers = {
     'Content-Type': 'application/json',
-    'x-user-id': '12345'
+    'x-user-id': '12345',
+    'x-password': 'my_password'
     }
 
 url = "http://localhost:7071/api/request_auth"
 response = requests.get(url, headers=headers)
 
-
-SECRET_KEY = response.content.decode("utf-8")
+token = response.content.decode('utf-8')
 
 url = "http://localhost:7071/api/core_llm_agent"
 #url="https://deepthought-app.azurewebsites.net/api/core_llm_agent"
 
 
-token = create_jwt()
 headers = {
     'Authorization': f'Bearer {token}',
     'Content-Type': 'application/json',

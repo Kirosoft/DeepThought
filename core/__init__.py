@@ -1,6 +1,7 @@
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
+import jwt
 
 # Local 
 #from core.agent.agent_llm import AgentLLM
@@ -11,6 +12,8 @@ from core.db.agent_db_base import AgentDBBase
 from core.llm.llm_base import LLMBase
 
 
+agent_config = AgentConfig()
+
 class RateLimitError(Exception):
     """Exception raised when rate limit is exceeded."""
 
@@ -18,8 +21,14 @@ class RateLimitError(Exception):
         self.message = message
         super().__init__(self.message)
 
+class CreditBalanceError(Exception):
+    """Exception raised when rate limit is exceeded."""
+
+    def __init__(self, message="Credit Balance Error"):
+        self.message = message
+        super().__init__(self.message)
+
 def get_user_context(user_id):
-    agent_config = AgentConfig()
     userdb = AgentDBBase(agent_config, agent_config.INDEX_USER, "/user")
     user_settings = userdb.get(user_id)
 
@@ -39,7 +48,14 @@ def get_user_context(user_id):
             user_settings['last_request_time'] = current_time.isoformat()
         else:
             user_settings['count'] += 1
-            
+       
+        if user_settings['credit_balance'] >= 1:
+            user_settings['credit_balance'] -= 1
+        else:
+            raise CreditBalanceError()
+
+        userdb.index(user_id, user_settings)
+
     except (CosmosResourceNotFoundError, KeyError) as e:
         # Create new entry if not found
         user_settings["count"] = 1
@@ -49,7 +65,7 @@ def get_user_context(user_id):
     return user_settings
 
 def process_request(body, tenant, user_id):
-    agent_config = AgentConfig(body)
+    agent_config.update_from_body(body)
      
     if agent_config.is_valid():
         logging.info('core_llm_agent processed an event: %s',agent_config.input)
@@ -69,3 +85,14 @@ def process_request(body, tenant, user_id):
         return llm_result
     else:
         return None
+
+def create_jwt(user_id, secret_key):
+    """Create a JWT with a specified expiration time and issued at timestamp."""
+    payload = {
+        'sub': user_id,  # Example user ID
+        'exp': datetime.now(timezone.utc) + timedelta(minutes=int(agent_config.TOKEN_EXPIRY_MINUTES)),  # Token expires in 5 minutes
+        'iat': datetime.now(timezone.utc)
+    }
+    token = jwt.encode(payload, secret_key, algorithm='HS256')
+    return token
+

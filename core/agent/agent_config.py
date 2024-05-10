@@ -13,15 +13,18 @@ class AgentConfig:
         if input_body is None:
             self.body = '{}'
         else:
-            try:
-                self.body = json.loads(input_body)
-                self.__setup_vars()
-            except Exception as err:
-                # invalid json supplied
-                logging.error(f'invalid json payload {input_body} {err}')
-                self.body = {}
+            self.update_from_body(input_body)
 
         self.__init_env_vars()
+
+    def update_from_body(self, input_body):
+        try:
+            self.body = json.loads(input_body)
+            self.__setup_vars()
+        except Exception as err:
+            # invalid json supplied
+            logging.error(f'invalid json payload {input_body} {err}')
+            self.body = {}
 
     def __init_env_vars(self):
         # AI config
@@ -78,6 +81,7 @@ class AgentConfig:
 
         self.AzureDBSetupFunctions = os.getenv("AzureDBSetupFunctions", "false")
 
+        self.TOKEN_EXPIRY_MINUTES = os.getenv("TOKEN_EXPIRY_MINUTES",30)
 
     # Setup the needed properties
     # If they were not supplied then provide suitable defaults

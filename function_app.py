@@ -1,7 +1,7 @@
 import azure.functions as func
 import logging
 import json
-from core import process_request, get_user_context, RateLimitError
+from core import process_request, get_user_context, RateLimitError, CreditBalanceError, create_jwt 
 import urllib3
 from context import do_import
 import jwt
@@ -15,17 +15,12 @@ logger.setLevel(logging.ERROR)
 
 app = func.FunctionApp()
 
-# You can dynamically set the allowed origins based on your requirements
-allowed_origins = ["http://127.0.0.1:5500", "2.103.49.185:5500"]
-
 response_headers = {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': 'null',  # Disallow any origin not in allowed_origins
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization'
 }
-SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'local_secure_key')
-
 @app.function_name(name="core_llm_agent")
 @app.route(auth_level=func.AuthLevel.ANONYMOUS)
 def core_llm_agent(req: func.HttpRequest) -> func.HttpResponse:  
@@ -47,7 +42,9 @@ def core_llm_agent(req: func.HttpRequest) -> func.HttpResponse:
     try:
         user_settings = get_user_context(user_id)
     except RateLimitError as e:
-        return func.HttpResponse("Rate Limit Exceeded", status_code=429)
+        return func.HttpResponse("Rate limit exceeded", status_code=429)
+    except CreditLimitError as e:
+        return func.HttpResponse("Credit limit balance is zero", status_code=429)
 
     # Get the request origin
     request_origin = req.headers.get('Origin')
@@ -65,6 +62,7 @@ def core_llm_agent(req: func.HttpRequest) -> func.HttpResponse:
     
         payload = jwt.decode(token, user_settings["secret_key"], algorithms=["HS256"])
         # TODO: cross validate the headeruserid with the decrypted userid
+
     except jwt.ExpiredSignatureError:
         return func.HttpResponse("Token expired", status_code=401, headers=response_headers)
     except jwt.InvalidTokenError:
@@ -106,27 +104,43 @@ def request_auth(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=204, headers=response_headers)
 
-    # Get the request origin
-    request_origin = req.headers.get('Origin')
-    if request_origin in allowed_origins:
-        response_headers['Access-Control-Allow-Origin'] = request_origin,  # Echo the origin back
-
     user_id = req.headers.get('x-user-id')  # Assume user ID is passed in header for simplicity
     if not user_id:
         return func.HttpResponse("User ID is required", status_code=400)
 
-    return func.HttpResponse(SECRET_KEY, headers=response_headers, status_code=200)
+    try:
+        user_settings = get_user_context(user_id)
+    except RateLimitError as e:
+        return func.HttpResponse("Rate limit exceeded", status_code=429)
+    except CreditBalanceError as e:
+        return func.HttpResponse("Credit limit balance is zero", status_code=429)
+
+    # Get the request origin
+    request_origin = req.headers.get('Origin')
+    if request_origin in user_settings["origins"]:
+        response_headers['Access-Control-Allow-Origin'] = request_origin,  # Echo the origin back
+
+    password = req.headers.get('x-password') 
+    if not password:
+        return func.HttpResponse("password header is required", status_code=400)
+    elif password != user_settings["password"]:
+        return func.HttpResponse("account credentials do not match", status_code=400)
+
+    # create token
+    token = create_jwt(user_id, user_settings["secret_key"])
+
+    return func.HttpResponse(token, headers=response_headers, status_code=200)
     
 
-@app.schedule(schedule="0 0 6 * * *", arg_name="mytimer", run_on_startup=True) 
-def scheduled_imports(mytimer: func.TimerRequest):
-    logging.info('*** Scheduler **** ')
-    try:
-        do_import("https://api.github.com/repos/ukho/docs/git/trees/main?recursive=1")
-    except Exception as err:
-        logging.info(f"do_import {err}")
+# @app.schedule(schedule="0 0 6 * * *", arg_name="mytimer", run_on_startup=True) 
+# def scheduled_imports(mytimer: func.TimerRequest):
+#     logging.info('*** Scheduler **** ')
+#     try:
+#         do_import("https://api.github.com/repos/ukho/docs/git/trees/main?recursive=1")
+#     except Exception as err:
+#         logging.info(f"do_import {err}")
 
-    return 
+#     return 
 
 
 # @app.event_hub_message_trigger(arg_name="azeventhub", event_hub_name="deepthoughtoutput",

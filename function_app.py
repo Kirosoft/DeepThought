@@ -17,9 +17,9 @@ app = func.FunctionApp()
 
 response_headers = {
     'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': 'null',  # Disallow any origin not in allowed_origins
+    'Access-Control-Allow-Origin': '*',  # Disallow any origin not in allowed_origins
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-user-id,x-password'
 }
 @app.function_name(name="core_llm_agent")
 @app.route(auth_level=func.AuthLevel.ANONYMOUS)
@@ -79,9 +79,10 @@ def core_llm_agent(req: func.HttpRequest) -> func.HttpResponse:
             else:
                 answer_str = {"answer":"No question found, please supply a question", "answer_type":"error"}
                 logging.info('Answer: %s',answer_str)
+                response_str = json.dumps(answer_str, ensure_ascii=False).encode('utf8')
 
                 return func.HttpResponse(
-                    answer_str,
+                    response_str,
                     status_code=200,
                     headers=response_headers
                 )
@@ -103,7 +104,7 @@ def request_auth(req: func.HttpRequest) -> func.HttpResponse:
     # Handle preflight requests
     if req.method == "OPTIONS":
         return func.HttpResponse(status_code=204, headers=response_headers)
-
+  
     user_id = req.headers.get('x-user-id')  # Assume user ID is passed in header for simplicity
     if not user_id:
         return func.HttpResponse("User ID is required", status_code=400)
@@ -127,7 +128,8 @@ def request_auth(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse("account credentials do not match", status_code=400)
 
     # create token
-    token = create_jwt(user_id, user_settings["secret_key"])
+    token = json.dumps({"token":create_jwt(user_id, user_settings["secret_key"])}, 
+                        ensure_ascii=False).encode('utf8')
 
     return func.HttpResponse(token, headers=response_headers, status_code=200)
     

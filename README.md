@@ -85,30 +85,54 @@ Docs:
 * Fully local run installation instructions<br/>
 
 
+
+
 System
 
 Support multiple users
+Added multi tenant support to DB (implement hierarchical partition keys cosmosdb)
 
 Problems:
 
 
 Features:
 
-* Self learning role/tool/specifications 
 * allow all role fields to be overriden from input<br>
+
+* Self learning role/tool/specifications 
 * run a role purely from the payload input<br>
 * Build a message routing framework<br>
 * develop a multie role agent demo<br>
 
+Client:
+
+* Add client side calls to the server API
+
+Installation:
+
+* Create a local docker version
+
+<strike>* Security - Added auth API to ensure secrets are not needed to be stored browser side<br></strike>
+<strike>* Security - Added rate limiting to the API<br></strike>
+<strike>* Security - Added request balance<br></strike>
+<strike>* Initial flow client created<br></strike>
+<strike>* Moved user options into DB<br></strike>
+<strike>* Implemented JWT token auth scheme<br></strike>
+<strike>* Security- Origin checks on requests<br></strike>
 <strike>* fix the ollama sdk to support function calling<br></strike>
 <Strike>* Local cosmodb init is slow ... <br></strike>
 <strike>* develop a job posting agent demo<br></strike>
-<Strike>* Support JSON schema specification outputs<br></strike>
+<Strike>* agent input expectation for multihop questions<br></strike>
+<Strike>* Improved LLM prompting i.e. system prompt, context, tools, examples <br></strike>
+<Strike>* Support JSON schema specification LLM outputs<br></strike>
 <strike>* LLM Model overrides from templates e.g. change the llm model based on the role<br></strike>
-<Strike>* rework function calling - now known as tools<br></strike>
+<Strike>* rework <b>function calling</b> - now known as tools<br></strike>
 <Strike>* Add support for Grok<br/></strike>
 <strike>* Add support for local AI model - LLama3 - DONE<br></strike>
 <strike>* Add support for a local and cloud vector/nosql database option - CosmosDB - DONE<br></strike>
+<strike>* Support <b>RAG</b> <br></strike>
+<strike>* Support <b>session memory</b> (Feature) <br></strike>
+
 
 # Installation
 

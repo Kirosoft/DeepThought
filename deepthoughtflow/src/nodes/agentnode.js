@@ -1,8 +1,30 @@
 import {LGraphNode} from 'litegraph.js';
 require("whatwg-fetch");
 
-const azureFunctionUrl = 'http://localhost:7071/api/core_llm_agent';
-const apiToken = 'Bearer YOUR_API_TOKEN';
+const agentFunctionUrl = 'http://localhost:7071/api/core_llm_agent';
+const authFunctionUrl = 'http://localhost:7071/api/request_auth';
+
+const authRequestOptions = {
+    method: 'GET',  // or 'GET' if no data needs to be sent
+    headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'x-user-id': '12345',
+        'x-password': 'my_password'
+        }
+};
+
+
+// Set up the request options, including the Authorization header
+const requestOptions = {
+    method: 'POST',  // or 'GET' if no data needs to be sent
+    headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': null,  // Include the API token in the Authorization header
+        'x-user-id': '12345'
+    },
+    body: JSON.stringify(document)
+};
+
 
 export class AgentNode  extends LGraphNode {
 
@@ -29,32 +51,42 @@ export class AgentNode  extends LGraphNode {
 
     onExecute() {
         const data = this.getInputData(0);
-        var document = {"input": data, "role":"ukho_policy", "name":"core_llm_agent"}
-
-        // Set up the request options, including the Authorization header
-        const requestOptions = {
-            method: 'POST',  // or 'GET' if no data needs to be sent
-            headers: {
-                'Content-Type': 'application/json; charset=UTF-8',
-                'Authorization': apiToken  // Include the API token in the Authorization header
-            },
-            body: JSON.stringify(document)
-        };
 
         // Make the request
-        fetch(azureFunctionUrl, requestOptions)
+        fetch(authFunctionUrl, authRequestOptions)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }
                 return response.json(); // or response.text() if the response is not in JSON format
             })
-            .then(data => {
-                console.log('Function responded with:', data);
+            .then(token => {
+                console.log('Function responded with:', token);
+
+                requestOptions["headers"]["Authorization"] = `Bearer ${token["token"]}`;
+
+                // Make the request
+                fetch(agentFunctionUrl, requestOptions)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json(); // or response.text() if the response is not in JSON format
+                    })
+                    .then(data => {
+                        console.log('Function responded with:', data);
+
+                        this.setOutputData(0, data && data.value !== undefined ? data.value : this.properties.value);
+                    })
+                    .catch(error => console.error('Failed to fetch:', error));
 
                 this.setOutputData(0, data && data.value !== undefined ? data.value : this.properties.value);
             })
             .catch(error => console.error('Failed to fetch:', error));
+
+        var document = {"input": data, "role":"ukho_policy", "name":"core_llm_agent"}
+
+
     }
 }
 

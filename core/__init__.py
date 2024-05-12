@@ -86,6 +86,15 @@ def process_request(body, tenant, user_id):
     else:
         return None
 
+def save_role(role, tenant, user_id):
+    agent_role.save_role(json.loads(role), tenant, user_id)
+
+def get_role(role, tenant, user_id, tenant, user_id):
+    return agent_role.get_role(role_name, tenant, user_id)
+
+def get_roles(role, tenant, user_id):
+    return agent_role.get_roles(role_name, tenant, user_id)
+
 def create_jwt(user_id, secret_key):
     """Create a JWT with a specified expiration time and issued at timestamp."""
     payload = {

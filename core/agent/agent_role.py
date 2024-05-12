@@ -22,7 +22,7 @@ class AgentRole:
         self.db_specs = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_SPECS, "/specs")
         self.db_session = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_HISTORY, "/history")
 
-    def __get_role(self, role: str) -> str:
+    def get_role(self, role: str, tenant:str, user_id:str) -> str:
         
         if not hasattr(self, 'role'):
             # determine role
@@ -34,6 +34,23 @@ class AgentRole:
             self.role = json.loads(unquote(result["prompt"]))
 
         return self.role
+
+    def get_roles(self, role: str, tenant:str, user_id:str) -> str:
+        
+        if not hasattr(self, 'role'):
+            # determine role
+            result = self.db_roles.get(id = role)
+
+            if result is None:
+                result = self.db_roles.get(id = "default_role")
+
+            self.role = json.loads(unquote(result["prompt"]))
+
+        return self.role
+
+
+    def save_role(role, tenant:str, user_id:str):
+        self.db_roles.index(role["name"], role)
 
     def is_rag(self, role) -> bool:
         is_rag = False
@@ -102,7 +119,7 @@ class AgentRole:
     # for example the template includes the '{% for doc in docs -%}' expecting data
     # should be inserted
     def get_completed_prompt(self, role_name:str) -> object:
-        role = self.__get_role(role_name)
+        role = self.get_role(role_name)
         messages = []
         options = {}
 

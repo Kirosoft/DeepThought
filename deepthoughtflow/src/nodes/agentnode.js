@@ -30,7 +30,7 @@ export class AgentNode  extends LGraphNode {
 
     constructor() {
         super();
-        this.properties = { role: "ukho" };
+        this.properties = { role: "ukho", answer: "" };
         this.initWidgets();
         this.initIO();
         this.size = this.computeSize();
@@ -77,6 +77,7 @@ export class AgentNode  extends LGraphNode {
                         console.log('Function responded with:', data);
 
                         this.setOutputData(0, data && data.value !== undefined ? data.value : this.properties.value);
+                        this.properties.answer = data['answer'];
                     })
                     .catch(error => console.error('Failed to fetch:', error));
 

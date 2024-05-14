@@ -9,20 +9,23 @@ Functional agentic framework
 # Features
 
 * Code free AI agent framework to orchestrate business flows
-* Fully deployed locally or at scale in the cloud
+* Fully deployable locally or at scale in the cloud
 * Recursive agent implementation with Domain Speciifc Language (DSL) built into the template
 * Support for context based search (RAG)
 * Dynamic workflow between agents
 
 # Agent Features
 
-* RAG Support using VectorDB
-* Multi-Agent session learning
-* Function calling support
-* JSON Output formatting
-* Reflective queries
-* Includes multi-shot learning
-* Change LLM model on a per agent basis
+* RAG Support 
+* Assistant mode (context shared across multiple calls)
+* Multi-Agent session learning (context shared across multiple class and agents)
+* Function calling support (use templated formats to make calls to tools or other agents)
+* Multi-shot learning (examples provide guideance for the AI)
+* Reflective queries (system prompts enhance output without user intervention)
+  * Support multi-hop strategies
+* JSON Output formatting (generate or expect data based on defined schemas)
+* Change LLM model on a per agent basis (to save cost use the best LLM agents only when needed)
+
 
 # VectorDB Integrations
 
@@ -76,21 +79,27 @@ python tools/update_tools.py "<path-to-tools-directory>"
 
 UI:
 
-Develop TTS and STT interface
-OR
 Develop flow based interface
+Save role definitions to system, tenant or user
+Save spec definition to system, tenant or user
+Load roles (system, tenant userid)
+Load specs (system, tenant userid)
+Load tools (system, tenant userid)
+Save flow (system, tenant, user)
+Load flow (system, tenant, user)
+
 
 Docs:
 
 * Fully local run installation instructions<br/>
 
+System:
 
 
-
-System
-
-Support multiple users
-Added multi tenant support to DB (implement hierarchical partition keys cosmosdb)
+Multi-tenant<br/>
+<br/>
+* user level flows, roles, tools and specs<br/>
+* system level flows, roles, tools and specs<br/>
 
 Problems:
 
@@ -100,7 +109,6 @@ Features:
 * allow all role fields to be overriden from input<br>
 
 * Self learning role/tool/specifications 
-* run a role purely from the payload input<br>
 * Build a message routing framework<br>
 * develop a multie role agent demo<br>
 
@@ -108,10 +116,17 @@ Client:
 
 * Add client side calls to the server API
 
+Enterprise:
+
+tenant level roles, tools and specs
+
 Installation:
 
 * Create a local docker version
 
+Done:
+
+<Strike>* Support multiple users<br/></strike>
 <strike>* Security - Added auth API to ensure secrets are not needed to be stored browser side<br></strike>
 <strike>* Security - Added rate limiting to the API<br></strike>
 <strike>* Security - Added request balance<br></strike>

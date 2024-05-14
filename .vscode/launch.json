@@ -27,11 +27,19 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "Azure Functions",
+             "name": "Azure Functions",
             "type": "python",
             "request": "attach",
             "port": 9091,
             "preLaunchTask": "func: host start"
+        },
+        {
+            "name": "Import context",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "./context/__init__.py",
+            "args":[],
+            "console": "integratedTerminal"
         }
     ]
 }

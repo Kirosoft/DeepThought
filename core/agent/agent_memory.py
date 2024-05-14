@@ -4,16 +4,18 @@ from core.agent.agent_config import AgentConfig
 from core.db.agent_db_base import AgentDBBase
 
 class AgentMemory:
-    def __init__(self, agent_config:AgentConfig, tenant, user_id):
+    def __init__(self, agent_config:AgentConfig, user_id, tenant):
         self.__agent_config = agent_config
+        self.tenant = tenant
+        self.user_id = user_id
 
-        self.__init_store()
+        self.__init_store(user_id, tenant)
 
-    def __init_store(self):
+    def __init_store(self, user_id, tenant):
         # connect to a db and intialise a connection to the vector store
         # TODO: make sure the tenant and userid are used to form a hierarchical key
-        self.__context_store = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_CONTEXT, "/context")
-        self.__history_store = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_HISTORY, "/history")
+        self.__context_store = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_CONTEXT, user_id, tenant)
+        self.__history_store = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_HISTORY, user_id, tenant)
 
     # similarity search in the conext db
     def get_context(self, question: str):

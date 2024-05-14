@@ -28,7 +28,7 @@ for setting in settings["Values"]:
     os.environ[setting]=settings["Values"][setting]
 
 agent_config = AgentConfig()
-db = AgentDBBase(agent_config, agent_config.INDEX_CONTEXT, "/context")
+db = AgentDBBase(agent_config, agent_config.INDEX_CONTEXT, "12345", "ukho")
 embedding = EmbeddingBase(agent_config)
 
 
@@ -108,7 +108,8 @@ def do_import(url):
         if file_type.lower() == ".md":
             txt = get_content(file["url"], file["path"])
 
+url = "https://api.github.com/repos/ukho/docs/git/trees/main?recursive=1"  # The basic URL to use the GitHub API
 
-#do_import()
+do_import(url)
 
 #test_query()

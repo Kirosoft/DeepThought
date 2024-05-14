@@ -9,20 +9,36 @@ import json
 
 class AgentRole:
 
-    def __init__(self, agent_config : AgentConfig, tenant, user_id):
+    def __init__(self, agent_config : AgentConfig, user_id, tenant):
         self.__agent_config = agent_config
-        self.agent_memory = AgentMemory(agent_config, tenant, user_id)
-        self.__init_store()
+        self.agent_memory = AgentMemory(agent_config, user_id, tenant)
+        self.__init_store(user_id, tenant)
 
-    def __init_store(self):
+    def __init_store(self, user_id, tenant):
         # connect to elastic and intialise a connection to the vector store
         # TODO: make sure the tenant and userid are used to form a hierarchical key
-        self.db_roles = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_ROLES, "/roles")
-        self.db_tools = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_TOOLS, "/tools")
-        self.db_specs = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_SPECS, "/specs")
-        self.db_session = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_HISTORY, "/history")
+        self.db_roles = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_ROLES, user_id, tenant)
+        self.db_tools = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_TOOLS, user_id, tenant)
+        self.db_specs = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_SPECS, user_id, tenant)
+        self.db_session = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_HISTORY, user_id, tenant)
 
-    def get_role(self, role: str, tenant:str, user_id:str) -> str:
+    def get_role(self, role: str) -> str:
+        
+        if not hasattr(self, 'role'):
+            # determine role, default user_id, default tenant
+            result = self.db_roles.get(role)
+
+            if result is None:
+                result = self.db_roles.get(role, "system", "system")
+                
+                if result is None:
+                    logging.error(f"Request role not found {role}")
+
+            self.role = json.loads(unquote(result["prompt"]))
+
+        return self.role
+
+    def get_roles(self, role: str) -> str:
         
         if not hasattr(self, 'role'):
             # determine role
@@ -35,21 +51,8 @@ class AgentRole:
 
         return self.role
 
-    def get_roles(self, role: str, tenant:str, user_id:str) -> str:
-        
-        if not hasattr(self, 'role'):
-            # determine role
-            result = self.db_roles.get(id = role)
 
-            if result is None:
-                result = self.db_roles.get(id = "default_role")
-
-            self.role = json.loads(unquote(result["prompt"]))
-
-        return self.role
-
-
-    def save_role(role, tenant:str, user_id:str):
+    def save_role(self, role):
         self.db_roles.index(role["name"], role)
 
     def is_rag(self, role) -> bool:

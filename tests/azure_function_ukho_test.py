@@ -35,14 +35,14 @@ headers = {
 url = "http://localhost:7071/api/request_auth"
 response = requests.get(url, headers=headers)
 
-token = response.content.decode('utf-8')
+token = json.loads(response.content.decode('utf-8'))
 
 url = "http://localhost:7071/api/core_llm_agent"
 #url="https://deepthought-app.azurewebsites.net/api/core_llm_agent"
 
 
 headers = {
-    'Authorization': f'Bearer {token}',
+    'Authorization': f'Bearer {token["token"]}',
     'Content-Type': 'application/json',
     'x-user-id': '12345'
     }

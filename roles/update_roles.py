@@ -19,9 +19,9 @@ for setting in settings["Values"]:
     os.environ[setting]=settings["Values"][setting]
 
 agent_config = AgentConfig()
-db = AgentDBBase(agent_config, agent_config.INDEX_ROLES, "/roles")
+db = AgentDBBase(agent_config, agent_config.INDEX_ROLES, "system", "system")
 
-def index_docs_elastic(directory_path, extension):
+def index_docs(directory_path, extension):
     file_list = find_in_files(directory_path, extension)
 
     for file_path in file_list:
@@ -50,7 +50,7 @@ if (len(sys.argv) > 1):
     # a second argument means skip the indexing phase
     #if (len(sys.argv) < 3):
     # read the local .prompt files and index into elastic
-    index_docs_elastic(local_path, '.prompt')
+    index_docs(local_path, '.prompt')
     
     print("Done")
 else:

@@ -5,10 +5,150 @@ from core.llm.embedding_base import EmbeddingBase
 
 import azure.cosmos.cosmos_client as cosmos_client
 from azure.cosmos import PartitionKey
-import numpy as np
-import base64
 import logging
 import json
+
+# Partion key: {tenant}{user_id}{index}
+# 'default' tenant will hold most users data
+# 'system' tenant and 'system' user will hold system level role, spec and tool definitions
+# 'tenant' and 'system' user will handle coporate level role definitions
+#
+class AgentDBCosmos(AgentDBBase):
+    def __init__(self, agent_config:AgentConfig, data_type:str, user_id:str, tenant:str, partition_key, container_name):
+        self.__agent_config = agent_config
+        self.__data_type = data_type
+        self.embedding = EmbeddingBase(self.__agent_config)
+        self.partition_key = partition_key
+        self.container = None
+        self.tenant = tenant
+        self.user_id = user_id
+        self.container_name = container_name
+
+    def init_db(self):
+
+        # Create a Cosmos DB client
+        self.client = cosmos_client.CosmosClient(self.__agent_config.COSMOS_ENDPOINT, {"masterKey": self.__agent_config.COSMOS_KEY}) 
+#                                                 _user_agent="deepthought_import_roles", user_agent_overwrite=True)
+        self.client.create_database_if_not_exists(self.__agent_config.DATABASE_NAME)
+        self.database = self.client.get_database_client(self.__agent_config.DATABASE_NAME)
+
+        self.container = None
+        return self.database
+    
+    def set_db(self, db):
+        self.database = db
+
+    def get_container(self):
+
+        if self.container is None:
+            return self.init_container()
+        else:
+            return self.container
+    
+    def init_container(self):
+        # This defines the location of the partition key 
+        self.database.create_container_if_not_exists(self.container_name, PartitionKey(path=self.partition_key, kind="MultiHash"))
+        self.container = self.database.get_container_client(self.container_name)
+
+        if self.__agent_config.AzureDBSetupFunctions == "true":
+            # make sure the UDF is registered
+            try:
+                udf = self.container.scripts.get_user_defined_function("cosineSimilarity")
+            except:
+                self.container.scripts.create_user_defined_function(udf_definition)
+
+            try:
+                self.created_sproc = self.container.scripts.get_stored_procedure(sproc="spSimilaritySearch") 
+            except:
+                self.created_sproc = self.container.scripts.create_stored_procedure(body=sproc) 
+
+            try:
+                self.delete_sproc = self.container.scripts.get_stored_procedure(sproc="spDeleteSproc") 
+            except:
+                self.delete_sproc = self.container.scripts.create_stored_procedure(body={
+                                                                                    'id': 'spDeleteSproc',
+                                                                                    'serverScript': delete_index_sproc,
+                                                                                }) 
+                
+        return self.container
+
+    def get(self, id:str, user_id = None, tenant = None):
+        try:
+            # if user_id and tenant are not supplied override with the defaults
+            user_id = user_id if user_id is not None else self.user_id
+            tenant = tenant if tenant is not None else self.tenant
+            data = self.get_container().read_item(item=id, partition_key=[tenant, user_id, self.__data_type])
+        except Exception  as err:
+            data = None
+            logging.warning(f"{err} Could not find {id} in ${self.index} with partition_key {[tenant, user_id, self.__data_type]}")
+
+        return data
+
+    def multi_get(self, docs:list[object], user_id = None, tenant = None):
+        user_id = user_id if user_id is not None else self.user_id
+        tenant = tenant if tenant is not None else self.tenant
+
+        query = f"SELECT * FROM C where C.id in ('{','.join(docs)}')"
+        result = self.get_container().query_items(query, enable_cross_partition_query=True, partition_key=[self.tenant, self.user_id, self.__data_type])
+        return result
+
+
+    def get_session(self, session_token:str):
+        user_id = user_id if user_id is not None else self.user_id
+        tenant = tenant if tenant is not None else self.tenant
+
+        query = f"SELECT * FROM C where C.session_token = '{session_token}'"
+        result = self.get_container().query_items(query, enable_cross_partition_query=True, partition_key=[self.tenant, self.user_id, self.__data_type])
+        return result
+
+    def similarity_search_vector(self, input_vector, distance_threshold=0.5, top_k = 5):
+
+        parameters = [
+            input_vector,
+            distance_threshold,
+            top_k
+        ]
+        
+        try:
+            result = self.get_container().scripts.execute_stored_procedure(sproc="spSimilaritySearch",params=parameters, partition_key=[self.tenant, self.user_id, self.__data_type]) 
+        except Exception as err:
+            result = "[]"
+        
+        return json.loads(result)
+
+    def similarity_search(self, input:str, distance_threshold=0.5, top_k = 5):
+        result=self.embedding.get_embedding(input)
+        vector = result.data[0].embedding
+        return self.similarity_search_vector(vector, distance_threshold, top_k)
+
+    def delete_index(self):
+
+        query = f"SELECT * FROM c"
+
+        parameters = [
+            query
+        ]
+        
+        try:
+            result = self.get_container().scripts.execute_stored_procedure(sproc="spDeleteSproc",params=parameters, partition_key=[self.tenant, self.user_id, self.__data_type]) 
+        except Exception as err:
+            result = "[]"
+        
+        return result
+
+
+    def index(self, id:str, doc:object, ttl=-1):
+
+        doc["id"] = id
+        #doc["partition_key"] = self.partition_key
+        doc["ttl"] = ttl
+        doc["data_type"] = self.__data_type
+        doc["tenant"] = self.tenant
+        doc["user_id"] = self.user_id
+
+        self.get_container().upsert_item(body=doc)
+
+
 
 # Define the cosine similarity UDF
 udf_definition = {
@@ -151,125 +291,3 @@ function deleteSproc(query) {
     }
 }
 """
-
-class AgentDBCosmos(AgentDBBase):
-    def __init__(self, agent_config:AgentConfig, index:str, partition_key):
-        self.__agent_config = agent_config
-        self.__index = index
-        self.embedding = EmbeddingBase(self.__agent_config)
-        self.partition_key = partition_key
-        self.container = None
-
-    def init_db(self):
-
-        # Create a Cosmos DB client
-        self.client = cosmos_client.CosmosClient(self.__agent_config.COSMOS_ENDPOINT, {"masterKey": self.__agent_config.COSMOS_KEY}, user_agent="deepthought_import_roles", user_agent_overwrite=True)
-        self.client.create_database_if_not_exists(self.__agent_config.DATABASE_NAME)
-        self.database = self.client.get_database_client(self.__agent_config.DATABASE_NAME)
-        self.container = None
-        return self.database
-    
-    def set_db(self, db):
-        self.database = db
-
-    def get_container(self):
-
-        if self.container is None:
-            return self.init_container()
-        else:
-            return self.container
-    
-    def init_container(self):
-        # This defines the location of the partition key 
-        self.database.create_container_if_not_exists(self.__index, PartitionKey(path='/partition_key'))
-        self.container = self.database.get_container_client(self.__index)
-
-        if self.__agent_config.AzureDBSetupFunctions == "true":
-            # make sure the UDF is registered
-            try:
-                udf = self.container.scripts.get_user_defined_function("cosineSimilarity")
-            except:
-                self.container.scripts.create_user_defined_function(udf_definition)
-
-            try:
-                self.created_sproc = self.container.scripts.get_stored_procedure(sproc="spSimilaritySearch") 
-            except:
-                self.created_sproc = self.container.scripts.create_stored_procedure(body=sproc) 
-
-            try:
-                self.delete_sproc = self.container.scripts.get_stored_procedure(sproc="spDeleteSproc") 
-            except:
-                self.delete_sproc = self.container.scripts.create_stored_procedure(body={
-                                                                                    'id': 'spDeleteSproc',
-                                                                                    'serverScript': delete_index_sproc,
-                                                                                }) 
-
-        return self.container
-
-
-    def get(self, id:str):
-        try:
-            data = self.get_container().read_item(item=id, partition_key=self.partition_key)
-        except Exception  as err:
-            data = None
-            logging.warning(f"{err} Could not find {id} in ${self.index} with partition_key {self.partition_key}")
-
-        return data
-
-    def multi_get(self, docs:list[object]):
-        query = f"SELECT * FROM {self.__index} C where C.id in ('{','.join(docs)}')"
-        result = self.get_container().query_items(query, enable_cross_partition_query=True, partition_key=self.partition_key)
-        return result
-
-
-    def get_session(self, session_token:str):
-        query = f"SELECT * FROM {self.__index} C where C.session_token = '{session_token}'"
-        result = self.get_container().query_items(query, enable_cross_partition_query=True, partition_key=self.partition_key)
-        return result
-
-    def similarity_search_vector(self, input_vector, distance_threshold=0.5, top_k = 5):
-
-        parameters = [
-            input_vector,
-            distance_threshold,
-            top_k
-        ]
-        
-        try:
-            result = self.get_container().scripts.execute_stored_procedure(sproc="spSimilaritySearch",params=parameters, partition_key=self.partition_key) 
-        except Exception as err:
-            result = "[]"
-        
-        return json.loads(result)
-
-    def similarity_search(self, input:str, distance_threshold=0.5, top_k = 5):
-        result=self.embedding.get_embedding(input)
-        vector = result.data[0].embedding
-        return self.similarity_search_vector(vector, distance_threshold, top_k)
-
-    def delete_index(self):
-
-        query = "SELECT * FROM c where c.partition_key = '/context'"
-
-        parameters = [
-            query
-        ]
-        
-        try:
-            result = self.get_container().scripts.execute_stored_procedure(sproc="spDeleteSproc",params=parameters, partition_key=self.partition_key) 
-        except Exception as err:
-            result = "[]"
-        
-        return result
-
-
-    def index(self, id:str, doc:object, ttl=-1):
-
-        doc["id"] = id
-        doc["partition_key"] = self.partition_key
-        doc["ttl"] = ttl
-
-        self.get_container().upsert_item(body=doc)
-
-
-

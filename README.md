@@ -96,7 +96,6 @@ Docs:
 System:
 
 
-Multi-tenant<br/>
 <br/>
 * user level flows, roles, tools and specs<br/>
 * system level flows, roles, tools and specs<br/>
@@ -116,16 +115,13 @@ Client:
 
 * Add client side calls to the server API
 
-Enterprise:
-
-tenant level roles, tools and specs
-
 Installation:
 
 * Create a local docker version
 
 Done:
 
+<strike>* Multi-tenant support added to database and functions<br/></strike>
 <Strike>* Support multiple users<br/></strike>
 <strike>* Security - Added auth API to ensure secrets are not needed to be stored browser side<br></strike>
 <strike>* Security - Added rate limiting to the API<br></strike>

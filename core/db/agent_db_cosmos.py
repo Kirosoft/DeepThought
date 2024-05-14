@@ -94,8 +94,8 @@ class AgentDBCosmos(AgentDBBase):
 
 
     def get_session(self, session_token:str):
-        user_id = user_id if user_id is not None else self.user_id
-        tenant = tenant if tenant is not None else self.tenant
+        #user_id = user_id if user_id is not None else self.user_id
+        #tenant = tenant if tenant is not None else self.tenant
 
         query = f"SELECT * FROM C where C.session_token = '{session_token}'"
         result = self.get_container().query_items(query, enable_cross_partition_query=True, partition_key=[self.tenant, self.user_id, self.__data_type])

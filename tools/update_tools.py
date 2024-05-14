@@ -16,7 +16,7 @@ for setting in settings["Values"]:
     os.environ[setting]=settings["Values"][setting]
 
 agent_config = AgentConfig()
-db = AgentDBBase(agent_config, agent_config.INDEX_TOOLS, '/tools')
+db = AgentDBBase(agent_config, agent_config.INDEX_TOOLS, 'system', "system")
 
 def index_docs_elastic(directory_path, extension):
     file_list = find_in_files(directory_path, extension)

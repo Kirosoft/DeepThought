@@ -1,10 +1,7 @@
 import os
-from core.db.agent_db_base import AgentDBBase
-from core.agent.agent_config import AgentConfig
 import json
 from langchain_community.document_loaders import TextLoader
 from os.path import join
-from core import process_request
 import logging
 import urllib3
 
@@ -20,17 +17,21 @@ settings = json.loads(TextLoader(join(os.getcwd(), 'local.settings.json'), encod
 for setting in settings["Values"]:
     os.environ[setting]=settings["Values"][setting]
 
+from core.db.agent_db_base import AgentDBBase
+from core.agent.agent_config import AgentConfig
+from core import process_request
+
 agent_config = AgentConfig()
 
 document = {"input": "what is the weather","role":"weather_forecast"}
 
-result = process_request(json.dumps(document))
+result = process_request(json.dumps(document), "12345", "ukho")
 
 print(result)
 
 document = {"input": "the location is plymouth, UK","role":"weather_forecast", "session_token":result["session_token"]}
 
-result = process_request(json.dumps(document))
+result = process_request(json.dumps(document), "12345", "ukho")
 
 print(result)
 

@@ -25,6 +25,7 @@ class AgentConfig:
             # invalid json supplied
             logging.error(f'invalid json payload {input_body} {err}')
             self.body = {}
+            
 
     def __init_env_vars(self):
         # AI config

@@ -84,6 +84,24 @@ class AgentDBCosmos(AgentDBBase):
 
         return data
 
+    def get_all(self, user_id = None, tenant = None):
+        try:
+            # if user_id and tenant are not supplied override with the defaults
+            user_id = user_id if user_id is not None else self.user_id
+            tenant = tenant if tenant is not None else self.tenant
+
+            data = self.get_container().query_items(
+                        query="SELECT * FROM c",
+                        enable_cross_partition_query=False,  # Ensure cross-partition querying is disabled
+                        partition_key=[tenant, user_id, self.__data_type]  # Specify the partition key
+                    )
+
+        except Exception  as err:
+            data = None
+            logging.warning(f"{err} Could not find {id} in ${self.index} with partition_key {[tenant, user_id, self.__data_type]}")
+
+        return data
+    
     def multi_get(self, docs:list[object], user_id = None, tenant = None):
         user_id = user_id if user_id is not None else self.user_id
         tenant = tenant if tenant is not None else self.tenant

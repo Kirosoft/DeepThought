@@ -44,6 +44,9 @@ class AgentDBBase:
     def get(self, id, user_id= None, tenant = None):
         return self.db_handler.get(id, user_id, tenant)
 
+    def get_all(self, user_id= None, tenant = None):
+        return self.db_handler.get_all(user_id, tenant)
+
     def multi_get(self, docs):
         return self.db_handler.multi_get(docs)
 

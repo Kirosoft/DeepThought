@@ -1,8 +1,10 @@
 import azure.functions as func
 import logging
 import json
-from core import process_request
-from core.security import validate_request, create_jwt
+from core.agent.agent_role import AgentRole
+from core.agent.agent_config import AgentConfig
+from core.security.security_utils import validate_request, create_jwt
+from core.middleware.role import Role
 
 import urllib3
 
@@ -14,9 +16,9 @@ logger.setLevel(logging.ERROR)
 
 app = func.FunctionApp()
 
-@app.function_name(name="core_llm_agent")
+@app.function_name(name="run_agent")
 @app.route(auth_level=func.AuthLevel.ANONYMOUS)
-def core_llm_agent(req: func.HttpRequest) -> func.HttpResponse:  
+def run_agent(req: func.HttpRequest) -> func.HttpResponse:  
 
     logging.info('core_llm_agent trigger from http')
 
@@ -30,7 +32,8 @@ def core_llm_agent(req: func.HttpRequest) -> func.HttpResponse:
     
     if req.method == "POST":
         try:
-            result = process_request(req.get_body().decode('utf-8'), user_settings["user_id"], user_settings["user_tenant"], )
+            agent = AgentRole(user_settings["user_id"], user_settings["user_tenant"])
+            result = agent.run_agent(req.get_body().decode('utf-8'))
 
             if (result != None):
                 logging.info('Answer: %s',result["answer"])
@@ -77,11 +80,11 @@ def request_auth(req: func.HttpRequest) -> func.HttpResponse:
     return func.HttpResponse(token, headers=response_headers, status_code=200)
     
 
-@app.function_name(name="core_load_roles")
+@app.function_name(name="load_roles")
 @app.route(auth_level=func.AuthLevel.ANONYMOUS)
-def core_load_roles(req: func.HttpRequest) -> func.HttpResponse:  
+def load_roles(req: func.HttpRequest) -> func.HttpResponse:  
 
-    logging.info('core load roles')
+    logging.info('load roles')
 
     response = validate_request(req)
     if type(response) is func.HttpResponse:
@@ -93,15 +96,17 @@ def core_load_roles(req: func.HttpRequest) -> func.HttpResponse:
     
     if req.method == "POST":
         try:
-            result = process_request(req.get_body().decode('utf-8'), user_settings["user_id"], user_settings["user_tenant"], )
+            agent_config = AgentConfig(req.get_body().decode('utf-8'))
+            role = Role(agent_config, user_settings["user_id"], user_settings["user_tenant"])
+            result = role.load_all_roles()
 
             if (result != None):
-                logging.info('Answer: %s',result["answer"])
+                logging.info('Loaded roles')
                 response_str = json.dumps(result, ensure_ascii=False).encode('utf8')
                 return func.HttpResponse(response_str, headers=response_headers, status_code=200)
             else:
-                answer_str = {"answer":"No question found, please supply a question", "answer_type":"error"}
-                logging.info('Answer: %s',answer_str)
+                answer_str = {"result":"nothing found"}
+                logging.info('Load roles - nothing found')
                 response_str = json.dumps(answer_str, ensure_ascii=False).encode('utf8')
 
                 return func.HttpResponse(

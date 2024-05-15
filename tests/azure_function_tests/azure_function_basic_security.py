@@ -25,7 +25,6 @@ for setting in settings["Values"]:
 
 agent_config = AgentConfig()
 
-document = {"input": "what are the usability standards","role":"ukho_policy", "name":"core_llm_agent"}
 headers = {
     'Content-Type': 'application/json',
     'x-user-id': '12345',
@@ -37,9 +36,9 @@ response = requests.get(url, headers=headers)
 
 token = json.loads(response.content.decode('utf-8'))
 
-url = "http://localhost:7071/api/core_llm_agent"
-#url="https://deepthought-app.azurewebsites.net/api/core_llm_agent"
+url = "http://localhost:7071/api/run_agent"
 
+document = {"input": "what are the usability standards","role":"ukho_policy", "name":"core_llm_agent"}
 
 headers = {
     'Authorization': f'Bearer {token["token"]}',

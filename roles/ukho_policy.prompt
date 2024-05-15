@@ -5,7 +5,7 @@
     "expected_input":"a question about a UKHO policy",
     "expected_output":"a detailed and specific job posting ",
     "output_format":[],
-    "examples":"Example: Question: What is the meaning of life? Response: The meaning of life is 42. SOURCES: <a href='https://some/web/reference>'>Hitchhiker's Guide to the Galaxy</a>",
+    "examples":["Example: Question: What is the meaning of life? Response: The meaning of life is 42. SOURCES: <a href='https://some/web/reference>'>Hitchhiker's Guide to the Galaxy</a>"],
     "tools":[],
     "options":
         {

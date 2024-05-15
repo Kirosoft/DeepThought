@@ -1,13 +1,9 @@
 import os
-from core.db.agent_db_base import AgentDBBase
-from core.agent.agent_config import AgentConfig
 import json
 from langchain_community.document_loaders import TextLoader
 from os.path import join
-from core import process_request
 import logging
 import urllib3
-import jwt
 
 urllib3.disable_warnings()
 
@@ -21,12 +17,19 @@ settings = json.loads(TextLoader(join(os.getcwd(), 'local.settings.json'), encod
 for setting in settings["Values"]:
     os.environ[setting]=settings["Values"][setting]
 
-agent_config = AgentConfig()
-
-document = {"input": "what is the policy on code pairing","role":"ukho_policy"}
+from core.agent.agent_role import AgentRole
 
 
-result = process_request(document)
+agent_role = AgentRole("12345", "ukho")
+document = {"input": "what is the weather","role":"weather_forecast"}
+
+result = agent_role.run_agent(json.dumps(document))
+
+print(result)
+
+document = {"input": "the location is plymouth, UK","role":"weather_forecast", "session_token":result["session_token"]}
+
+result = agent_role.run_agent(json.dumps(document))
 
 print(result)
 

@@ -17,21 +17,14 @@ settings = json.loads(TextLoader(join(os.getcwd(), 'local.settings.json'), encod
 for setting in settings["Values"]:
     os.environ[setting]=settings["Values"][setting]
 
-from core.db.agent_db_base import AgentDBBase
-from core.agent.agent_config import AgentConfig
-from core import process_request
+from core.agent.agent_role import AgentRole
+agent_role = AgentRole("12345", "ukho")
 
-agent_config = AgentConfig()
+
+
 
 document = {"input": "what is the weather","role":"weather_forecast"}
 
-result = process_request(json.dumps(document), "12345", "ukho")
+result = agent_role.run_agent(json.dumps(document))
 
-print(result)
-
-document = {"input": "the location is plymouth, UK","role":"weather_forecast", "session_token":result["session_token"]}
-
-result = process_request(json.dumps(document), "12345", "ukho")
-
-print(result)
 

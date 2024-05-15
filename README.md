@@ -77,6 +77,11 @@ python tools/update_tools.py "<path-to-tools-directory>"
 
 # TODO:
 
+
+Tests:
+
+Need a test framework
+
 UI:
 
 Develop flow based interface

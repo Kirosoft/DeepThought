@@ -57,7 +57,10 @@ class AgentDBBase:
         return self.db_handler.similarity_search(input, distance_threshold, top_k)
 
     def index(self, id:str, doc:object, ttl:int = -1):
-        self.db_handler.index(id, doc, ttl)
+        return self.db_handler.index(id, doc, ttl)
+
+    def delete(self, id:str):
+            return self.db_handler.delete(id)
 
     def delete_index(self):
         self.db_handler.delete_index()

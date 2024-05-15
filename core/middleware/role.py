@@ -3,7 +3,13 @@ from core.db.agent_db_base import AgentDBBase
 from urllib.parse import unquote
 import json
 import logging
+import urllib3
 
+urllib3.disable_warnings()
+
+# Create a logger for the 'azure' SDK
+logger = logging.getLogger('azure')
+logger.setLevel(logging.ERROR)
 class Role:
 
     def __init__(self, agent_config, user_id, tenant):
@@ -12,17 +18,21 @@ class Role:
         self.db_roles_system = AgentDBBase(self.agent_config, self.agent_config.INDEX_ROLES, "system", "system")
 
     def load_all_roles(self):
-        results = list(self.db_roles_system.get_all())
-        system_roles = [json.loads(unquote(result["prompt"])) for result in results]
-        results = list(self.db_roles_user.get_all())
-        user_roles = [json.loads(unquote(result["prompt"])) for result in results]
+        system_roles = list(self.db_roles_system.get_all())
+        user_roles = list(self.db_roles_user.get_all())
 
         # TODO: tenant roles?
         return { "system_roles": system_roles, "user_roles": user_roles}
 
-    def save_role(self, role):
+    def save_role(self, role, level = "user"):
         # TODO: split out role data to be context seachable?
-        self.db_roles.index(role["name"], role)
+        if level == "user":
+            role["level"] = "user"
+            return self.db_roles_user.index(role["name"], role)
+        elif level == "system" or self.tenant=="system":
+            role["level"] = "system"
+            return self.db_roles_system.index(role["name"], role)
+
 
     def get_role(self, role_name: str) -> str:
         
@@ -37,7 +47,7 @@ class Role:
                     logging.error(f"Request role not found {role_name}")
                     return None
 
-        return json.loads(unquote(result["prompt"]))
+        return result
     
     def is_rag(self, role) -> bool:
         is_rag = False
@@ -49,7 +59,12 @@ class Role:
 
         return is_rag
         
-    
+    def delete_role(self, role_name, level = "user"):
+        
+        if (level == "user"):
+            return self.db_roles_user.delete(role_name)
+        else:
+            return self.db_roles_system.delete(role_name)
 
 
 

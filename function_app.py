@@ -80,11 +80,11 @@ def request_auth(req: func.HttpRequest) -> func.HttpResponse:
     return func.HttpResponse(token, headers=response_headers, status_code=200)
     
 
-@app.function_name(name="load_roles")
+@app.function_name(name="roles")
 @app.route(auth_level=func.AuthLevel.ANONYMOUS)
-def load_roles(req: func.HttpRequest) -> func.HttpResponse:  
+def roles(req: func.HttpRequest) -> func.HttpResponse:  
 
-    logging.info('load roles')
+    logging.info('roles CRUD')
 
     response = validate_request(req)
     if type(response) is func.HttpResponse:
@@ -94,26 +94,48 @@ def load_roles(req: func.HttpRequest) -> func.HttpResponse:
         user_settings = response["user_settings"]
         payload = response["payload"]
     
+    body = req.get_body().decode('utf-8')
+    agent_config = AgentConfig(body)
+
     if req.method == "POST":
         try:
-            agent_config = AgentConfig(req.get_body().decode('utf-8'))
+            json_body = json.loads(body)
             role = Role(agent_config, user_settings["user_id"], user_settings["user_tenant"])
-            result = role.load_all_roles()
-
-            if (result != None):
-                logging.info('Loaded roles')
-                response_str = json.dumps(result, ensure_ascii=False).encode('utf8')
-                return func.HttpResponse(response_str, headers=response_headers, status_code=200)
+            result = role.save_role(json_body)
+            response_str = json.dumps(result, ensure_ascii=False).encode('utf8')
+            return func.HttpResponse(response_str, headers=response_headers, status_code=200)
+        except ValueError:
+            return func.HttpResponse(
+                "Invalid JSON",
+                status_code=400,
+                headers=response_headers
+            )
+    if req.method == "DELETE":
+        try:
+            item_id = req.params.get('id')
+            role = Role(agent_config, user_settings["user_id"], user_settings["user_tenant"])
+            result = role.delete_role(item_id)
+            response_str = json.dumps(result, ensure_ascii=False).encode('utf8')
+            return func.HttpResponse(response_str, headers=response_headers, status_code=200)
+        except ValueError:
+            return func.HttpResponse(
+                "Invalid JSON",
+                status_code=400,
+                headers=response_headers
+            )
+    elif req.method == "GET":
+        try:
+            item_id = req.params.get('id')
+            agent_config = AgentConfig(body)
+            role = Role(agent_config, user_settings["user_id"], user_settings["user_tenant"])
+            if item_id is not None:
+                result = role.get_role(item_id)
             else:
-                answer_str = {"result":"nothing found"}
-                logging.info('Load roles - nothing found')
-                response_str = json.dumps(answer_str, ensure_ascii=False).encode('utf8')
+                result = role.load_all_roles()
 
-                return func.HttpResponse(
-                    response_str,
-                    status_code=200,
-                    headers=response_headers
-                )
+            logging.info('Loaded roles')
+            response_str = json.dumps(result, ensure_ascii=False).encode('utf8')
+            return func.HttpResponse(response_str, headers=response_headers, status_code=200)
         except ValueError:
             return func.HttpResponse(
                 "Invalid JSON",

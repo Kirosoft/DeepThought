@@ -7,6 +7,13 @@ import azure.cosmos.cosmos_client as cosmos_client
 from azure.cosmos import PartitionKey
 import logging
 import json
+import urllib3
+
+urllib3.disable_warnings()
+
+# Create a logger for the 'azure' SDK
+logger = logging.getLogger('azure')
+logger.setLevel(logging.ERROR)
 
 # Partion key: {tenant}{user_id}{index}
 # 'default' tenant will hold most users data
@@ -80,7 +87,7 @@ class AgentDBCosmos(AgentDBBase):
             data = self.get_container().read_item(item=id, partition_key=[tenant, user_id, self.__data_type])
         except Exception  as err:
             data = None
-            logging.warning(f"{err} Could not find {id} in ${self.index} with partition_key {[tenant, user_id, self.__data_type]}")
+            logging.info(f"{err} Could not find {id} in ${self.index} with partition_key {[tenant, user_id, self.__data_type]}")
 
         return data
 
@@ -164,7 +171,10 @@ class AgentDBCosmos(AgentDBBase):
         doc["tenant"] = self.tenant
         doc["user_id"] = self.user_id
 
-        self.get_container().upsert_item(body=doc)
+        return self.get_container().upsert_item(body=doc)
+
+    def delete(self, id:str):
+        return self.get_container().delete_item(id, partition_key=[self.tenant, self.user_id, self.__data_type])
 
 
 

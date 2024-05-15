@@ -1,7 +1,7 @@
 import {LGraphNode} from 'litegraph.js';
 require("whatwg-fetch");
 
-const agentFunctionUrl = 'http://localhost:7071/api/core_llm_agent';
+const agentFunctionUrl = 'http://localhost:7071/api/run_agent';
 const authFunctionUrl = 'http://localhost:7071/api/request_auth';
 
 const authRequestOptions = {

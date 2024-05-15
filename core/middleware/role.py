@@ -36,16 +36,15 @@ class Role:
 
     def get_role(self, role_name: str) -> str:
         
-        if not hasattr(self, 'role'):
-            # determine role, default user_id, default tenant
-            result = self.db_roles_user.get(role_name)
+        # determine role, default user_id, default tenant
+        result = self.db_roles_user.get(role_name)
 
+        if result is None:
+            result = self.db_roles_system.get(role_name)
+            
             if result is None:
-                result = self.db_roles_system.get(role_name)
-                
-                if result is None:
-                    logging.error(f"Request role not found {role_name}")
-                    return None
+                logging.error(f"Request role not found {role_name}")
+                return None
 
         return result
     

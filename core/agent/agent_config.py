@@ -45,6 +45,7 @@ class AgentConfig:
         self.INDEX_CONTEXT = os.getenv("INDEX_CONTEXT", "ai_context")
         self.INDEX_SPECS = os.getenv("INDEX_SPECS", "ai_specs")
         self.INDEX_USER = os.getenv("INDEX_USER", "ai_user")
+        self.INDEX_FLOWS = os.getenv("INDEX_FLOWS", "ai_flows")
 
         self.DB_ROLES = os.getenv("DB_ROLES", "ai_roles")
         self.DB_HISTORY = os.getenv("DB_HISTORY", "ai_history")

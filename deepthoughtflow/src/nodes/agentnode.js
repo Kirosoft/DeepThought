@@ -1,29 +1,6 @@
 import {LGraphNode} from 'litegraph.js';
 require("whatwg-fetch");
 
-const agentFunctionUrl = 'http://localhost:7071/api/run_agent';
-const authFunctionUrl = 'http://localhost:7071/api/request_auth';
-
-const authRequestOptions = {
-    method: 'GET',  // or 'GET' if no data needs to be sent
-    headers: {
-        'Content-Type': 'application/json; charset=UTF-8',
-        'x-user-id': '12345',
-        'x-password': 'my_password'
-        }
-};
-
-
-// Set up the request options, including the Authorization header
-const requestOptions = {
-    method: 'POST',  // or 'GET' if no data needs to be sent
-    headers: {
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Authorization': null,  // Include the API token in the Authorization header
-        'x-user-id': '12345'
-    },
-    body: JSON.stringify(document)
-};
 
 
 export class AgentNode  extends LGraphNode {

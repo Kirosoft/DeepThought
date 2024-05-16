@@ -1,25 +1,14 @@
 import {LGraph, LiteGraph, LGraphCanvas} from 'litegraph.js';
 import {Editor} from './litegraph-editor.js'
 import {} from './customnodes.js'
+import { DTAI } from './dtai/dtai-core.js';
 
 LiteGraph.node_images_path = "../nodes_data/";
 
 var editor = new LiteGraph.Editor("main",{miniwindow:false});
 window.graphcanvas = editor.graphcanvas;
 window.graph = editor.graph;
-require("whatwg-fetch");
 
-const flowsFunctionUrl = 'http://localhost:7071/api/flows';
-const authFunctionUrl = 'http://localhost:7071/api/request_auth';
-
-const authRequestOptions = {
-    method: 'GET',  // or 'GET' if no data needs to be sent
-    headers: {
-        'Content-Type': 'application/json; charset=UTF-8',
-        'x-user-id': '12345',
-        'x-password': 'my_password'
-        }
-};
 
 updateEditorHiPPICanvas();
 
@@ -49,6 +38,8 @@ function updateEditorHiPPICanvas() {
 //enable scripting
 LiteGraph.allow_scripts = true;
 
+var dtai = new DTAI();
+
 //create scene selector
 var elem = document.createElement("span");
 elem.id = "LGEditorTopBarSelector";
@@ -59,123 +50,50 @@ editor.tools.appendChild(elem);
 
 var select = elem.querySelector("select");
 
-select.addEventListener("change", function(e){
+select.addEventListener("change", async function(e){
 	var option = this.options[this.selectedIndex];
 	var url = option.dataset["url"];
 	
-	if(url)
-		graph.load( url );
+	if(url) {
+		await dtai.loadFlow("test_flow").then(flow => {
+			graph.configure(flow);
+			console.log("loaded");
+		}).catch(error => {
+			console.log("Error loading flow: ",error);
+		});
+	
+	}
 	else if(option.callback)
 		option.callback();
 	else
 		graph.clear();
 });
 
-// Set up the request options, including the Authorization header
-const saveFlowOptions = {
-    method: 'POST',  // or 'GET' if no data needs to be sent
-    headers: {
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Authorization': null,  // Include the API token in the Authorization header
-        'x-user-id': '12345'
-    }
-};
 
 
-elem.querySelector("#save").addEventListener("click",function(){
-	console.log("saved");
-	//localStorage.setItem( "graphdemo_save", JSON.stringify( graph.serialize() ) );
+elem.querySelector("#save").addEventListener("click",async () => {
 
-	// Make the request
-	fetch(authFunctionUrl, authRequestOptions)
-		.then(response => {
-			if (!response.ok) {
-				throw new Error('Network response was not ok');
-			}
-			return response.json(); // or response.text() if the response is not in JSON format
-		})
-		.then(token => {
-			console.log('Function responded with:', token);
+	var flowData = graph.serialize();
+	flowData["name"]="test_flow"
 
-			saveFlowOptions["headers"]["Authorization"] = `Bearer ${token["token"]}`;
-			var body = graph.serialize()
-			body["name"]="test_flow"
-			saveFlowOptions["body"] = JSON.stringify(body);
-
-			// Make the request
-
-			fetch(flowsFunctionUrl, saveFlowOptions)
-				.then(response => {
-					if (!response.ok) {
-						throw new Error('Network response was not ok');
-					}
-
-					return response.json(); // or response.text() if the response is not in JSON format
-				})
-				.then(data => {
-					console.log('Function responded with:', data);
-					graph.configure( data );
-					console.log("saved");
-				})
-				.catch(error => console.error('Failed to fetch:', error));
-		})
-		.catch(error => console.error('Failed to fetch:', error));
-
+	await dtai.saveFlow(JSON.stringify(flowData)).then(result => {
+		console.log("saved");
+	}).catch(error => {
+		console.log("save error");
+	});
 });
 
 
 
-
-// Set up the request options, including the Authorization header
-const loadFlowOptions = {
-    method: 'GET',  // or 'GET' if no data needs to be sent
-    headers: {
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Authorization': null,  // Include the API token in the Authorization header
-        'x-user-id': '12345'
-    }
-};
-
-
-elem.querySelector("#load").addEventListener("click",function(){
-	// Make the request
-	fetch(authFunctionUrl, authRequestOptions)
-		.then(response => {
-			if (!response.ok) {
-				throw new Error('Network response was not ok');
-			}
-			return response.json(); // or response.text() if the response is not in JSON format
-		})
-		.then(token => {
-			console.log('Function responded with:', token);
-
-			loadFlowOptions["headers"]["Authorization"] = `Bearer ${token["token"]}`;
-
-			// Make the request
-
-			fetch(flowsFunctionUrl+"?"+new URLSearchParams({id:"test_flow"}), loadFlowOptions)
-				.then(response => {
-					if (!response.ok) {
-						throw new Error('Network response was not ok');
-					}
-
-					return response.json(); // or response.text() if the response is not in JSON format
-				})
-				.then(data => {
-					console.log('Function responded with:', data);
-					graph.configure( data );
-					console.log("loaded");
-				})
-				.catch(error => console.error('Failed to fetch:', error));
-		})
-		.catch(error => console.error('Failed to fetch:', error));
-
-
-
-	// var data = localStorage.getItem( "graphdemo_save" );
-	// if(data)
-	// 	graph.configure( JSON.parse( data ) );
-	// console.log("loaded");
+elem.querySelector("#load").addEventListener("click",async () => {
+	
+	
+	await dtai.loadFlow("test_flow").then(flow => {
+		graph.configure(flow);
+		console.log("loaded");
+	}).catch(error => {
+		console.log("Error loading flow: ",error);
+	});
 });
 
 
@@ -197,3 +115,4 @@ function addDemo( name, url )
 addDemo("Features", "examples/features.json");
 addDemo("Benchmark", "examples/benchmark.json");
 addDemo("Subgraph", "examples/subgraph.json");
+addDemo("test_flow", "test_flow");

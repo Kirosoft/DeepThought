@@ -13,6 +13,9 @@ LiteGraph.registerNodeType("agents/Basic", AgentNode );
 LiteGraph.registerNodeType("agents/UserInput", UserInput );
 
 LiteGraph.registerNodeType("features/widgets", TestWidgetsNode );
+LiteGraph.registerNodeType("graph/group", Subgraph );
+LiteGraph.registerNodeType("graph/input", GraphInput );
+LiteGraph.registerNodeType("graph/output", GraphOutput );
 
 //Constant
 function Time() {

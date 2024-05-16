@@ -9,6 +9,7 @@ const config = {
     filename: 'bundle.js',
     publicPath: "/"
   },
+  devtool: 'source-map', // This enables source map generation
   module: {
     rules: [
       {
@@ -21,7 +22,8 @@ const config = {
         use: 'babel-loader',
         exclude: /node_modules/
       }
-    ]
+    ],
+    
   },
   resolve: {
     extensions: [

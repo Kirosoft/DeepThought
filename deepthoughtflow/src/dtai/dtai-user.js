@@ -2,7 +2,10 @@
 
 require("whatwg-fetch");
 
-const authFunctionUrl = 'http://localhost:7071/api/request_auth';
+//const baseURL ="http://localhost:7071/api";
+const baseURL ="https://deepthought-app.azurewebsites.net/api";
+
+const authFunctionUrl = `${baseURL}/request_auth`;
 
 export class DTAI_User {
 

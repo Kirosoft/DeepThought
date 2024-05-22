@@ -29,7 +29,7 @@ token = json.loads(response.content.decode('utf-8'))
 
 ### Test Agent Execution ####
 
-url = "http://localhost:7071/api/roles"
+url = "http://localhost:7071/api/roles_crud"
 new_role = {
     "name":"test_role",
     "description":"You are an AI assistant using the following passages to answer the user questions on policies at the UKHO (UK Hydrogrpahic Office). ",

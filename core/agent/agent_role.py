@@ -53,8 +53,8 @@ class AgentRole:
         # construct the system prompt
         # TODO: detect if the output is a spec and prompt the whole spec as JSON {spec}
         system_prompt = f"""
-            {role["description"]}
-            {role["role"]}
+            {role["description"] if "description" in role else ""}
+            {role["role"] if "role" in role else ""}
             {f"Expected input: {role['expected_input']}" if role['expected_input'] != "" else ""}
             {f"Think about your response. If all the INPUT was provided and the OUTPUT seems complete, OUTPUT [[**FINISHED**]] OR [[**NOT_FINISHED**]] if not finished. You *MUST* output one or the other based on the circumstances."}
             {f"Example output: {role['examples']}" if role['examples'] != "" else ""}

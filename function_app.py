@@ -1,11 +1,14 @@
 import azure.functions as func
 import logging
+
+from tools import tools
+from security import security
+from agent import agent
+from roles import roles
+from flows import flows
+
 import json
-from core.agent.agent_role import AgentRole
-from core.agent.agent_config import AgentConfig
-from core.security.security_utils import validate_request, create_jwt
-from core.middleware.role import Role
-from core.middleware.flow import Flow
+
 
 import urllib3
 
@@ -15,201 +18,13 @@ urllib3.disable_warnings()
 logger = logging.getLogger('azure')
 logger.setLevel(logging.ERROR)
 
-app = func.FunctionApp()
+app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 
-@app.function_name(name="run_agent")
-@app.route(auth_level=func.AuthLevel.ANONYMOUS)
-def run_agent(req: func.HttpRequest) -> func.HttpResponse:  
-
-    logging.info('core_llm_agent trigger from http')
-
-    response = validate_request(req)
-    if type(response) is func.HttpResponse:
-        return response
-    else:
-        response_headers = response["response_headers"]
-        user_settings = response["user_settings"]
-        payload = response["payload"]
-    
-    if req.method == "POST":
-        try:
-            agent = AgentRole(user_settings["user_id"], user_settings["user_tenant"])
-            result = agent.run_agent(req.get_body().decode('utf-8'))
-
-            if (result != None):
-                logging.info('Answer: %s',result["answer"])
-                response_str = json.dumps(result, ensure_ascii=False).encode('utf8')
-                return func.HttpResponse(response_str, headers=response_headers, status_code=200)
-            else:
-                answer_str = {"answer":"No question found, please supply a question", "answer_type":"error"}
-                logging.info('Answer: %s',answer_str)
-                response_str = json.dumps(answer_str, ensure_ascii=False).encode('utf8')
-
-                return func.HttpResponse(
-                    response_str,
-                    status_code=200,
-                    headers=response_headers
-                )
-        except ValueError:
-            return func.HttpResponse(
-                "Invalid JSON",
-                status_code=400,
-                headers=response_headers
-            )
-    else:
-        return func.HttpResponse("Method not allowed", status_code=405, headers=response_headers)
-
-
-@app.function_name(name="request_auth")
-@app.route(auth_level=func.AuthLevel.ANONYMOUS)
-def request_auth(req: func.HttpRequest) -> func.HttpResponse:  
-    logging.info('request_auth')
-
-    response = validate_request(req, True)
-
-    if type(response) is func.HttpResponse:
-        return response
-    else:
-        response_headers = response["response_headers"]
-        user_settings = response["user_settings"]
-        user_id = response["user_id"]
-
-    # create token
-    token = json.dumps({"token":create_jwt(user_id, user_settings["secret_key"])}, 
-                        ensure_ascii=False).encode('utf8')
-
-    return func.HttpResponse(token, headers=response_headers, status_code=200)
-    
-
-@app.function_name(name="roles")
-@app.route(auth_level=func.AuthLevel.ANONYMOUS)
-def roles(req: func.HttpRequest) -> func.HttpResponse:  
-
-    logging.info('roles CRUD')
-
-    response = validate_request(req)
-    if type(response) is func.HttpResponse:
-        return response
-    else:
-        response_headers = response["response_headers"]
-        user_settings = response["user_settings"]
-        payload = response["payload"]
-    
-    body = req.get_body().decode('utf-8')
-    agent_config = AgentConfig(body)
-
-    if req.method == "POST":
-        try:
-            json_body = json.loads(body)
-            role = Role(agent_config, user_settings["user_id"], user_settings["user_tenant"])
-            result = role.save_role(json_body)
-            response_str = json.dumps(result, ensure_ascii=False).encode('utf8')
-            return func.HttpResponse(response_str, headers=response_headers, status_code=200)
-        except ValueError:
-            return func.HttpResponse(
-                "Invalid JSON",
-                status_code=400,
-                headers=response_headers
-            )
-    if req.method == "DELETE":
-        try:
-            item_id = req.params.get('id')
-            role = Role(agent_config, user_settings["user_id"], user_settings["user_tenant"])
-            result = role.delete_role(item_id)
-            response_str = json.dumps(result, ensure_ascii=False).encode('utf8')
-            return func.HttpResponse(response_str, headers=response_headers, status_code=200)
-        except ValueError:
-            return func.HttpResponse(
-                "Invalid JSON",
-                status_code=400,
-                headers=response_headers
-            )
-    elif req.method == "GET":
-        try:
-            item_id = req.params.get('id')
-            agent_config = AgentConfig(body)
-            role = Role(agent_config, user_settings["user_id"], user_settings["user_tenant"])
-            if item_id is not None:
-                result = role.get_role(item_id)
-            else:
-                result = role.load_all_roles()
-
-            logging.info('Loaded roles')
-            response_str = json.dumps(result, ensure_ascii=False).encode('utf8')
-            return func.HttpResponse(response_str, headers=response_headers, status_code=200)
-        except ValueError:
-            return func.HttpResponse(
-                "Invalid JSON",
-                status_code=400,
-                headers=response_headers
-            )
-    else:
-        return func.HttpResponse("Method not allowed", status_code=405, headers=response_headers)
-
-@app.function_name(name="flows")
-@app.route(auth_level=func.AuthLevel.ANONYMOUS)
-def flows(req: func.HttpRequest) -> func.HttpResponse:  
-
-    logging.info('flows CRUD')
-
-    response = validate_request(req)
-    if type(response) is func.HttpResponse:
-        return response
-    else:
-        response_headers = response["response_headers"]
-        user_settings = response["user_settings"]
-        payload = response["payload"]
-    
-    body = req.get_body().decode('utf-8')
-    agent_config = AgentConfig(body) if body != '' else AgentConfig()
-
-    if req.method == "POST":
-        try:
-            json_body = json.loads(body)
-            flow = Flow(agent_config, user_settings["user_id"], user_settings["user_tenant"])
-            result = flow.save_flow(json_body)
-            response_str = json.dumps(result, ensure_ascii=False).encode('utf8')
-            return func.HttpResponse(response_str, headers=response_headers, status_code=200)
-        except ValueError:
-            return func.HttpResponse(
-                "Invalid JSON",
-                status_code=400,
-                headers=response_headers
-            )
-    if req.method == "DELETE":
-        try:
-            item_id = req.params.get('id')
-            flow = Flow(agent_config, user_settings["user_id"], user_settings["user_tenant"])
-            result = flow.delete_flow(item_id)
-            response_str = json.dumps(result, ensure_ascii=False).encode('utf8')
-            return func.HttpResponse(response_str, headers=response_headers, status_code=200)
-        except ValueError:
-            return func.HttpResponse(
-                "Invalid JSON",
-                status_code=400,
-                headers=response_headers
-            )
-    elif req.method == "GET":
-        try:
-            item_id = req.params.get('id')
-            flow = Flow(agent_config, user_settings["user_id"], user_settings["user_tenant"])
-            if item_id is not None:
-                result = flow.get_flow(item_id)
-            else:
-                result = flow.load_all_flows()
-
-            logging.info('Loaded flows')
-            response_str = json.dumps(result, ensure_ascii=False).encode('utf8')
-            return func.HttpResponse(response_str, headers=response_headers, status_code=200)
-        except ValueError:
-            return func.HttpResponse(
-                "Invalid JSON",
-                status_code=400,
-                headers=response_headers
-            )
-    else:
-        return func.HttpResponse("Method not allowed", status_code=405, headers=response_headers)
-
+app.register_functions(tools) 
+app.register_functions(security) 
+app.register_functions(agent)
+app.register_functions(roles)
+app.register_functions(flows)
 
 
 # @app.function_name(name="core_llm_agent")

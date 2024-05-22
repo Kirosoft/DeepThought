@@ -82,6 +82,10 @@ Tests:
 
 Need a test framework
 
+
+Tools:
+
+RAG from PDF, TXT files, Website
 UI:
 
 Develop flow based interface

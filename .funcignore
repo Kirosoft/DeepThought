@@ -13,4 +13,6 @@ __*
 tests/*
 *.pyc
 .funcignore
-DeepThoughtFlow
+deepthoughtflow/*
+*.cpython-310.pyc
+__pycache__*

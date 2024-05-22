@@ -1,8 +1,8 @@
-from core.agent.agent_config import AgentConfig
 from core.db.agent_db_base import AgentDBBase
 from urllib.parse import unquote
 import json
 import logging
+
 
 class Tool:
 
@@ -65,7 +65,13 @@ class Tool:
             json_tool = None
 
         return json_tool
+    
 
+    def run_tool(self, argument):
+
+        rag_tool = RagTool().from_file("")
+
+        rag
 
 
 

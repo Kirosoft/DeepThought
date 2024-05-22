@@ -1,0 +1,69 @@
+import os
+
+import json
+import logging
+import urllib3
+import requests
+
+urllib3.disable_warnings()
+
+# Create a logger for the 'azure' SDK
+logger = logging.getLogger('azure')
+logger.setLevel(logging.ERROR)
+
+headers = {
+    'Content-Type': 'application/json',
+    'x-user-id': 'ukho',
+    'x-password': 'my_password'
+    }
+
+#base_url = "http://localhost:7071/api"
+base_url = "https://deepthought-app.azurewebsites.net/api"
+
+url = f"{base_url}/request_auth"
+response = requests.get(url, headers=headers)
+
+token = json.loads(response.content.decode('utf-8'))
+
+headers = {
+    'Authorization': f'Bearer {token["token"]}',
+    'Content-Type': 'application/json',
+    'x-user-id': 'ukho'
+    }
+
+params = {'id': "ukho_policy"}
+url = f"{base_url}/roles_crud"
+
+
+# try to get the ukho policy
+response = requests.get(url, params=params, headers=headers)
+response_json = response.json()
+
+if response.status_code == 200 and response_json == None:
+    ukho_policy_role = {
+        "name":"ukho_policy",
+        "description":"You are an AI assistant using the following passages to answer the user questions on policies at the UKHO (UK Hydrogrpahic Office). ",
+        "role":"You should also use the content in any of the links in the passages as SOURCES. Each passage has a NAME which is the title of the document. After your answer, leave a blank line and then give the source html link(s) of the passages you answered from. Put them in a <br> separated list, prefixed with SOURCES and do not adjust the embedded html data in the source links:.",
+        "expected_input":"a question about a UKHO policy",
+        "expected_output":"a detailed and specific job posting ",
+        "output_format":[],
+        "examples":["Example: Question: What is the meaning of life? Response: The meaning of life is 42. SOURCES: <a href='https://some/web/reference>'>Hitchhiker's Guide to the Galaxy</a>"],
+        "tools":[],
+        "options":
+            {
+                "rag_mode":True
+            },
+        "supervisor":[],
+        "assistants":[]
+    }
+    payload = json.dumps(ukho_policy_role, ensure_ascii=False).encode('utf8')
+    response = requests.post(f"{base_url}/roles_crud", payload, headers=headers)
+    response_json = response.json()
+
+
+
+
+print(response_json)
+
+
+

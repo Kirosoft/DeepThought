@@ -31,7 +31,7 @@ export class AgentNode  extends LGraphNode {
         this.initIO();
         this.size = this.computeSize();
         this.serialize_widgets = true;
-        this.title = this.properties.name;
+        // this.title = this.properties.name;
     }
 
     initWidgets() {

@@ -150,7 +150,7 @@ export class DTAI {
 
             var roleOptions = await this.getHeaderOptions();
             // Make the request
-            fetch(flowsFunctionUrl, roleOptions)
+            fetch(rolesFunctionUrl, roleOptions)
             .then(response => {
                     if (!response.ok) {
                         throw new Error('Network response was not ok');

@@ -2,6 +2,7 @@ import {LGraph, LiteGraph, LGraphCanvas} from 'litegraph.js';
 import {Editor} from './litegraph-editor.js'
 import {} from './customnodes.js'
 import { DTAI } from './dtai/dtai-core.js';
+import {AgentNode} from './nodes/agentnode.js'
 
 LiteGraph.node_images_path = "../nodes_data/";
 
@@ -40,33 +41,49 @@ LiteGraph.allow_scripts = true;
 
 var dtai = new DTAI();
 
-//create scene selector
+// Create scene selector
 var elem = document.createElement("span");
 elem.id = "LGEditorTopBarSelector";
 elem.className = "selector";
-elem.innerHTML = "";
-elem.innerHTML += "DeepThoughtFlow <select><option>Empty</option></select> <button class='btn' id='save'>Save</button><button class='btn' id='load'>Load</button> | <button class='btn' id='multiview'>Multiview</button>";
+elem.innerHTML = "DeepThoughtFlow <select id='sceneSelect'><option>New Flow</option></select> <button class='btn' id='save'>Save</button> | <button class='btn' id='multiview'>Multiview</button>";
 editor.tools.appendChild(elem);
 
-var select = elem.querySelector("select");
+var select = elem.querySelector("#sceneSelect");
 
-select.addEventListener("change", async function(e){
-	var option = this.options[this.selectedIndex];
-	var url = option.dataset["url"];
-	
-	if(url) {
-		await dtai.loadFlow("test_flow").then(flow => {
+// Function to replace select with an input field
+function replaceSelectWithInput() {
+    var input = document.createElement("input");
+    input.type = "text";
+    input.id = "editableOption";
+    input.placeholder = "Flow name";
+    select.parentNode.replaceChild(input, select);
+    input.focus();
+
+    // Event to handle when user presses enter in input
+    input.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            var newOption = document.createElement("option");
+            newOption.text = input.value;
+            newOption.selected = true;
+            select.appendChild(newOption);
+            input.parentNode.replaceChild(select, input); // Switch back to select
+			graph.clear();
+        }
+    });
+}
+
+select.addEventListener("change", async function(e) {
+    var option = this.options[this.selectedIndex];
+    if (option.textContent === "New Flow") {
+        replaceSelectWithInput();
+    } else {
+		await dtai.loadFlow(option.textContent).then(flow => {
 			graph.configure(flow);
 			console.log("loaded");
 		}).catch(error => {
 			console.log("Error loading flow: ",error);
 		});
-	
 	}
-	else if(option.callback)
-		option.callback();
-	else
-		graph.clear();
 });
 
 
@@ -74,10 +91,12 @@ select.addEventListener("change", async function(e){
 elem.querySelector("#save").addEventListener("click",async () => {
 
 	var flowData = graph.serialize();
-	flowData["name"]="test_flow"
+	var selectedText = select.options[select.selectedIndex].text;
+
+	flowData["name"]=selectedText;
 
 	await dtai.saveFlow(JSON.stringify(flowData)).then(result => {
-		console.log("saved");
+		console.log(`saved ${selectedText}`);
 	}).catch(error => {
 		console.log("save error");
 	});
@@ -85,16 +104,16 @@ elem.querySelector("#save").addEventListener("click",async () => {
 
 
 
-elem.querySelector("#load").addEventListener("click",async () => {
+// elem.querySelector("#load").addEventListener("click",async () => {
 	
 	
-	await dtai.loadFlow("test_flow").then(flow => {
-		graph.configure(flow);
-		console.log("loaded");
-	}).catch(error => {
-		console.log("Error loading flow: ",error);
-	});
-});
+// 	await dtai.loadFlow("test_flow").then(flow => {
+// 		graph.configure(flow);
+// 		console.log("loaded");
+// 	}).catch(error => {
+// 		console.log("Error loading flow: ",error);
+// 	});
+// });
 
 
 
@@ -111,8 +130,43 @@ function addDemo( name, url )
 	select.appendChild( option );
 }
 
-//some examples
-addDemo("Features", "examples/features.json");
-addDemo("Benchmark", "examples/benchmark.json");
-addDemo("Subgraph", "examples/subgraph.json");
-addDemo("test_flow", "test_flow");
+
+await  dtai.loadFlows().then(flows => {
+	flows?.forEach(flow => {
+		console.log(`found flow: ${flow.name}`);
+		addDemo(flow.name, flow.name);
+	});
+});
+
+
+function createDerivedClass(className) {
+    var DynamicClass =  class extends AgentNode {
+        constructor() {
+            super();
+			this.title = className;
+        }
+    };
+
+	// Set the name of the class dynamically using Object.defineProperty
+	Object.defineProperty(DynamicClass, 'name', { value: className });
+	// Object.defineProperty(DynamicClass, 'type', { value: className });
+	Object.defineProperty(DynamicClass, 'title', { value: className });
+	return DynamicClass;
+}
+
+await  dtai.loadRoles().then(roles => {
+
+	roles?.user_roles?.forEach(role => {
+		console.log(`found user role: ${role.name}`);
+
+		var roleClass = createDerivedClass(role.name);
+
+		LiteGraph.registerNodeType(`roles/${role.name}`, roleClass);
+
+	});
+
+	roles?.system_roles?.forEach(role => {
+		console.log(`found system role: ${role.name}`);
+	});
+
+});

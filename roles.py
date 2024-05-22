@@ -23,7 +23,7 @@ def roles_crud(req: func.HttpRequest) -> func.HttpResponse:
         payload = response["payload"]
     
     body = req.get_body().decode('utf-8')
-    agent_config = AgentConfig(body)
+    agent_config = AgentConfig(body) if body != '' else AgentConfig()
 
     if req.method == "POST":
         try:
@@ -54,7 +54,6 @@ def roles_crud(req: func.HttpRequest) -> func.HttpResponse:
     elif req.method == "GET":
         try:
             item_id = req.params.get('id')
-            agent_config = AgentConfig(body)
             role = Role(agent_config, user_settings["user_id"], user_settings["user_tenant"])
             if item_id is not None:
                 result = role.get_role(item_id)

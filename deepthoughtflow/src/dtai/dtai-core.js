@@ -4,8 +4,8 @@ import {DTAI_User} from "./dtai-user.js";
 require("whatwg-fetch");
 
 
-const baseURL ="http://localhost:7071/api";
-//const baseURL ="https://deepthought-app.azurewebsites.net/api";
+//const baseURL ="http://localhost:7071/api";
+const baseURL ="https://deepthought-app.azurewebsites.net/api";
 
 const flowsFunctionUrl = `${baseURL}/flows_crud`;
 const rolesFunctionUrl = `${baseURL}/roles_crud`;

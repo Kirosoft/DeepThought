@@ -13,7 +13,6 @@ export class AgentNode  extends LGraphNode {
         super();
         this.properties = { 
             name:"test_role",
-            answer: "",
             role:"You are an AI assistant using the following passages to answer the user questions on policies at the UKHO (UK Hydrogrpahic Office). You should also use the content in any of the links in the passages as SOURCES. Each passage has a NAME which is the title of the document. After your answer, leave a blank line and then give the source html link(s) of the passages you answered from. Put them in a <br> separated list, prefixed with SOURCES and do not adjust the embedded html data in the source links:.",
             expected_input:"a question about a UKHO policy",
             expected_output:"a detailed and specific job posting ",
@@ -24,7 +23,9 @@ export class AgentNode  extends LGraphNode {
             {
                 "rag_mode":true
             },
-            input: "what are the usability standards"
+            input: "what are the usability standards",
+            answer: "",
+            session_token:""
         };
 
         this.initWidgets();
@@ -70,6 +71,7 @@ export class AgentNode  extends LGraphNode {
     initIO() {
         this.addInput("Input Request", "text");
         this.addInput("Context", "text");
+        this.addInput("Examples", "text");
         this.addOutput("Answer", "text");
     }
 

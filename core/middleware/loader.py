@@ -24,8 +24,7 @@ class Loader:
     
     def __init__(self, agent_config, user_id, tenant):
         self.agent_config = agent_config
-        self.db_roles_user = AgentDBBase(self.agent_config, self.agent_config.INDEX_ROLES, user_id, tenant)
-        self.db_roles_system = AgentDBBase(self.agent_config, self.agent_config.INDEX_ROLES, "system", "system")
+
         if Loader.__loaders is None:
             self.init_loaders()
 

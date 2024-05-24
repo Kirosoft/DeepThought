@@ -24,7 +24,7 @@ def run_agent(req: func.HttpRequest) -> func.HttpResponse:
     
     if req.method == "POST":
         try:
-            agent = AgentRole(user_settings["user_id"], user_settings["user_tenant"])
+            agent = AgentRole(user_settings["user_id"], user_settings["user_tenant"], user_settings["keys"])
             result = agent.run_agent(req.get_body().decode('utf-8'))
 
             if (result != None):

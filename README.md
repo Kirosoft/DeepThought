@@ -40,6 +40,8 @@ GroqCloud<br>
 
 # Demo
 
+<img src="./images/deepthoughtflow_demo.png"  height="500">
+
 Job posting agent
 
 

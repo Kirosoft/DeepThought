@@ -28,7 +28,7 @@ for setting in settings["Values"]:
     os.environ[setting]=settings["Values"][setting]
 
 agent_config = AgentConfig()
-db = AgentDBBase(agent_config, agent_config.INDEX_CONTEXT, "ukho", "ukho")
+db = AgentDBBase(agent_config, agent_config.INDEX_VECTOR, "ukho", "ukho")
 embedding = EmbeddingBase(agent_config)
 
 

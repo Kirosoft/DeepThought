@@ -6,8 +6,7 @@ from security import security
 from agent import agent
 from roles import roles
 from flows import flows
-
-import json
+from contexts import contexts
 
 
 import urllib3
@@ -25,49 +24,8 @@ app.register_functions(security)
 app.register_functions(agent)
 app.register_functions(roles)
 app.register_functions(flows)
+app.register_functions(contexts)
 
-
-# @app.function_name(name="core_llm_agent")
-# @app.route(auth_level=func.AuthLevel.ANONYMOUS)
-# def save_role(req: func.HttpRequest) -> func.HttpResponse:  
-
-#     logging.info('save role')
-
-#     response = validate_request(req)
-
-#     if response is func.HttpResponse:
-#         return response
-#     else:
-#         response_headers = response["response_headers"]
-#         user_settings = response["user_settings"]
-#         payload = response["payload"]    
-    
-#     if req.method == "POST":
-#         try:
-#             result = process_request(req.get_body().decode('utf-8'), user_settings["tenant"], user_settings["user_id"])
-
-#             if (result != None):
-#                 logging.info('Answer: %s',result["answer"])
-#                 response_str = json.dumps(result, ensure_ascii=False).encode('utf8')
-#                 return func.HttpResponse(response_str, headers=response_headers, status_code=200)
-#             else:
-#                 answer_str = {"answer":"No question found, please supply a question", "answer_type":"error"}
-#                 logging.info('Answer: %s',answer_str)
-#                 response_str = json.dumps(answer_str, ensure_ascii=False).encode('utf8')
-
-#                 return func.HttpResponse(
-#                     response_str,
-#                     status_code=200,
-#                     headers=response_headers
-#                 )
-#         except ValueError:
-#             return func.HttpResponse(
-#                 "Invalid JSON",
-#                 status_code=400,
-#                 headers=response_headers
-#             )
-#     else:
-#         return func.HttpResponse("Method not allowed", status_code=405, headers=response_headers)
 
 
 # @app.schedule(schedule="0 0 6 * * *", arg_name="mytimer", run_on_startup=True) 

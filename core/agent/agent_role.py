@@ -4,7 +4,7 @@ import logging
 from core.agent.agent_config import AgentConfig
 from core.agent.agent_memory import AgentMemory
 from core.llm.llm_base import LLMBase
-from core.middleware.role import Role
+from core.middleware.context import Context
 from core.middleware.tool import Tool
 from core.middleware.spec import Spec
 
@@ -13,7 +13,7 @@ class AgentRole:
     def __init__(self, user_id, tenant):
         self.agent_config = AgentConfig()
         self.agent_memory = AgentMemory(self.agent_config, user_id, tenant)
-        self.role = Role(self.agent_config, user_id, tenant)
+        self.role = Context(self.agent_config, user_id, tenant)
         self.tool = Tool(self.agent_config, user_id, tenant)
         self.spec = Spec(self.agent_config, user_id, tenant)
 

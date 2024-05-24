@@ -1,5 +1,6 @@
 import '../imgs/load-progress-empty.png'
 import '../imgs/load-progress-full.png'
+import '../imgs/grid.png'
 
 import '../css/style.css'
 import '../css/litegraph-editor.css'
@@ -52,7 +53,7 @@ var dtai = new DTAI();
 var elem = document.createElement("span");
 elem.id = "LGEditorTopBarSelector";
 elem.className = "selector";
-elem.innerHTML = "DeepThoughtFlow <select id='sceneSelect'><option>New Flow</option></select> <button class='btn' id='save'>Save</button> | <button class='btn' id='multiview'>Multiview</button>";
+elem.innerHTML = "DeepThoughtFlow <select id='sceneSelect'><option>New Flow</option></select> <button class='btn' id='save'>Save</button> <button class='btn' id='delete'>Delete</button> | <button class='btn' id='multiview'>Multiview</button>";
 editor.tools.appendChild(elem);
 
 var select = elem.querySelector("#sceneSelect");

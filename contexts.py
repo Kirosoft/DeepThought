@@ -5,14 +5,15 @@ from core.security.security_utils import validate_request
 import json
 from core.agent.agent_config import AgentConfig
 from core.middleware.context import Context
+from core.middleware.loader import Loader
 
-roles = func.Blueprint()
+contexts = func.Blueprint()
 
-@roles.function_name(name="roles_crud")
-@roles.route(auth_level=func.AuthLevel.ANONYMOUS)
-def roles_crud(req: func.HttpRequest) -> func.HttpResponse:  
+@contexts.function_name(name="contexts_crud")
+@contexts.route(auth_level=func.AuthLevel.ANONYMOUS)
+def contexts_crud(req: func.HttpRequest) -> func.HttpResponse:  
 
-    logging.info('roles CRUD')
+    logging.info('contexts CRUD')
 
     response = validate_request(req)
     if type(response) is func.HttpResponse:
@@ -28,8 +29,8 @@ def roles_crud(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "POST":
         try:
             json_body = json.loads(body)
-            role = Context(agent_config, user_settings["user_id"], user_settings["user_tenant"])
-            result = role.save_role(json_body)
+            context = Context(agent_config, user_settings["user_id"], user_settings["user_tenant"])
+            result = context.save_context(json_body)
             response_str = json.dumps(result, ensure_ascii=False).encode('utf8')
             return func.HttpResponse(response_str, headers=response_headers, status_code=200)
         except ValueError:
@@ -41,8 +42,8 @@ def roles_crud(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "DELETE":
         try:
             item_id = req.params.get('id')
-            role = Context(agent_config, user_settings["user_id"], user_settings["user_tenant"])
-            result = role.delete_role(item_id)
+            context = Context(agent_config, user_settings["user_id"], user_settings["user_tenant"])
+            result = context.delete_context(item_id)
             response_str = json.dumps(result, ensure_ascii=False).encode('utf8')
             return func.HttpResponse(response_str, headers=response_headers, status_code=200)
         except ValueError:
@@ -54,13 +55,13 @@ def roles_crud(req: func.HttpRequest) -> func.HttpResponse:
     elif req.method == "GET":
         try:
             item_id = req.params.get('id')
-            role = Context(agent_config, user_settings["user_id"], user_settings["user_tenant"])
+            context = Context(agent_config, user_settings["user_id"], user_settings["user_tenant"])
             if item_id is not None:
-                result = role.get_role(item_id)
+                result = context.get_context(item_id)
             else:
-                result = role.load_all_roles()
+                result = context.load_all_contexts()
 
-            logging.info('Loaded roles')
+            logging.info('Loaded contexts')
             response_str = json.dumps(result, ensure_ascii=False).encode('utf8')
             return func.HttpResponse(response_str, headers=response_headers, status_code=200)
         except ValueError:
@@ -71,3 +72,28 @@ def roles_crud(req: func.HttpRequest) -> func.HttpResponse:
             )
     else:
         return func.HttpResponse("Method not allowed", status_code=405, headers=response_headers)
+
+
+@contexts.function_name(name="run_context")
+@contexts.route(auth_level=func.AuthLevel.ANONYMOUS)
+def run_context(req: func.HttpRequest) -> func.HttpResponse:  
+
+    logging.info('run context')
+
+    response = validate_request(req)
+    if type(response) is func.HttpResponse:
+        return response
+    else:
+        response_headers = response["response_headers"]
+        user_settings = response["user_settings"]
+        payload = response["payload"]
+
+    # find the loader in the context
+    body = req.get_body().decode('utf-8')
+    agent_config = AgentConfig(body) if body != '' else AgentConfig()
+
+    loader = Loader(agent_config, user_settings["user_id"], user_settings["user_tenant"])
+    loaderArgs = body["LoaderArgs"]
+
+    docLoader = loader.get(body["loaderName"])
+    

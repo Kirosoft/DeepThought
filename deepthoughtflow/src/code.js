@@ -1,3 +1,10 @@
+import '../imgs/load-progress-empty.png'
+import '../imgs/load-progress-full.png'
+
+import '../css/style.css'
+import '../css/litegraph-editor.css'
+import '../css/litegraph.css'
+
 import {LGraph, LiteGraph, LGraphCanvas} from 'litegraph.js';
 import {Editor} from './litegraph-editor.js'
 import {} from './customnodes.js'
@@ -6,7 +13,7 @@ import {AgentNode} from './nodes/agentnode.js'
 
 LiteGraph.node_images_path = "../nodes_data/";
 
-var editor = new LiteGraph.Editor("main",{miniwindow:false});
+var editor = new Editor("main",{miniwindow:false});
 window.graphcanvas = editor.graphcanvas;
 window.graph = editor.graph;
 

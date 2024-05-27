@@ -12,16 +12,19 @@ class AgentRole:
 
     def __init__(self, user_id, tenant, user_settings_keys):
         self.agent_config = AgentConfig(user_settings_keys=user_settings_keys)
+        self.user_id = user_id
+        self.tenant = tenant
         self.role = Role(self.agent_config, user_id, tenant)
-        self.agent_memory = AgentMemory(self.agent_config, user_id, tenant, self.role.get_context())
         self.tool = Tool(self.agent_config, user_id, tenant)
         self.spec = Spec(self.agent_config, user_id, tenant)
+        self.agent_memory = None
 
     def run_agent(self, body):
         self.agent_config.update_from_body(body)
 
         if self.agent_config.is_valid():
             logging.info('run_agent processed an event: %s',self.agent_config.input)
+        
 
             llm = LLMBase(self.agent_config)
 
@@ -45,6 +48,10 @@ class AgentRole:
         role = self.role.get_role(role_name)
         messages = []
         options = {}
+
+        if self.agent_memory is None:
+            context = self.role.get_context(role)
+            self.agent_memory = AgentMemory(self.agent_config, self.user_id, self.tenant, context)
 
         # user can override the examples 
         output_format_json = self.spec.get_specs(role['output_format']) if 'output_format' in role else []

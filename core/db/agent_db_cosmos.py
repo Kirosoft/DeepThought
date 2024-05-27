@@ -24,7 +24,7 @@ class AgentDBCosmos(AgentDBBase):
     def __init__(self, agent_config:AgentConfig, data_type:str, user_id:str, tenant:str, partition_key, container_name):
         self.__agent_config = agent_config
         self.__data_type = data_type
-        self.embedding = EmbeddingBase(self.__agent_config)
+        self.embedding = None #EmbeddingBase(self.__agent_config)
         self.partition_key = partition_key
         self.container = None
         self.tenant = tenant
@@ -128,6 +128,7 @@ class AgentDBCosmos(AgentDBBase):
 
     def similarity_search_vector(self, input_vector, distance_threshold=0.5, top_k = 5):
 
+
         parameters = [
             input_vector,
             distance_threshold,
@@ -142,6 +143,10 @@ class AgentDBCosmos(AgentDBBase):
         return json.loads(result)
 
     def similarity_search(self, input:str, distance_threshold=0.5, top_k = 5):
+
+        if self.embedding is None:
+            self.embedding = EmbeddingBase(self.__agent_config)
+
         result=self.embedding.get_embedding(input)
         vector = result.data[0].embedding
         return self.similarity_search_vector(vector, distance_threshold, top_k)

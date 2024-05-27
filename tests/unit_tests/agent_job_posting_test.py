@@ -4,6 +4,7 @@ from langchain_community.document_loaders import TextLoader
 from os.path import join
 import logging
 import urllib3
+from core.security.security_utils import get_user_context
 
 urllib3.disable_warnings()
 
@@ -19,7 +20,8 @@ for setting in settings["Values"]:
 
 from core.agent.agent_role import AgentRole
 
-agent_role = AgentRole("12345", "ukho")
+user_settings = get_user_context("12345")
+agent_role = AgentRole("12345", "ukho", user_settings_keys=user_settings["keys"])
 
 
 ### AI ###

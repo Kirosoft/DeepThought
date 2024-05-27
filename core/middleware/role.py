@@ -49,6 +49,12 @@ class Role:
 
         return result
     
+    def get_context(self, role):
+        if "options" in role and "context" in role["options"]:
+            return role["options"]["context"]
+        else:
+            return ""
+
     def is_rag(self, role) -> bool:
         is_rag = False
 

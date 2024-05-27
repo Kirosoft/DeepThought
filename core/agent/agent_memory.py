@@ -14,7 +14,8 @@ class AgentMemory:
 
     def __init_store(self, user_id, tenant):
         # connect to a db and intialise a connection to the vector store
-        self.__vector_store_base = AgentDBBase(self.__agent_config, f"{self.__agent_config.INDEX_VECTOR}{'' if self.context=='' else '_'}{self.context}_info", user_id, tenant)
+        self.__vector_store_base = AgentDBBase(self.__agent_config, 
+                        f"{self.__agent_config.INDEX_VECTOR}{'' if self.context=='' else '_'}{self.context}_info", user_id, tenant)
         
         # find the latest version of this context
         # default to version 1 if none found
@@ -25,9 +26,10 @@ class AgentMemory:
             info = self.__vector_store_base.get(context_name)
             version = info["latest"] if "latest" in info else 1
         except:
-            self.__vector_store_base.index(context_name,{"latest",self.version})
+            self.__vector_store_base.index(context_name,{"latest":version})
 
-        self.__vector_store = AgentDBBase(self.__agent_config, f"{self.__agent_config.INDEX_VECTOR}{'' if self.contex=='' else '_'}{self.context}_v{version}", user_id, tenant)
+        self.__vector_store = AgentDBBase(self.__agent_config, 
+                                f"{self.__agent_config.INDEX_VECTOR}{'' if context_name=='' else '_'}{context_name}_v{version}", user_id, tenant)
         self.__history_store = AgentDBBase(self.__agent_config, self.__agent_config.INDEX_HISTORY, user_id, tenant)
 
     # similarity search in the conext db

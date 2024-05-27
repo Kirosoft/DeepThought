@@ -16,7 +16,7 @@ class AgentConfig:
             self.update_from_body(input_body)
 
         if user_settings_keys is not None:
-            self.__update_from_user_settings(user_settings_keys)
+            self.update_from_user_settings(user_settings_keys)
 
         self.__init_env_vars()
 
@@ -31,30 +31,30 @@ class AgentConfig:
             
     def update_from_user_settings(self, user_settings_keys):
 
-        self.OPENAI_API_KEY = user_settings_keys("OPENAI_API_KEY")
+        self.OPENAI_API_KEY = user_settings_keys["OPENAI_API_KEY"]
         # AI config
-        self.OPENAI_MODEL = user_settings_keys("OPENAI_MODEL")
-        self.OPENAI_EMBEDDING_MODEL = user_settings_keys("OPENAI_EMBEDDING_MODEL")
+        self.OPENAI_MODEL = user_settings_keys["OPENAI_MODEL"]
+        self.OPENAI_EMBEDDING_MODEL = user_settings_keys["OPENAI_EMBEDDING_MODEL"]
 
-        self.LLM_TYPE = user_settings_keys("LLM_TYPE")
-        self.EMEBDDING_TYPE = user_settings_keys("EMBEDDING_TYPE")
+        self.LLM_TYPE = user_settings_keys["LLM_TYPE"]
+        self.EMEBDDING_TYPE = user_settings_keys["EMBEDDING_TYPE"]
 
         # github creds
-        self.GITHUB_USER = user_settings_keys("GITHUB_USER")
-        self.GITHUB_KEY = user_settings_keys("GITHUB_KEY")
+        self.GITHUB_USER = user_settings_keys["GITHUB_USER"]
+        self.GITHUB_KEY = user_settings_keys["GITHUB_KEY"]
         
         # LLAMA3
-        self.OLLAMA_ENDPOINT = user_settings_keys("OLLAMA_ENDPOINT")
-        self.OLLAMA_MODEL = user_settings_keys("OLLAMA_MODEL")
-        self.OLLAMA_EMBEDDING_MODEL = user_settings_keys("OLLAMA_EMBEDDING_MODEL")
+        self.OLLAMA_ENDPOINT = user_settings_keys["OLLAMA_ENDPOINT"]
+        self.OLLAMA_MODEL = user_settings_keys["OLLAMA_MODEL"]
+        self.OLLAMA_EMBEDDING_MODEL = user_settings_keys["OLLAMA_EMBEDDING_MODEL"]
 
         # GROK
-        self.GROK_ENDPOINT = user_settings_keys("GROK_ENDPOINT")
-        self.GROK_MODEL = user_settings_keys("GROK_MODEL")
-        self.GROK_API_KEY = user_settings_keys("GROK_API_KEY")
+        self.GROK_ENDPOINT = user_settings_keys["GROK_ENDPOINT"]
+        self.GROK_MODEL = user_settings_keys["GROK_MODEL"]
+        self.GROK_API_KEY = user_settings_keys["GROK_API_KEY"]
 
         # SERPER
-        self.SERPER_API_KEY = user_settings_keys("SERPER_API_KEY")
+        self.SERPER_API_KEY = user_settings_keys["SERPER_API_KEY"]
 
 
     def __init_env_vars(self):

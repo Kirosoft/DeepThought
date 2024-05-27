@@ -32,12 +32,11 @@ def index_docs(directory_path, extension):
         prompt = loader.load()
 
         prompt_name = Path(file_path).stem
+        doc = json.loads(prompt[0].page_content)
+        doc["fileanme"] = file_path
 
         db.index(id=prompt_name,
-            doc={
-                "filename": file_path,
-                "prompt": prompt[0].page_content
-            },
+            doc=doc,
         )
         print(f"{file_path} imported ")
 

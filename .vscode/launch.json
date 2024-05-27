@@ -7,7 +7,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "./roles/update_roles.py",
-            "args":["f:/deepthought/roles/"],
+            "args":["./roles"],
             "console": "integratedTerminal"
         },
         {

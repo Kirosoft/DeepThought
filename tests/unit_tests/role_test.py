@@ -18,10 +18,10 @@ for setting in settings["Values"]:
     os.environ[setting]=settings["Values"][setting]
 
 from core.agent.agent_config import AgentConfig
-from core.middleware.role import Role
+from core.middleware.context import Context
 
 agent_config = AgentConfig()
-user_role = Role(agent_config, "12345", "ukho")
+user_role = Context(agent_config, "12345", "ukho")
 
 
 all_roles = user_role.load_all_roles()
@@ -31,7 +31,7 @@ print(all_roles)
 
 ### create a new system role
 
-system_roles = Role(agent_config, "system", "system")
+system_roles = Context(agent_config, "system", "system")
 
 new_role = {
     "name":"test_role",

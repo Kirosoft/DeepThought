@@ -10,6 +10,7 @@ urllib3.disable_warnings()
 # Create a logger for the 'azure' SDK
 logger = logging.getLogger('azure')
 logger.setLevel(logging.ERROR)
+
 class Role:
 
     def __init__(self, agent_config, user_id, tenant):
@@ -52,7 +53,7 @@ class Role:
         is_rag = False
 
         try:
-            is_rag = role["options"]["rag_mode"]
+            is_rag = role["options"]["context"] != ""
         except Exception as err:
             logging.info(f"Rag option not set {err}")
 
@@ -68,9 +69,3 @@ class Role:
 
 
     
-
-
-
-
-
-

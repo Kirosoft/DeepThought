@@ -21,6 +21,17 @@ const config = {
         test: /\.js$/,
         use: 'babel-loader',
         exclude: /node_modules/
+      },
+      {
+        test: /\.css$/,
+        use: ['style-loader', 'css-loader']
+      },
+      {
+        test: /\.(png|svg|jpg|jpeg|gif)$/i,
+        type: 'asset/resource',
+        generator: {
+          filename: 'imgs/[name][ext]'  // This places all images into an 'imgs' folder within the 'dist' directory.
+        }
       }
     ],
     
@@ -29,12 +40,13 @@ const config = {
     extensions: [
       '.tsx',
       '.ts',
-      '.js'
+      '.js',
+      '.png'
     ]
   },
   plugins: [
     new HtmlWebpackPlugin({
-      templateContent: ({ htmlWebpackPlugin }) => '<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>' + htmlWebpackPlugin.options.title + '</title></head><body><div id=\"app\"></div></body></html>',
+      templateContent: ({ htmlWebpackPlugin }) => '<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>' + htmlWebpackPlugin.options.title + '</title></head><body><div id=\"main\"></div></body></html>',
       filename: 'index.html',
     }),
     new webpack.ProvidePlugin({

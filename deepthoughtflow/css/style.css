@@ -126,7 +126,7 @@ label {
 .header input { 
 	color: #EEE;
 	background-color: #555;
-	font-size: 1.2em;
+	/* font-size: 1.2em; */
 	border: 1px solid black;
 	/*border-radius: 4px;*/
 	padding: 2px;

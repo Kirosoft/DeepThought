@@ -10,10 +10,10 @@ from core.middleware.spec import Spec
 
 class AgentRole:
 
-    def __init__(self, user_id, tenant):
-        self.agent_config = AgentConfig()
-        self.agent_memory = AgentMemory(self.agent_config, user_id, tenant)
+    def __init__(self, user_id, tenant, user_settings_keys):
+        self.agent_config = AgentConfig(user_settings_keys=user_settings_keys)
         self.role = Role(self.agent_config, user_id, tenant)
+        self.agent_memory = AgentMemory(self.agent_config, user_id, tenant, self.role.get_context())
         self.tool = Tool(self.agent_config, user_id, tenant)
         self.spec = Spec(self.agent_config, user_id, tenant)
 
@@ -28,7 +28,6 @@ class AgentRole:
             # use the configured role to find the prompt and populate with the context and session history as required
             completed_prompt = self.get_completed_prompt(self.agent_config.role)
 
-            #llm_result = agent_llm.run_inference(completed_prompt, agent_config.input, agent_config.role, tools, routing)
             llm_result = llm.inference(completed_prompt)
 
             self.agent_memory.save_session_history(llm_result)
@@ -53,8 +52,8 @@ class AgentRole:
         # construct the system prompt
         # TODO: detect if the output is a spec and prompt the whole spec as JSON {spec}
         system_prompt = f"""
-            {role["description"]}
-            {role["role"]}
+            {role["description"] if "description" in role else ""}
+            {role["role"] if "role" in role else ""}
             {f"Expected input: {role['expected_input']}" if role['expected_input'] != "" else ""}
             {f"Think about your response. If all the INPUT was provided and the OUTPUT seems complete, OUTPUT [[**FINISHED**]] OR [[**NOT_FINISHED**]] if not finished. You *MUST* output one or the other based on the circumstances."}
             {f"Example output: {role['examples']}" if role['examples'] != "" else ""}

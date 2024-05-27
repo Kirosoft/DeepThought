@@ -1,0 +1,12 @@
+{
+  "$schema": "https://aka.ms/azure/static-web-apps-cli/schema",
+  "configurations": {
+    "deepthoughtflow": {
+      "appLocation": ".",
+      "outputLocation": "./dist",
+      "appBuildCommand": "pnpm run build-dev",
+      "appName": "deepthoughtflow",
+      "resourceGroup": "deepthoughtflow-rg"
+    }
+  }
+}

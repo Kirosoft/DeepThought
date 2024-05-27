@@ -235,7 +235,7 @@ function similarity_search(input_vector, max_dist, top_k) {
         // else take 1st element from feed
         if (!feed || !feed.length) {
             var response = getContext().getResponse();
-            response.setBody(`no docs found: ${query} ${input_vector} ${max_dist} ${top_k}`);
+            response.setBody(`[]`);
         }
         else {
             var response = getContext().getResponse();

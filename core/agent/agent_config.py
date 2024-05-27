@@ -6,7 +6,7 @@ import logging
 # Helper class to gather all properties and settings expected when procesing
 # a payload from the EventHub
 class AgentConfig:
-    def __init__(self, input_body:str = None):
+    def __init__(self, input_body:str = None, user_settings_keys = None):
         self.SESSION_ID_CHARS = 16
 
         # sanitise the input
@@ -15,26 +15,49 @@ class AgentConfig:
         else:
             self.update_from_body(input_body)
 
+        if user_settings_keys is not None:
+            self.__update_from_user_settings(user_settings_keys)
+
         self.__init_env_vars()
 
     def update_from_body(self, input_body):
         try:
             self.body = json.loads(input_body)
-            self.__setup_vars()
+            self.__setup_vars_from_payload()
         except Exception as err:
             # invalid json supplied
             logging.error(f'invalid json payload {input_body} {err}')
             self.body = {}
             
+    def update_from_user_settings(self, user_settings_keys):
+
+        self.OPENAI_API_KEY = user_settings_keys("OPENAI_API_KEY")
+        # AI config
+        self.OPENAI_MODEL = user_settings_keys("OPENAI_MODEL")
+        self.OPENAI_EMBEDDING_MODEL = user_settings_keys("OPENAI_EMBEDDING_MODEL")
+
+        self.LLM_TYPE = user_settings_keys("LLM_TYPE")
+        self.EMEBDDING_TYPE = user_settings_keys("EMBEDDING_TYPE")
+
+        # github creds
+        self.GITHUB_USER = user_settings_keys("GITHUB_USER")
+        self.GITHUB_KEY = user_settings_keys("GITHUB_KEY")
+        
+        # LLAMA3
+        self.OLLAMA_ENDPOINT = user_settings_keys("OLLAMA_ENDPOINT")
+        self.OLLAMA_MODEL = user_settings_keys("OLLAMA_MODEL")
+        self.OLLAMA_EMBEDDING_MODEL = user_settings_keys("OLLAMA_EMBEDDING_MODEL")
+
+        # GROK
+        self.GROK_ENDPOINT = user_settings_keys("GROK_ENDPOINT")
+        self.GROK_MODEL = user_settings_keys("GROK_MODEL")
+        self.GROK_API_KEY = user_settings_keys("GROK_API_KEY")
+
+        # SERPER
+        self.SERPER_API_KEY = user_settings_keys("SERPER_API_KEY")
+
 
     def __init_env_vars(self):
-        # AI config
-        self.OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-        self.OPENAI_MODEL = os.getenv("OPENAI_MODEL")
-        self.OPENAI_EMBEDDING_MODEL = os.getenv("OPENAI_EMBEDDING_MODEL")
-
-        self.LLM_TYPE = os.getenv("LLM_TYPE")
-        self.EMEBDDING_TYPE = os.getenv("EMBEDDING_TYPE")
 
         self.MAX_SESSION_TOKENS = int(os.getenv("MAX_SESSION_TOKENS", "4096"))
 
@@ -42,10 +65,11 @@ class AgentConfig:
         self.INDEX_ROLES = os.getenv("INDEX_ROLES", "ai_roles")
         self.INDEX_HISTORY = os.getenv("INDEX_HISTORY", "ai_history")
         self.INDEX_TOOLS = os.getenv("INDEX_TOOLS", "ai_tools")
-        self.INDEX_CONTEXT = os.getenv("INDEX_CONTEXT", "ai_context")
+        self.INDEX_VECTOR = os.getenv("INDEX_VECTOR", "ai_vector")
         self.INDEX_SPECS = os.getenv("INDEX_SPECS", "ai_specs")
         self.INDEX_USER = os.getenv("INDEX_USER", "ai_user")
         self.INDEX_FLOWS = os.getenv("INDEX_FLOWS", "ai_flows")
+        self.INDEX_CONTEXT = os.getenv("INDEX_CONTEXT", "ai_context")
 
         self.DB_ROLES = os.getenv("DB_ROLES", "ai_roles")
         self.DB_HISTORY = os.getenv("DB_HISTORY", "ai_history")
@@ -72,30 +96,13 @@ class AgentConfig:
         # queue storage
         self.QUEUE_STORAGE_CONNECTION_STRING = os.getenv("QUEUE_STORAGE_CONNECTION_STRING"),
 
-        # github creds
-        self.GITHUB_USER = os.getenv("GITHUB_USER")
-        self.GITHUB_KEY = os.getenv("GITHUB_KEY")
-        
-        # LLAMA3
-        self.OLLAMA_ENDPOINT = os.getenv("OLLAMA_ENDPOINT")
-        self.OLLAMA_MODEL = os.getenv("OLLAMA_MODEL")
-        self.OLLAMA_EMBEDDING_MODEL = os.getenv("OLLAMA_EMBEDDING_MODEL")
-
-        # GROK
-        self.GROK_ENDPOINT = os.getenv("GROK_ENDPOINT")
-        self.GROK_MODEL = os.getenv("GROK_MODEL")
-        self.GROK_API_KEY = os.getenv("GROK_API_KEY")
-
-        # SERPER
-        self.SERPER_API_KEY = os.getenv("SERPER_API_KEY")
-
         self.AzureDBSetupFunctions = os.getenv("AzureDBSetupFunctions", "false")
 
         self.TOKEN_EXPIRY_MINUTES = os.getenv("TOKEN_EXPIRY_MINUTES",30)
 
     # Setup the needed properties
     # If they were not supplied then provide suitable defaults
-    def __setup_vars(self):
+    def __setup_vars_from_payload(self):
     
         # persona to use when evaluating the message or use the default
         self.role=self.body.get("role", "default_role")                      

@@ -1,8 +1,16 @@
 
+import '../imgs/load-progress-empty.png'
+import '../imgs/load-progress-full.png'
+import '../imgs/grid.png'
+
+import '../css/style.css'
+import '../css/litegraph-editor.css'
+import '../css/litegraph.css'
+
 import {LGraph, LiteGraph, LGraphCanvas} from 'litegraph.js';
 
 //Creates an interface to access extra features from a graph (like play, stop, live, etc)
-function Editor(container_id, options) {
+export function Editor(container_id, options) {
     options = options || {};
 
     //fill container
@@ -24,7 +32,7 @@ function Editor(container_id, options) {
     //create graph
     var graph = (this.graph = new LGraph());
     var graphcanvas = this.graphcanvas = new LGraphCanvas(canvas, graph);
-    graphcanvas.background_image = "imgs/grid.png";
+    graphcanvas.background_image = "./imgs/grid.png";
     graph.onAfterExecute = function() {
         graphcanvas.draw(true);
     };
@@ -206,10 +214,70 @@ Editor.prototype.goFullscreen = function() {
     }, 100);
 };
 
+
 Editor.prototype.onFullscreenButton = function() {
     this.goFullscreen();
 };
 
+Editor.prototype.addMiniWindow = function(w, h) {
+    var miniwindow = document.createElement("div");
+    miniwindow.className = "litegraph miniwindow";
+    miniwindow.innerHTML =
+        "<canvas class='graphcanvas' width='" +
+        w +
+        "' height='" +
+        h +
+        "' tabindex=10></canvas>";
+    var canvas = miniwindow.querySelector("canvas");
+    var that = this;
+
+    var graphcanvas = new LGraphCanvas( canvas, this.graph );
+    graphcanvas.show_info = false;
+    graphcanvas.background_image = "imgs/grid.png";
+    graphcanvas.scale = 0.25;
+    graphcanvas.allow_dragnodes = false;
+    graphcanvas.allow_interaction = false;
+    graphcanvas.render_shadows = false;
+    graphcanvas.max_zoom = 0.25;
+    this.miniwindow_graphcanvas = graphcanvas;
+    graphcanvas.onClear = function() {
+        graphcanvas.scale = 0.25;
+        graphcanvas.allow_dragnodes = false;
+        graphcanvas.allow_interaction = false;
+    };
+    graphcanvas.onRenderBackground = function(canvas, ctx) {
+        ctx.strokeStyle = "#567";
+        var tl = that.graphcanvas.convertOffsetToCanvas([0, 0]);
+        var br = that.graphcanvas.convertOffsetToCanvas([
+            that.graphcanvas.canvas.width,
+            that.graphcanvas.canvas.height
+        ]);
+        tl = this.convertCanvasToOffset(tl);
+        br = this.convertCanvasToOffset(br);
+        ctx.lineWidth = 1;
+        ctx.strokeRect(
+            Math.floor(tl[0]) + 0.5,
+            Math.floor(tl[1]) + 0.5,
+            Math.floor(br[0] - tl[0]),
+            Math.floor(br[1] - tl[1])
+        );
+    };
+
+    miniwindow.style.position = "absolute";
+    miniwindow.style.top = "4px";
+    miniwindow.style.right = "4px";
+
+    var close_button = document.createElement("div");
+    close_button.className = "corner-button";
+    close_button.innerHTML = "&#10060;";
+    close_button.addEventListener("click", function(e) {
+        graphcanvas.setGraph(null);
+        miniwindow.parentNode.removeChild(miniwindow);
+    });
+    miniwindow.appendChild(close_button);
+
+    this.root.querySelector(".content").appendChild(miniwindow);
+};
 
 Editor.prototype.addMultiview = function()
 {
@@ -219,7 +287,7 @@ Editor.prototype.addMultiview = function()
 	this.graphcanvas.viewport = [0,0,canvas.width*0.5-2,canvas.height];
 
 	var graphcanvas = new LGraphCanvas( canvas, this.graph );
-    graphcanvas.background_image = "imgs/grid.png";
+    graphcanvas.background_image = "./imgs/grid.png";
     this.graphcanvas2 = graphcanvas;
 	this.graphcanvas2.viewport = [canvas.width*0.5,0,canvas.width*0.5,canvas.height];
 }

@@ -29,11 +29,15 @@ class Loader:
             self.init_loaders()
 
     def init_loaders(self):
-        Loader.__loaders = []
+        Loader.__loaders = {}
         self.register_loader(loader_types.GITHUB_FILE_LOADER, [{"name":"repo", "mandatory":True}, {"name":"filter","Mandatory":False}])
                                                                     
     def register_loader(loader_name, loader_args):
-         Loader.__loaders.append(loader_name, loader_args)
+        Loader.__loaders[loader_name] = loader_args
+
+    def get_schema(self, loader_name):
+        return Loader.__loaders[loader_name] if loader_name in Loader.__loaders else None
+         
 
     def run(self, loaderName, args):
 

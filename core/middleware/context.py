@@ -1,6 +1,7 @@
 from core.agent.agent_config import AgentConfig
 from core.db.agent_db_base import AgentDBBase
 from urllib.parse import unquote
+from core.middleware.loader import Loader
 import json
 import logging
 import urllib3
@@ -58,6 +59,18 @@ class Context:
 
 
 
+    def run_context(self, context_name:str):
+
+        context = self.get_context(context_name)
+
+        if self.loader is None:
+            self.loader = Loader()
+
+        context = self.loader.get_context(context_name)
+
+        args = self.get_args(context)
+
+        self.loader.run(context["loader_name"], args)
     
 
 

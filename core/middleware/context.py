@@ -68,9 +68,9 @@ class Context:
 
         context = self.loader.get_context(context_name)
 
-        args = self.get_args(context)
+        result = self.loader.run(context["loader_name"], context["loader_args"])
 
-        self.loader.run(context["loader_name"], args)
+        return result
     
 
 

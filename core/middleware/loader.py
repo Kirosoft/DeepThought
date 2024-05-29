@@ -45,18 +45,22 @@ class Loader:
             case loader_types.GITHUB_FILE_LOADER:
                     
                     # TODO: validate the supplied args against the registered ones
-                    repo = args[0]
-                    filter = args[1]
+                    try: 
+                        repo = args["repo"]
+                        filter = args["filter"]
+                        github_api_url = args["github_api_url"]
 
-                    loader = GithubFileLoader(
-                        repo=repo,
-                        # TODO: this key should come from the user profile?
-                        access_token=self.agent_config.GITHUB_KEY,
-                        github_api_url="https://api.github.com",
-                        file_filter=lambda file_path: file_path.endswith(
-                            filter
-                        ),  
-                    )
+                        loader = GithubFileLoader(
+                            repo=repo,
+                            # TODO: this key should come from the user profile?
+                            access_token=self.agent_config.GITHUB_KEY,
+                            github_api_url="https://api.github.com",
+                            file_filter=lambda file_path: file_path.endswith(
+                                filter
+                            ),  
+                        )
+                    except:
+                        return None
                     return loader
 
     def getLoaders(self):

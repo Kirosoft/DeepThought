@@ -61,33 +61,40 @@ headers = {
 
 params = {'id': "github1"}
 
-# create a new context
-payload = json.dumps(new_context, ensure_ascii=False).encode('utf8')
-response = requests.post(url, payload, headers=headers)
-response_json = response.json()
-print(response_json)
+# # create a new context
+# payload = json.dumps(new_context, ensure_ascii=False).encode('utf8')
+# response = requests.post(url, payload, headers=headers)
+# response_json = response.json()
+# print(response_json)
 
-# get the new context
+# # get the new context
+# response = requests.get(url, params=params, headers=headers)
+# response_json = response.json()
+# print(response_json)
+
+# # get the  all the contexts
+# response = requests.get(url, headers=headers)
+# response_json = response.json()
+# print(response_json)
+
+
+# # delete the new context
+# # response = requests.delete(url, params=params, headers=headers)
+# # response_json = response.json()
+# # print(response_json)
+
+
+# # get the  context (should be blank)
+# response = requests.get(url, params=params, headers=headers)
+# response_json = response.json()
+# print(response_json)
+
+
+
+#############################################
+# run the contexts orchestrator
+url = "http://localhost:7071/api/run_context"
 response = requests.get(url, params=params, headers=headers)
 response_json = response.json()
 print(response_json)
-
-# get the  all the contexts
-response = requests.get(url, headers=headers)
-response_json = response.json()
-print(response_json)
-
-
-# delete the new context
-response = requests.delete(url, params=params, headers=headers)
-response_json = response.json()
-print(response_json)
-
-
-# get the  context (should be blank)
-response = requests.get(url, params=params, headers=headers)
-response_json = response.json()
-print(response_json)
-
-
 

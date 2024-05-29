@@ -30,19 +30,19 @@ class Loader:
         if Loader.__loaders is None:
             self.init_loaders()
 
-        self.userdb = AgentDBBase(agent_config, agent_config.INDEX_USER, user_id, tenant)
+        self.userdb = AgentDBBase(agent_config, agent_config.INDEX_USER, user_id, "system")
         self.user_keys = None
 
     def init_loaders(self):
         Loader.__loaders = {}
         self.register_loader(loader_types.GITHUB_FILE_LOADER, [
                 {"name":"repo", "mandatory":True}, 
-                {"name":"filter","mandatory":False, "default":".*"}, 
-                {"name":"github_api_url","mandatory": False, "default":"https://api.github.com" },
-                {"name":"github_key","mandatory": True, "default":"$GITHUB_API_KEY" }
+                {"name":"filter","mandatory":True, "default":".md"}, 
+                {"name":"github_api_url","mandatory": True, "default":"https://api.github.com" },
+                {"name":"github_key","mandatory": True, "default":"$GITHUB_KEY" }
             ])
                                                                     
-    def register_loader(loader_name, loader_args):
+    def register_loader(self, loader_name, loader_args):
         Loader.__loaders[loader_name] = loader_args
 
     def get_schema(self, loader_name):
@@ -61,45 +61,50 @@ class Loader:
 
             # resolve the value in user keys if available            
             return self.user_keys[arg[1:]] if arg[1:] in self.user_keys else arg
+        return arg
 
     def get_args(self, loader_args,input_args):
         result_args = {}
 
         for arg in loader_args:
             # arg found as supplied in the input
-            if arg in input_args:
-                result_args[arg] = self.resolve_variables(input_args[arg])
+            if arg["name"] in input_args:
+                result_args[arg["name"]] = self.resolve_variables(input_args[arg["name"]])
             elif arg["mandatory"] and "default" in arg:
-                result_args[arg] = self.resolve_variables(arg["default"])
+                result_args[arg["name"]] = self.resolve_variables(arg["default"])
             elif arg["mandatory"]:
                 raise(f'Missing mandatory {arg["name"]}')
             else:
                 # missing but not mandatory
                 pass
+        return result_args
 
     def run(self, loader_name, input_args):
+        result = []
 
         match loader_name:
             case loader_types.GITHUB_FILE_LOADER:
                     
                     try: 
-                        loader_args_spec = Loader.__loaders(loader_name)
+                        loader_args_spec = Loader.__loaders[loader_name]
                         loader_args  = self.get_args(loader_args_spec, input_args)
 
                         loader = GithubFileLoader(
                             repo=loader_args["repo"],
                             # TODO: this key should come from the user profile?
                             access_token=loader_args["github_key"],
-                            github_api_url=loader_args["github_api_ul"],
+                            github_api_url=loader_args["github_api_url"],
                             file_filter=lambda file_path: file_path.endswith(
                                 loader_args["filter"]
                             ),  
                         )
-                    except:
+                        result = loader.load()
+                        return result
+                    except Exception as e:
+                        logging.error(f"error running loader: {e}")
                         return None
 
-                    return loader
-
+        return None
 
 
 

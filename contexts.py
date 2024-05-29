@@ -91,45 +91,61 @@ async def run_context(req: func.HttpRequest, client) -> func.HttpResponse:
         user_settings = response["user_settings"]
         payload = response["payload"]
 
-    body = req.get_body().decode('utf-8')
+    #body = req.get_body().decode('utf-8')
 
-    instance_id = await client.start_new("orchestrate_context", None, body)
-    monitoring_url = client.create_http_management_payload(instance_id)
+    input = {
+        "user_settings":user_settings,
+        "id":req.params.get("id","")
+    }
 
-    return func.HttpResponse(body=monitoring_url, status_code=202, headers=response_headers)
+    instance_id = await client.start_new("orchestrate_context", None, input )
+    logging.info(f"Started orchestration with ID = '{instance_id}'.")
+
+    return client.create_check_status_response(req, instance_id)
 
 
 @df_contexts.orchestration_trigger(context_name="context")
-async def orchestrate_context(context):
+def orchestrate_context(context: df.DurableOrchestrationContext):
     input_data = context.get_input()  # Retrieve input data
+    user_settings = input_data["user_settings"]
 
     # You can process or pass this data to activity functions as needed
     # TODO: migrate version
-    result1 = await context.call_activity('run_loader', input_data)
-    result2 = await context.call_activity('run_adaptor', input_data)
-    result3 = await context.call_activity('run_embedding', input_data)
-    result4 = await context.call_activity('do_import', input_data)
+    agent_config = AgentConfig(user_settings_keys=user_settings["keys"])
+    context_crud = Context(agent_config, user_settings["user_id"], user_settings["user_tenant"])
+
+    context_definition = context_crud.get_context(input_data["id"])
+    context_definition["user_settings_keys"] = user_settings["keys"]
+
+    result1 = yield context.call_activity('run_loader', context_definition)
+    # result2 = yield context.call_activity('run_adaptor', "2")
+    # result3 = yield context.call_activity('run_embedding', "3")
+    # result4 = yield context.call_activity('do_import', "4")
     
-    return [result1, result2, result3, result4]
+    return [result1]
 
 
-@df_contexts.activity_trigger
-def run_loader(name: str) -> str:
+@df_contexts.activity_trigger(input_name="name")
+def run_loader(name):
+
+    loader = Loader(AgentConfig(), name["user_id"], name["tenant"])
+    result = loader.run(name["loader"], name["loader_args"])
+
     # You can access the input with context.get_input() if needed
-    return f"run loader: {name}"
+    return f"run loader: "
 
-@df_contexts.activity_trigger
+@df_contexts.activity_trigger(input_name="name")
 def run_adaptor(name: str) -> str:
     # You can access the input with context.get_input() if needed
     return f"run adaptor: {name}"
 
 
-@df_contexts.activity_trigger
+@df_contexts.activity_trigger(input_name="name")
 def run_embedding(name: str) -> str:
     # You can access the input with context.get_input() if needed
     return f"run embedding: {name}"
 
-@df_contexts.activity_trigger
+@df_contexts.activity_trigger(input_name="name")
 def do_import(name: str) -> str:
     # You can access the input with context.get_input() if needed
     return f"do import: {name}"

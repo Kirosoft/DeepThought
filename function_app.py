@@ -1,4 +1,5 @@
 import azure.functions as func
+import azure.durable_functions as df
 import logging
 
 from tools import tools
@@ -7,7 +8,7 @@ from agent import agent
 from roles import roles
 from flows import flows
 from contexts import contexts
-
+from contexts import df_contexts
 
 import urllib3
 
@@ -26,6 +27,9 @@ app.register_functions(roles)
 app.register_functions(flows)
 app.register_functions(contexts)
 
+app.register_functions(df_contexts)
+
+# activity functions
 
 
 # @app.schedule(schedule="0 0 6 * * *", arg_name="mytimer", run_on_startup=True) 

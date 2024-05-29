@@ -79,6 +79,11 @@ python tools/update_tools.py "<path-to-tools-directory>"
 
 # TODO:
 
+
+Workflow:
+
+Function orchestration
+
 MVP:
 
 UserSettings:
@@ -94,14 +99,6 @@ Tools:
 RAG from PDF, TXT files, Website
 UI:
 
-Develop flow based interface
-Save role definitions to system, tenant or user
-Save spec definition to system, tenant or user
-Load roles (system, tenant userid)
-Load specs (system, tenant userid)
-Load tools (system, tenant userid)
-Save flow (system, tenant, user)
-Load flow (system, tenant, user)
 
 
 Docs:
@@ -136,6 +133,10 @@ Installation:
 
 Done:
 
+<strike>role CRUD definitions to system, tenant or user</strike>
+<Strike>specs CRUD (system, tenant userid)</strike>
+<Strike>tools CRUD (system, tenant userid)</strike>
+<Strike>flow CRUD (system, tenant, user)</strike>
 <strike>* Multi-tenant support added to database and functions<br/></strike>
 <Strike>* Support multiple users<br/></strike>
 <strike>* Security - Added auth API to ensure secrets are not needed to be stored browser side<br></strike>

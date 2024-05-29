@@ -15,8 +15,8 @@ class Context:
 
     def __init__(self, agent_config, user_id, tenant):
         self.agent_config = agent_config
-        self.db_contexts_user = AgentDBBase(self.agent_config, self.agent_config.INDEX_CONTEXTS, user_id, tenant)
-        self.db_contexts_system = AgentDBBase(self.agent_config, self.agent_config.INDEX_CONTEXT, "system", "system")
+        self.db_contexts_user = AgentDBBase(self.agent_config, self.agent_config.INDEX_CONTEXT_DEFINITION, user_id, tenant)
+        self.db_contexts_system = AgentDBBase(self.agent_config, self.agent_config.INDEX_CONTEXT_DEFINITION, "system", "system")
 
     def load_all_contexts(self):
         system_contexts = list(self.db_contexts_system.get_all())

@@ -1,5 +1,7 @@
 
 import azure.functions as func
+import azure.durable_functions as df
+
 import logging
 from core.security.security_utils import validate_request
 import json
@@ -8,6 +10,8 @@ from core.middleware.context import Context
 from core.middleware.loader import Loader
 
 contexts = func.Blueprint()
+df_contexts  = df.Blueprint()
+
 
 @contexts.function_name(name="contexts_crud")
 @contexts.route(auth_level=func.AuthLevel.ANONYMOUS)
@@ -73,10 +77,9 @@ def contexts_crud(req: func.HttpRequest) -> func.HttpResponse:
     else:
         return func.HttpResponse("Method not allowed", status_code=405, headers=response_headers)
 
-
-@contexts.function_name(name="run_context")
-@contexts.route(auth_level=func.AuthLevel.ANONYMOUS)
-def run_context(req: func.HttpRequest) -> func.HttpResponse:  
+@df_contexts.route(route="run_context")
+@df_contexts.durable_client_input(client_name="client")
+async def run_context(req: func.HttpRequest, client) -> func.HttpResponse:  
 
     logging.info('run context')
 
@@ -88,12 +91,48 @@ def run_context(req: func.HttpRequest) -> func.HttpResponse:
         user_settings = response["user_settings"]
         payload = response["payload"]
 
-    # find the loader in the context
     body = req.get_body().decode('utf-8')
-    agent_config = AgentConfig(body) if body != '' else AgentConfig()
 
-    loader = Loader(agent_config, user_settings["user_id"], user_settings["user_tenant"])
-    loaderArgs = body["LoaderArgs"]
+    instance_id = await client.start_new("orchestrate_context", None, body)
+    monitoring_url = client.create_http_management_payload(instance_id)
 
-    docLoader = loader.get(body["loaderName"])
+    return func.HttpResponse(body=monitoring_url, status_code=202, headers=response_headers)
+
+
+@df_contexts.orchestration_trigger(context_name="context")
+async def orchestrate_context(context):
+    input_data = context.get_input()  # Retrieve input data
+
+    # You can process or pass this data to activity functions as needed
+    # TODO: migrate version
+    result1 = await context.call_activity('run_loader', input_data)
+    result2 = await context.call_activity('run_adaptor', input_data)
+    result3 = await context.call_activity('run_embedding', input_data)
+    result4 = await context.call_activity('do_import', input_data)
     
+    return [result1, result2, result3, result4]
+
+
+@df_contexts.activity_trigger
+def run_loader(name: str) -> str:
+    # You can access the input with context.get_input() if needed
+    return f"run loader: {name}"
+
+@df_contexts.activity_trigger
+def run_adaptor(name: str) -> str:
+    # You can access the input with context.get_input() if needed
+    return f"run adaptor: {name}"
+
+
+@df_contexts.activity_trigger
+def run_embedding(name: str) -> str:
+    # You can access the input with context.get_input() if needed
+    return f"run embedding: {name}"
+
+@df_contexts.activity_trigger
+def do_import(name: str) -> str:
+    # You can access the input with context.get_input() if needed
+    return f"do import: {name}"
+
+
+

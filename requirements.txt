@@ -3,6 +3,7 @@
 # Manually managing azure-functions-worker may cause unexpected issues
 
 azure-functions
+azure-functions-durable
 azure-cosmos
 #azure.identity
 #azure.storage.queue
@@ -37,3 +38,6 @@ numpy
 
 # crypto
 pyjwt[crypto]
+
+#test
+pytest

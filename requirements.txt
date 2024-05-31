@@ -11,7 +11,8 @@ azure-cosmos
 # core dependencies
 elasticsearch
 langchain
-langchain_community
+firecrawl-py
+PyPDF2
 
 # Vertex AI dependencies
 google-cloud-aiplatform

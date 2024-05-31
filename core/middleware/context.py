@@ -17,6 +17,8 @@ urllib3.disable_warnings()
 # Create a logger for the 'azure' SDK
 logger = logging.getLogger('azure')
 logger.setLevel(logging.ERROR)
+
+    
 class Context:
 
     def __init__(self, agent_config, user_id, tenant):
@@ -101,8 +103,9 @@ class Context:
                 vector_doc={}
                 result=self.embedding.get_embedding(chunk)
                 vector = result.data[0].embedding
-                vector_doc["url"] = doc.metadata["source"]
-                vector_doc["path"] = doc.metadata["path"]
+                # TODO support output mapper for meta data properties
+                vector_doc["url"] = doc.metadata["source"] if "source" in doc.metadata else ""
+                vector_doc["path"] = doc.metadata["path"] if "path" in doc.metadata else ""
                 vector_doc["embedding"] = vector
                 vector_doc["content"] = chunk
 

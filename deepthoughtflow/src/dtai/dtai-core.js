@@ -4,11 +4,12 @@ import {DTAI_User} from "./dtai-user.js";
 require("whatwg-fetch");
 
 
-//const baseURL ="http://localhost:7071/api";
-const baseURL ="https://deepthought-app.azurewebsites.net/api";
+const baseURL ="http://localhost:7071/api";
+//const baseURL ="https://deepthought-app.azurewebsites.net/api";
 
 const flowsFunctionUrl = `${baseURL}/flows_crud`;
 const rolesFunctionUrl = `${baseURL}/roles_crud`;
+const contextsFunctionUrl = `${baseURL}/contexts_crud`;
 const runAgentFunctionUrl = `${baseURL}/run_agent`;
 
 
@@ -151,6 +152,26 @@ export class DTAI {
             var roleOptions = await this.getHeaderOptions();
             // Make the request
             fetch(rolesFunctionUrl, roleOptions)
+            .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+
+                    return resolve(response.json()); // or response.text() if the response is not in JSON format
+            })
+            .catch(error => {
+                console.error('Failed to fetch:', error);
+                reject(error);
+            });
+        });
+    }
+
+    async loadContexts() {
+        return new Promise(async (resolve, reject) => {
+
+            var roleOptions = await this.getHeaderOptions();
+            // Make the request
+            fetch(contextsFunctionUrl, roleOptions)
             .then(response => {
                     if (!response.ok) {
                         throw new Error('Network response was not ok');

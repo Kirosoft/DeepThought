@@ -28,7 +28,7 @@ def contexts_crud(req: func.HttpRequest) -> func.HttpResponse:
         payload = response["payload"]
     
     body = req.get_body().decode('utf-8')
-    agent_config = AgentConfig(body) if body != '' else AgentConfig()
+    agent_config = AgentConfig(body, user_settings_keys=user_settings["keys"]) if body != '' else AgentConfig(user_settings_keys=user_settings["keys"])
 
     if req.method == "POST":
         try:
@@ -128,21 +128,23 @@ def run_loader(inputdata):
     loader = Loader(agent_config, user_settings["user_id"], user_settings["tenant"])
 
     docs = loader.run(context["loader"], context["loader_args"])
-    next_version = context["current_version"]+1
+    if len(docs) > 0:
+        next_version = context["current_version"]+1
 
-    result = context_crud.process_content(docs, context["id"], next_version)
+        result = context_crud.process_content(docs, context["id"], next_version)
 
-    # move the current version
-    context["current_version"] = next_version
+        # move the current version
+        context["current_version"] = next_version
 
-    #schedule last version for deletion
-    if next_version > 1:
-        context_crud.schedule_for_deletion(context['id'], next_version-1, 60*1)
+        #schedule last version for deletion
+        if next_version > 1:
+            context_crud.schedule_for_deletion(context['id'], next_version-1, 60*1)
 
-    context_crud.save_context(context)
+        context_crud.save_context(context)
 
-    # You can access the input with context.get_input() if needed
-    return result
+        # You can access the input with context.get_input() if needed
+        return result
+    return ""
 
 @df_contexts.activity_trigger(input_name="name")
 def run_adaptor(name: str) -> str:

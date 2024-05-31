@@ -34,7 +34,7 @@ new_context = {
     "id": "github1",
     "tenant": "ukho",
     "user_id": "12345",
-    "data_type": "context_ukho_policy_v1",
+    "data_type": "context_definition",
     "name": "github1",
     "loader": "github_file_loader",
     "loader_args": {
@@ -44,6 +44,7 @@ new_context = {
         "api_url": "https://api.github.com"
     },
     "adaptor": "html_to_text",
+    "current_version":0,
     "adaptor_args": {},
     "rag_options": {
         "chunk_size": 1000,
@@ -61,39 +62,30 @@ headers = {
 
 params = {'id': "github1"}
 
-# # create a new context
-# payload = json.dumps(new_context, ensure_ascii=False).encode('utf8')
-# response = requests.post(url, payload, headers=headers)
-# response_json = response.json()
-# print(response_json)
+# create a new context
+payload = json.dumps(new_context, ensure_ascii=False).encode('utf8')
+response = requests.post(url, payload, headers=headers)
+response_json = response.json()
+print(response_json)
 
-# # get the new context
-# response = requests.get(url, params=params, headers=headers)
-# response_json = response.json()
-# print(response_json)
+# get the new context
+response = requests.get(url, params=params, headers=headers)
+response_json = response.json()
+print(response_json)
 
-# # get the  all the contexts
-# response = requests.get(url, headers=headers)
-# response_json = response.json()
-# print(response_json)
-
-
-# # delete the new context
-# # response = requests.delete(url, params=params, headers=headers)
-# # response_json = response.json()
-# # print(response_json)
+# get the  all the contexts
+response = requests.get(url, headers=headers)
+response_json = response.json()
+print(response_json)
 
 
-# # get the  context (should be blank)
-# response = requests.get(url, params=params, headers=headers)
+# delete the new context
+# response = requests.delete(url, params=params, headers=headers)
 # response_json = response.json()
 # print(response_json)
 
 
-
-#############################################
-# run the contexts orchestrator
-url = "http://localhost:7071/api/run_context"
+# get the  context (should be blank)
 response = requests.get(url, params=params, headers=headers)
 response_json = response.json()
 print(response_json)

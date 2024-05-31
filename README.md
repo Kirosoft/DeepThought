@@ -100,6 +100,9 @@ RAG from PDF, TXT files, Website
 UI:
 
 
+S57 Demo:
+
+
 
 Docs:
 
@@ -133,6 +136,8 @@ Installation:
 
 Done:
 
+<Strike>Optional secrets now come from user account</strike>
+<Strike>RAG from github repo</strike>
 <strike>role CRUD definitions to system, tenant or user</strike>
 <Strike>specs CRUD (system, tenant userid)</strike>
 <Strike>tools CRUD (system, tenant userid)</strike>

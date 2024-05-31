@@ -7,7 +7,7 @@ var dtai = new DTAI();
 
 
 
-export class AgentNode  extends LGraphNode {
+export class ContextNode  extends LGraphNode {
 
     constructor() {
         super();
@@ -120,32 +120,6 @@ export class AgentNode  extends LGraphNode {
         var size = super.computeSize();
         size[0] += 150;
         return size;
-    }
-}
-
-export class UserInput extends LGraphNode {
-
-    constructor() {
-        super();
-        this.properties = { output: "" };
-        this.initWidgets();
-        this.initIO();
-        this.size = this.computeSize();
-        this.serialize_widgets = true;
-        this.title = "Agent"
-    }
-
-    initWidgets() {
-        this.text = this.addWidget("text", "UserInput", "multiline", function(v) {}, { multiline: true });
-    }
-
-    initIO() {
-        this.addOutput("UserText", "text");
-    }
-
-    onExecute() {
-        this.setOutputData(0, this.text.value);
-        this.properties.output = this.text.value;
     }
 }
 

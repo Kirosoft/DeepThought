@@ -11,6 +11,7 @@ import {Editor} from './litegraph-editor.js'
 import {} from './customnodes.js'
 import { DTAI } from './dtai/dtai-core.js';
 import {AgentNode} from './nodes/agentnode.js'
+import {ContextNode} from './nodes/contextnode.js'
 
 LiteGraph.node_images_path = "../nodes_data/";
 
@@ -147,8 +148,23 @@ await  dtai.loadFlows().then(flows => {
 });
 
 
-function createDerivedClass(className) {
+function createAgentDerivedClass(className) {
     var DynamicClass =  class extends AgentNode {
+        constructor() {
+            super();
+			this.title = className;
+        }
+    };
+
+	// Set the name of the class dynamically using Object.defineProperty
+	Object.defineProperty(DynamicClass, 'name', { value: className });
+	// Object.defineProperty(DynamicClass, 'type', { value: className });
+	Object.defineProperty(DynamicClass, 'title', { value: className });
+	return DynamicClass;
+}
+
+function createContextDerivedClass(className) {
+    var DynamicClass =  class extends ContextNode {
         constructor() {
             super();
 			this.title = className;
@@ -167,7 +183,7 @@ await  dtai.loadRoles().then(roles => {
 	roles?.user_roles?.forEach(role => {
 		console.log(`found user role: ${role.name}`);
 
-		var roleClass = createDerivedClass(role.name);
+		var roleClass = createAgentDerivedClass(role.name);
 
 		LiteGraph.registerNodeType(`roles/${role.name}`, roleClass);
 
@@ -178,3 +194,16 @@ await  dtai.loadRoles().then(roles => {
 	});
 
 });
+
+await  dtai.loadContexts().then(contexts => {
+
+	contexts?.user_contexts?.forEach(context => {
+		console.log(`found context: ${context.name}`);
+
+		var contextClass = createContextDerivedClass(context.name);
+
+		LiteGraph.registerNodeType(`contexts/${context.name}`, contextClass);
+
+	});
+});
+

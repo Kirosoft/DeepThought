@@ -7,7 +7,9 @@ import types
 
 # langchain loaders
 from langchain.document_loaders import GithubFileLoader
-
+from langchain_community.document_loaders import FireCrawlLoader
+import urllib, PyPDF2
+from io import BytesIO
 
 urllib3.disable_warnings()
 
@@ -17,7 +19,16 @@ logger.setLevel(logging.ERROR)
 
 loader_types = types.SimpleNamespace()
 loader_types.GITHUB_FILE_LOADER = "github_file_loader"
+loader_types.HTML_FILE_LOADER = "html_file_loader"
+loader_types.PDF_FILE_LOADER = "pdf_file_loader"
 
+class Document(object):
+    metadata = {}
+    page_content = ""
+    def __init__(self, page_content, metadata):
+        self.page_content = page_content
+        self.metadata = metadata
+    
 class Loader:
     
     __loaders = None
@@ -41,6 +52,14 @@ class Loader:
                 {"name":"github_api_url","mandatory": True, "default":"https://api.github.com" },
                 {"name":"github_key","mandatory": True, "default":"$GITHUB_KEY" }
             ])
+        self.register_loader(loader_types.HTML_FILE_LOADER, [
+            {"name":"url", "mandatory":True},
+            {"name":"mode", "mandatory":True, "default":"crawl"}, # scape for single page mode, crawl for multi page
+            {"name":"firecrawl_key","mandatory":True, "default":"$FIRECRAWL_API_KEY"}
+        ])
+        self.register_loader(loader_types.PDF_FILE_LOADER, [
+            {"name":"url", "mandatory":True}
+        ])
                                                                     
     def register_loader(self, loader_name, loader_args):
         Loader.__loaders[loader_name] = loader_args
@@ -103,9 +122,38 @@ class Loader:
                     except Exception as e:
                         logging.error(f"error running loader: {e}")
                         return None
+            case loader_types.HTML_FILE_LOADER:
+                    
+                    try: 
+                        loader_args_spec = Loader.__loaders[loader_name]
+                        loader_args  = self.get_args(loader_args_spec, input_args)
 
+                        loader = FireCrawlLoader(
+                            api_key=loader_args["firecrawl_key"],
+                            # TODO: this key should come from the user profile?
+                            url=loader_args["url"],
+                            mode=loader_args["mode"],
+                        )
+                        result = loader.load()
+                        return result
+                    except Exception as e:
+                        logging.error(f"error running loader: {e}")
+                        return []
+            case loader_types.PDF_FILE_LOADER:
+                    try: 
+                        loader_args_spec = Loader.__loaders[loader_name]
+                        loader_args  = self.get_args(loader_args_spec, input_args)
+
+                        f = urllib.request.urlopen(loader_args["url"]).read()
+                        pdf_bytes = BytesIO(f)
+                        pdf_reader = PyPDF2.PdfReader(pdf_bytes)
+
+                        result = [Document(page.extract_text(), {}) for page in pdf_reader.pages]
+                        return result
+                    except Exception as e:
+                        logging.error(f"error running loader: {e}")
+                        return []
         return None
-
 
 
 

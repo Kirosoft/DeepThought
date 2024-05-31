@@ -4,7 +4,7 @@ import logging
 from core.security.security_utils import validate_request
 import json
 from core.agent.agent_config import AgentConfig
-from core.middleware.context import Context
+from core.middleware.role import Role
 
 roles = func.Blueprint()
 
@@ -23,12 +23,12 @@ def roles_crud(req: func.HttpRequest) -> func.HttpResponse:
         payload = response["payload"]
     
     body = req.get_body().decode('utf-8')
-    agent_config = AgentConfig(body) if body != '' else AgentConfig()
+    agent_config = AgentConfig(body, user_settings_keys=user_settings["keys"]) if body != '' else AgentConfig(user_settings_keys=user_settings["keys"])
 
     if req.method == "POST":
         try:
             json_body = json.loads(body)
-            role = Context(agent_config, user_settings["user_id"], user_settings["user_tenant"])
+            role = Role(agent_config, user_settings["user_id"], user_settings["user_tenant"])
             result = role.save_role(json_body)
             response_str = json.dumps(result, ensure_ascii=False).encode('utf8')
             return func.HttpResponse(response_str, headers=response_headers, status_code=200)
@@ -41,7 +41,7 @@ def roles_crud(req: func.HttpRequest) -> func.HttpResponse:
     if req.method == "DELETE":
         try:
             item_id = req.params.get('id')
-            role = Context(agent_config, user_settings["user_id"], user_settings["user_tenant"])
+            role = Role(agent_config, user_settings["user_id"], user_settings["user_tenant"])
             result = role.delete_role(item_id)
             response_str = json.dumps(result, ensure_ascii=False).encode('utf8')
             return func.HttpResponse(response_str, headers=response_headers, status_code=200)
@@ -54,7 +54,7 @@ def roles_crud(req: func.HttpRequest) -> func.HttpResponse:
     elif req.method == "GET":
         try:
             item_id = req.params.get('id')
-            role = Context(agent_config, user_settings["user_id"], user_settings["user_tenant"])
+            role = Role(agent_config, user_settings["user_id"], user_settings["user_tenant"])
             if item_id is not None:
                 result = role.get_role(item_id)
             else:

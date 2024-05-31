@@ -22,7 +22,7 @@ def flows_crud(req: func.HttpRequest) -> func.HttpResponse:
         payload = response["payload"]
     
     body = req.get_body().decode('utf-8')
-    agent_config = AgentConfig(body) if body != '' else AgentConfig()
+    agent_config = AgentConfig(body, user_settings_keys=user_settings["keys"]) if body != '' else AgentConfig(user_settings_keys=user_settings["keys"])
 
     if req.method == "POST":
         try:

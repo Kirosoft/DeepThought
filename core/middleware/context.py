@@ -1,10 +1,16 @@
 from core.agent.agent_config import AgentConfig
 from core.db.agent_db_base import AgentDBBase
+from core.llm.embedding_base import EmbeddingBase
 from urllib.parse import unquote
 from core.middleware.loader import Loader
 import json
 import logging
 import urllib3
+from langchain_community.document_loaders import TextLoader
+from langchain_text_splitters import CharacterTextSplitter
+import base64
+import numpy as np
+
 
 urllib3.disable_warnings()
 
@@ -17,6 +23,9 @@ class Context:
         self.agent_config = agent_config
         self.db_contexts_user = AgentDBBase(self.agent_config, self.agent_config.INDEX_CONTEXT_DEFINITION, user_id, tenant)
         self.db_contexts_system = AgentDBBase(self.agent_config, self.agent_config.INDEX_CONTEXT_DEFINITION, "system", "system")
+        self.embedding = EmbeddingBase(agent_config)
+        self.user_id = user_id
+        self.tenant = tenant
 
     def load_all_contexts(self):
         system_contexts = list(self.db_contexts_system.get_all())
@@ -58,19 +67,52 @@ class Context:
             return self.db_contexts_system.delete(context_name)
 
 
+    def embedding_to_lsh(self, embedding, num_planes=10, seed=123):
 
-    def run_context(self, context_name:str):
+        # Generate a set of random planes (vectors) for the projection
+        planes = np.random.normal(size=(num_planes, len(embedding)))
 
-        context = self.get_context(context_name)
+        # Project the embedding onto each plane and binarize the results
+        projections = np.dot(planes, embedding)
+        binary_projections = (projections >= 0).astype(int)
 
-        if self.loader is None:
-            self.loader = Loader()
+        # Convert the binary projections to a string hash
+        hash_str = ''.join(str(bit) for bit in binary_projections)
 
-        context = self.loader.get_context(context_name)
+        # Return the hash as a string
+        return hash_str
 
-        result = self.loader.run(context["loader_name"], context["loader_args"])
+    def schedule_for_deletion(self, context_name, version, ttl_seconds=60*5):
+        full_context_name = f'{self.agent_config.INDEX_VECTOR}_{context_name}_v{version}'
+        db_vector_chunks = AgentDBBase(self.agent_config, full_context_name, self.user_id, self.tenant)
+        db_vector_chunks.set_ttl_for_data_type(full_context_name, ttl_seconds)
+        
+    def process_content(self, docs, context_name, version):
+        
+        db_vector_chunks = AgentDBBase(self.agent_config, f'{self.agent_config.INDEX_VECTOR}_{context_name}_v{version}', self.user_id, self.tenant)
 
-        return result
+        for doc in docs:
+
+            text_splitter = CharacterTextSplitter(chunk_size=5000, chunk_overlap=100)
+            chunks = text_splitter.split_text(doc.page_content)
+
+            # Adding metadata to documents
+            for i, chunk in enumerate(chunks):
+                vector_doc={}
+                result=self.embedding.get_embedding(chunk)
+                vector = result.data[0].embedding
+                vector_doc["url"] = doc.metadata["source"]
+                vector_doc["path"] = doc.metadata["path"]
+                vector_doc["embedding"] = vector
+                vector_doc["content"] = chunk
+
+                hash = self.embedding_to_lsh(vector,256)
+                row_key = int(hash, 2).to_bytes(-(-len(hash) // 8), byteorder='big')
+                # encode the int array into a base64 string
+                encoded = base64.b64encode(row_key).decode('utf-8').replace('/','-').replace('=','_')
+                vector_doc["encoded"] = encoded
+
+                db_vector_chunks.index(id=encoded, doc=vector_doc)
     
 
 

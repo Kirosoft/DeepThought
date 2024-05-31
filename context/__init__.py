@@ -8,9 +8,11 @@ import pathlib
 from core.db.agent_db_base import AgentDBBase
 from core.agent.agent_config import AgentConfig
 from core.llm.embedding_base import EmbeddingBase
+from core.security.security_utils import get_user_context
 
 from langchain_community.document_loaders import TextLoader
 from langchain_text_splitters import CharacterTextSplitter
+
 import numpy as np
 import logging
 import urllib3
@@ -27,7 +29,8 @@ settings = json.loads(TextLoader(join(os.getcwd(), 'local.settings.json'), encod
 for setting in settings["Values"]:
     os.environ[setting]=settings["Values"][setting]
 
-agent_config = AgentConfig()
+user_settings = get_user_context("ukho")
+agent_config = AgentConfig(user_settings_keys=user_settings["keys"])
 db = AgentDBBase(agent_config, agent_config.INDEX_VECTOR, "ukho", "ukho")
 embedding = EmbeddingBase(agent_config)
 
@@ -108,8 +111,16 @@ def do_import(url):
         if file_type.lower() == ".md":
             txt = get_content(file["url"], file["path"])
 
+def delete_by_datatype(datatype_name):
+    db = AgentDBBase(agent_config, agent_config.DB_HISTORY, "ukho", "12345")
+
+    db.delete_all_by_datatype(datatype_name)
+
+#delete_by_datatype("vector_github1_v7")
+
+
 url = "https://api.github.com/repos/ukho/docs/git/trees/main?recursive=1"  # The basic URL to use the GitHub API
 
-do_import(url)
+#do_import(url)
 
 #test_query()

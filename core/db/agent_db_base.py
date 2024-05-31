@@ -65,6 +65,12 @@ class AgentDBBase:
     def delete_index(self):
         self.db_handler.delete_index()
 
+    def delete_all_by_datatype(self, data_type):
+        self.db_handler.delete_all_by_datatype(data_type)
+
+    def set_ttl_for_data_type(self, data_type, ttl_seconds):
+        self.db_handler.set_ttl_for_data_type(data_type, ttl_seconds)
+
 from core.db.agent_db_elastic import AgentDBElastic
 from core.db.agent_db_cosmos import AgentDBCosmos
 from core.db.agent_db_elastic_vector import AgentDBElasticVector

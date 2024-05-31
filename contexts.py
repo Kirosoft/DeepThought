@@ -107,32 +107,42 @@ async def run_context(req: func.HttpRequest, client) -> func.HttpResponse:
 @df_contexts.orchestration_trigger(context_name="context")
 def orchestrate_context(context: df.DurableOrchestrationContext):
     input_data = context.get_input()  # Retrieve input data
-    user_settings = input_data["user_settings"]
 
-    # You can process or pass this data to activity functions as needed
-    # TODO: migrate version
-    agent_config = AgentConfig(user_settings_keys=user_settings["keys"])
-    context_crud = Context(agent_config, user_settings["user_id"], user_settings["user_tenant"])
-
-    context_definition = context_crud.get_context(input_data["id"])
-    context_definition["user_settings_keys"] = user_settings["keys"]
-
-    result1 = yield context.call_activity('run_loader', context_definition)
+    docs = yield context.call_activity('run_loader', input_data)
     # result2 = yield context.call_activity('run_adaptor', "2")
-    # result3 = yield context.call_activity('run_embedding', "3")
-    # result4 = yield context.call_activity('do_import', "4")
+    # result3 = yield context.call_activity('do_chunk', "3")
+    # result4 = yield context.call_activity('do_encode', "4")
     
-    return [result1]
+
+    return [docs]
 
 
-@df_contexts.activity_trigger(input_name="name")
-def run_loader(name):
+@df_contexts.activity_trigger(input_name="inputdata")
+def run_loader(inputdata):
 
-    loader = Loader(AgentConfig(), name["user_id"], name["tenant"])
-    result = loader.run(name["loader"], name["loader_args"])
+    user_settings = inputdata["user_settings"]
+    agent_config = AgentConfig(user_settings_keys=user_settings["keys"])
+
+    context_crud = Context(agent_config, user_settings["user_id"], user_settings["user_tenant"])
+    context = context_crud.get_context(inputdata["id"])
+    loader = Loader(agent_config, user_settings["user_id"], user_settings["tenant"])
+
+    docs = loader.run(context["loader"], context["loader_args"])
+    next_version = context["current_version"]+1
+
+    result = context_crud.process_content(docs, context["id"], next_version)
+
+    # move the current version
+    context["current_version"] = next_version
+
+    #schedule last version for deletion
+    if next_version > 1:
+        context_crud.schedule_for_deletion(context['id'], next_version-1, 60*1)
+
+    context_crud.save_context(context)
 
     # You can access the input with context.get_input() if needed
-    return f"run loader: "
+    return result
 
 @df_contexts.activity_trigger(input_name="name")
 def run_adaptor(name: str) -> str:
@@ -150,5 +160,10 @@ def do_import(name: str) -> str:
     # You can access the input with context.get_input() if needed
     return f"do import: {name}"
 
+
+@df_contexts.activity_trigger(input_name="name")
+def save_context(name: str) -> str:
+    # You can access the input with context.get_input() if needed
+    return f"do import: {name}"
 
 

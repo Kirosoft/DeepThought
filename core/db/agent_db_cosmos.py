@@ -4,7 +4,7 @@ from core.db.agent_db_base import AgentDBBase
 from core.llm.embedding_base import EmbeddingBase
 
 import azure.cosmos.cosmos_client as cosmos_client
-from azure.cosmos import PartitionKey
+from azure.cosmos import PartitionKey, exceptions
 import logging
 import json
 import urllib3
@@ -181,8 +181,35 @@ class AgentDBCosmos(AgentDBBase):
     def delete(self, id:str):
         return self.get_container().delete_item(id, partition_key=[self.tenant, self.user_id, self.__data_type])
 
+    def delete_all_by_datatype(self, data_type):
+        # TODO: fix this security problem
+        query = f"SELECT * FROM c WHERE c.data_type = '{data_type}'"
 
+        try:
+            # Fetch the items
+            items = list(self.get_container().query_items(query=query, enable_cross_partition_query=True))
+            for item in items:
+                # Delete each item
+                self.get_container().delete_item(item['id'], partition_key=[item["tenant"], item["user_id"], item["data_type"]])
+            print(f"Deleted {len(items)} items successfully.")
+        except exceptions.CosmosHttpResponseError as e:
+            print('Deletion failed:', e)
 
+    def set_ttl_for_data_type(self, data_type, ttl_seconds):
+        # TODO: fix this security problem
+        query = f"SELECT * FROM c WHERE c.data_type = '{data_type}'"
+
+        try:
+            # Fetch the items
+            items = list(self.get_container().query_items(query=query, enable_cross_partition_query=True))
+            for item in items:
+                # Delete each item
+                item['ttl'] = ttl_seconds
+                self.get_container().replace_item(item=item['id'], body=item)
+            print(f"TTL updated {len(items)} items successfully.")
+        except exceptions.CosmosHttpResponseError as e:
+            print('TTL update failed:', e)
+ 
 # Define the cosine similarity UDF
 udf_definition = {
     "id": "cosineSimilarity",

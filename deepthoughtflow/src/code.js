@@ -200,7 +200,7 @@ await  dtai.loadContexts().then(contexts => {
 	contexts?.user_contexts?.forEach(context => {
 		console.log(`found context: ${context.name}`);
 
-		var contextClass = createContextDerivedClass(context.name);
+		var contextClass = createContextDerivedClass(context.loader);
 
 		LiteGraph.registerNodeType(`contexts/${context.name}`, contextClass);
 

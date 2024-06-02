@@ -76,43 +76,6 @@ export class AgentNode  extends LGraphNode {
     }
 
     onExecute() {
-        const data = this.getInputData(0);
-
-        // Make the request
-        fetch(authFunctionUrl, authRequestOptions)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json(); // or response.text() if the response is not in JSON format
-            })
-            .then(token => {
-                console.log('Function responded with:', token);
-
-                requestOptions["headers"]["Authorization"] = `Bearer ${token["token"]}`;
-
-                // Make the request
-                fetch(agentFunctionUrl, requestOptions)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok');
-                        }
-                        return response.json(); // or response.text() if the response is not in JSON format
-                    })
-                    .then(data => {
-                        console.log('Function responded with:', data);
-
-                        this.setOutputData(0, data && data.value !== undefined ? data.value : this.properties.value);
-                        this.properties.answer = data['answer'];
-                    })
-                    .catch(error => console.error('Failed to fetch:', error));
-
-                this.setOutputData(0, data && data.value !== undefined ? data.value : this.properties.value);
-            })
-            .catch(error => console.error('Failed to fetch:', error));
-
-        var document = {"input": data, "role":"ukho_policy", "name":"core_llm_agent"}
-
 
     }
 

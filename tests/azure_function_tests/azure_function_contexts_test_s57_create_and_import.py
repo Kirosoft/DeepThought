@@ -34,24 +34,24 @@ contexts_run_url = "http://localhost:7071/api/run_context"
 
 def create_context(name, url):
     return {
-    "id": name,
-    "tenant": "ukho",
-    "user_id": "12345",
-    "data_type": "context_definition",
-    "name": name,
-    "loader": "pdf_file_loader",
-    "loader_args": {
-        "url": url,
-    },
-    "adaptor": "html_to_text",
-    "adaptor_args": {},
-    "current_version":0,
-    "rag_options": {
-        "chunk_size": 1000,
-        "overlap": 250,
-        "strategy": "basic"
+        "id": name,
+        "tenant": "ukho",
+        "user_id": "12345",
+        "data_type": "context_definition",
+        "name": name,
+        "loader": "pdf_file_loader",
+        "loader_args": {
+            "url": url,
+        },
+        "adaptor": "html_to_text",
+        "adaptor_args": {},
+        "current_version":0,
+        "rag_options": {
+            "chunk_size": 1000,
+            "overlap": 250,
+            "strategy": "basic"
+        }
     }
-}
 
 
 

@@ -11,6 +11,7 @@ azure-cosmos
 # core dependencies
 elasticsearch
 langchain
+langchain-community
 firecrawl-py
 PyPDF2
 

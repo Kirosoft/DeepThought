@@ -6,9 +6,8 @@ from tools import tools
 from security import security
 from agent import agent
 from roles import roles
-from flows import flows
-from contexts import contexts
-from contexts import df_contexts
+from flows import flows, df_flows
+from contexts import contexts, df_contexts
 
 import urllib3
 
@@ -28,6 +27,7 @@ app.register_functions(flows)
 app.register_functions(contexts)
 
 app.register_functions(df_contexts)
+app.register_functions(df_flows)
 
 # activity functions
 

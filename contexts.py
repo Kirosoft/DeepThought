@@ -12,7 +12,6 @@ from core.middleware.loader import Loader
 contexts = func.Blueprint()
 df_contexts  = df.Blueprint()
 
-
 @contexts.function_name(name="contexts_crud")
 @contexts.route(auth_level=func.AuthLevel.ANONYMOUS)
 def contexts_crud(req: func.HttpRequest) -> func.HttpResponse:  

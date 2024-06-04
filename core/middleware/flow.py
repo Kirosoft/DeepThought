@@ -4,6 +4,7 @@ from urllib.parse import unquote
 import json
 import logging
 import urllib3
+from collections import deque, defaultdict
 
 urllib3.disable_warnings()
 
@@ -43,9 +44,50 @@ class Flow:
         
         return self.db_flows_user.delete(flow_name)
 
+    def topological_sort(self, graph, from_node_id = -1):
+        # Initialize the in-degree dictionary
+        in_degree = defaultdict(int)
+        node_lookup = {}
+        nodes = graph["nodes"]
+        links = graph["links"]
+        link_lookup = {}
 
+        for link in links:
+            link_lookup[link[0]] = link
 
+        for node in nodes:
+            node_lookup[node["id"]]=node
+  
+        for node in nodes:
+            for output in node["outputs"]:
+                if output["links"] is not None:
+                    for link_id in output["links"]:
+                        neighbour_id = link_lookup[link_id][3]
+                        in_degree[neighbour_id] += 1
+        
+        # Queue for nodes with no incoming edges (in-degree of 0)
+        queue = deque([node for node in nodes if in_degree[node["id"]] == 0])
+        sorted_order = []
 
+        while queue:
+            node = queue.popleft()
+            sorted_order.append(node)
+            # Visit each dependency of the node and reduce its in-degree
+            link_groups = [output for output in node_lookup[node["id"]]["outputs"] if output["links"] is not None]
+            for link_group in link_groups:
+                if link_group["links"] is not None:
+                    for link_id in link_group["links"]:
+                        neighbour_id = link_lookup[link_id][3]
+                        in_degree[neighbour_id] -= 1
+                        if in_degree[neighbour_id] == 0:
+                            queue.append(node_lookup[neighbour_id])
+
+        # If sorted_order contains all nodes, we have a successful topological sort
+        if len(sorted_order) == len(nodes):
+            return sorted_order
+        else:
+            # There was a cycle or some nodes weren't reachable
+            raise ValueError("Graph has at least one cycle or unconnected components, which prevents topological sorting.")
 
 
 

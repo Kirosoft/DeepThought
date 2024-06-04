@@ -163,18 +163,24 @@ function createAgentDerivedClass(className) {
 	return DynamicClass;
 }
 
-function createContextDerivedClass(className) {
+function createContextDerivedClass(context) {
     var DynamicClass =  class extends ContextNode {
         constructor() {
             super();
-			this.title = className;
+			this.title = context.name;
+			this.properties = {
+				name: context.name, 
+				loader:context.loader, 
+				loader_args_url:context.loader_args.url
+			};
         }
     };
 
 	// Set the name of the class dynamically using Object.defineProperty
-	Object.defineProperty(DynamicClass, 'name', { value: className });
+	Object.defineProperty(DynamicClass, 'name', { value: context.name });
 	// Object.defineProperty(DynamicClass, 'type', { value: className });
-	Object.defineProperty(DynamicClass, 'title', { value: className });
+	Object.defineProperty(DynamicClass, 'title', { value: context.name});
+
 	return DynamicClass;
 }
 
@@ -200,7 +206,7 @@ await  dtai.loadContexts().then(contexts => {
 	contexts?.user_contexts?.forEach(context => {
 		console.log(`found context: ${context.name}`);
 
-		var contextClass = createContextDerivedClass(context.loader);
+		var contextClass = createContextDerivedClass(context);
 
 		LiteGraph.registerNodeType(`contexts/${context.name}`, contextClass);
 

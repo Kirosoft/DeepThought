@@ -86,8 +86,6 @@ Function orchestration
 
 MVP:
 
-UserSettings:
-we need all user keys to be stored in the user settings object
 
 Tests:
 
@@ -97,10 +95,8 @@ Need a test framework
 Tools:
 
 RAG from PDF, TXT files, Website
+
 UI:
-
-
-S57 Demo:
 
 
 

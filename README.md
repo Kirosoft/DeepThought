@@ -28,6 +28,17 @@ The framework aims to allow users to specifiy fully orchestrated agentic flows w
 * HTML, PDF & Github import tools
 * Full API to integrate with other systems/tools
 
+# Aims
+
+* No code agentic flows
+* Self documenting flows
+* Observable - logging/monitoring
+* Testable flows
+* Deployable A/B
+* Secure
+* Open Source
+* Framework will support the latest algorithmic understanding necessary to achieve best performance
+
 
 > [!IMPORTANT]  
 <bold>

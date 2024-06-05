@@ -7,7 +7,7 @@ The framework aims to allow users to specifiy fully orchestrated agentic flows w
 
 <img src="./images/_d376e6fa-4fea-409b-a841-00e47f35bdad.jpeg"  height="500">
 <br>
-<i>"Deep Thought announced that the new machine would be so large, it would resemble a planet, and be of such complexity that organic life itself would become part of its operating matrix." - Douglas Adams, Hitch Hikers Guide To The Galaxy</i><br><br>
+<i>"Deep Thought announced that the new machine would be so large, it would resemble a planet, and be of such complexity that organic life itself would become part of its operating matrix."<br> - Douglas Adams, Hitch Hikers Guide To The Galaxy<i><br><br>
 
 # DeepThought Flow
 
@@ -37,9 +37,9 @@ This project is currently in a very early development/experimental stage. <br/>
 
 # Examples
 
-Policy chatbot
-Notice to mariners
-Job posting agent
+Policy chatbot<br>
+Notice to mariners<Br>
+Job posting agent<br>
 
 
 

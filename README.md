@@ -1,18 +1,32 @@
-# DeepThought
+# DeepThoughtAI (DTAI)
 
-Functional agentic framework
+A flexible open source agentic framework designed to work in business production workflow settings. 
+The framework aims to allow users to specifiy fully orchestrated agentic flows without using any code.
+
+<h1>Functional agentic framework</h1>
 
 <img src="./images/_d376e6fa-4fea-409b-a841-00e47f35bdad.jpeg"  height="500">
 <br>
-"Deep Thought announced that the new machine would be so large, it would resemble a planet, and be of such complexity that organic life itself would become part of its operating matrix." - Douglas Adams, Hitch Hikers Guide To The Galaxy
+<i>"Deep Thought announced that the new machine would be so large, it would resemble a planet, and be of such complexity that organic life itself would become part of its operating matrix." - Douglas Adams, Hitch Hikers Guide To The Galaxy</i><br><br>
+
+<img src="./images/deepthoughtflow_demo.png"  height="500">
+
 
 # Features
 
-* Code free AI agent framework to orchestrate business flows
+* Code free AI agentic framework to orchestrate business flows in production
 * Fully deployable locally or at scale in the cloud
-* Recursive agent implementation with Domain Speciifc Language (DSL) built into the template
-* Support for context based search (RAG)
-* Dynamic workflow between agents
+* Agentic core supporting:
+    * Multi-RAG - RAG micro knowledge base per role
+    * In context (multi-shot) Learning  - using semantic or lexical similarity
+    * Multi-agent session learning
+    * Using tools (API calling)
+    * Using specs (output specification formatting)
+    * Multi LLM support (LLM defined on a per role)
+* GUI to help specify contextual and agentic flows
+* HTML, PDF & Github import tools
+* Full API to integrate with other systems/tools
+
 
 # Agent Features
 
@@ -25,115 +39,48 @@ Functional agentic framework
   * Support multi-hop strategies
 * JSON Output formatting (generate or expect data based on defined schemas)
 * Change LLM model on a per agent basis (to save cost use the best LLM agents only when needed)
+* Multi-tenant support for user, tenants, roles, specs, tools, contexts
+
+# Technical notes
+
+* Azure functions to support all crud operations
+* Experimental frontend gui developed in javascript/canvas (deployed as static web app - uses the function back end API)
 
 
 # VectorDB Integrations
 
-ElasticCloud<br>
 CosmosDB (custom vector DB implementation)<br>
+ElasticCloud<br>
 
 # LLM Integrations
 
 OpenAI<Br>
+Anthropic(in testing)<br>
 Ollama (local)<br>
 GroqCloud<br>
-
-# Demo
-
-<img src="./images/deepthoughtflow_demo.png"  height="500">
-
-Job posting agent
-
 
 > [!IMPORTANT]  
 <bold>
 This project is currently in a very early development/experimental stage. <br/>
-There are a lot of unimplemented/broken features at the moment. <br/>
 </bold>
 
-# Terminology
-
-Functions/Tools - 3rd party functions to perform specific tasks e.g. scrape a web page etc
-Specification - Used to define the JSON output format from an AI conversation (not used like 'functions')
 
 # Examples
 
-
-
-
-## Example request
-
-
-
-## Update roles database
-
-```
-python roles/update_roles.py "<path-to-roles-directory>"
-```
-
-## Update tools database
-
-```
-python tools/update_tools.py "<path-to-tools-directory>"
-```
+Policy chatbot
+Notice to mariners
+Job posting agent
 
 # TODO:
 
-
-Workflow:
-
-Function orchestration
-
-MVP:
-
-
-Tests:
-
-Need a test framework
-
-
-Tools:
-
-RAG from PDF, TXT files, Website
-
-UI:
-
-
-
-Docs:
-
-* Fully local run installation instructions<br/>
-
-System:
-
-
-<br/>
-* user level flows, roles, tools and specs<br/>
-* system level flows, roles, tools and specs<br/>
-
-Problems:
-
-
-Features:
-
-* allow all role fields to be overriden from input<br>
-
 * Self learning role/tool/specifications 
 * Build a message routing framework<br>
-* develop a multie role agent demo<br>
-
-Client:
-
-* Add client side calls to the server API
-
-Installation:
-
-* Create a local docker version
 
 Done:
 
+<Strike>Add support for Anthropic</strike>
 <Strike>Optional secrets now come from user account</strike>
-<Strike>RAG from github repo</strike>
+<Strike>RAG import from github repo</strike>
 <strike>role CRUD definitions to system, tenant or user</strike>
 <Strike>specs CRUD (system, tenant userid)</strike>
 <Strike>tools CRUD (system, tenant userid)</strike>
@@ -162,82 +109,9 @@ Done:
 <strike>* Support <b>session memory</b> (Feature) <br></strike>
 
 
-# Installation
-
-Download and install Azure Core Tools runtime (Python)
-
-https://learn.microsoft.com/en-us/azure/azure-functions/functions-run-local?tabs=windows%2Cisolated-process%2Cnode-v4%2Cpython-v2%2Chttp-trigger%2Ccontainer-apps&pivots=programming-language-python
-
-For VSCode install the Azure Functions extension: ms-azuretools.vscode-azurefunctions
-For local running you will also need to install Azurite Blob Serive (running on port 10000)
-
-## Download and install CosmoDB emulator
-
-https://learn.microsoft.com/en-us/azure/cosmos-db/how-to-develop-emulator?tabs=windows%2Ccsharp&pivots=api-nosql
-https://aka.ms/cosmosdb-emulator (takes a few minutes to start)
-
-### data explorer:
-
-https://localhost:8081/_explorer/index.html
-
-
-## Queue storage
-
-Account name: devstoreaccount1
-Account key: Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==
-
-
-## LLM 
-
-OLLAMA installation:<br>
-
-https://ollama.com/download
-
-Install a model e.g.  llama3:<br>
-
-https://ollama.com/library/llama3
-
-
-## Configuration of services and keys
-
-Setup the secret tokens in the local.settings.json file:
-
-{
-  "IsEncrypted": false,
-  "Values": {
-    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
-    "FUNCTIONS_WORKER_RUNTIME": "python",
-    "AzureWebJobsFeatureFlags": "EnableWorkerIndexing",
-
-    "ELASTIC_CLOUD_ID":"<CloudId>",
-    "ELASTIC_API_KEY":"<ApiKey>",
-    "ES_INDEX":"embedding_test_index",
-    "ES_INDEX_ROLES": "deepthought_roles",
-    "ES_INDEX_HISTORY": "deepthought_history",
-    "ES_INDEX_TOOLS": "deepthought_tools",
-    "ES_NUM_DOCS": "5",
-
-    "LLM_TYPE":"openai",
-    "OPENAI_API_KEY":"<your api key for open-ai>",
-    "OPENAI_MODEL":"gpt-4-turbo-preview",
-    "EMBEDDING_MODEL":"text-embedding-3-small",
-    "MAX_SESSION_TOKENS": "4096"
-  }
-}
-
-## running (see .vscode/settings.json)
-
-.venv\Scripts\activate ; func host start 
-
-## other tools
-
-Installation of mqttx app (https://mqttx.app/) for local testing 
-
-
 
 
 ## Architecture notes
-
 
 ```mermaid
 graph TD
@@ -276,7 +150,6 @@ graph TD
     Connectors --> Send_Info;
     Connectors --> Webhooks;
 ```
-
 
 # Workflows
 

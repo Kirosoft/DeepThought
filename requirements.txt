@@ -43,3 +43,6 @@ pyjwt[crypto]
 
 #test
 pytest
+
+#Anthropic
+anthropic

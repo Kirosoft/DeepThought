@@ -7,11 +7,13 @@ from groq import Groq
 from datetime import datetime
 import random, string
 import json
+import anthropic
 
 llm_types = types.SimpleNamespace()
 llm_types.OPENAI = "openai"
 llm_types.OLLAMA = "ollama"
 llm_types.GROQ = "groq"
+llm_types.ANTHROPIC = "anthropic"
 
 class LLMBase:
     def __init__(self, agent_config:AgentConfig):
@@ -27,6 +29,8 @@ class LLMBase:
                 return self.agent_config.OLLAMA_MODEL
             case llm_types.GROQ:
                 return self.agent_config.GROK_MODEL
+            case llm_types.ANTHROPIC:
+                return self.agent_config.ANTHROPIC_MODEL
             
     def process_ai_completion(self, completion):
         # todo: assumes the answer object schema
@@ -97,6 +101,14 @@ class LLMBase:
             case llm_types.GROQ:
                 client = Groq(api_key=self.agent_config.GROK_API_KEY)
                 completion = client.chat.completions.create(model=llm_model, messages=completed_prompt["messages"], tools=completed_prompt["tools"])
+                
+                doc = self.process_ai_completion(completion)
+                
+                return doc
+
+            case llm_types.ANTHROPIC:
+                client = anthropic.Anthropic(api_key=self.agent_config.ANTHROPIC_API_KEY)
+                completion = client.messages.create(model=llm_model, messages=completed_prompt["messages"], tools=completed_prompt["tools"])
                 
                 doc = self.process_ai_completion(completion)
                 

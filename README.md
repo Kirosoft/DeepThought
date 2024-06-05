@@ -9,8 +9,9 @@ The framework aims to allow users to specifiy fully orchestrated agentic flows w
 <br>
 <i>"Deep Thought announced that the new machine would be so large, it would resemble a planet, and be of such complexity that organic life itself would become part of its operating matrix." - Douglas Adams, Hitch Hikers Guide To The Galaxy</i><br><br>
 
-<img src="./images/deepthoughtflow_demo.png"  height="500">
+# DeepThought Flow
 
+<img src="./images/deepthoughtflow_demo.png"  height="500">
 
 # Features
 

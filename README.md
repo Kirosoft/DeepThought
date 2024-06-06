@@ -1,9 +1,9 @@
 # DeepThoughtAI (DTAI)
 
-A flexible open source agentic framework designed to work in business production workflow settings. 
+A flexible open source distributed agentic framework designed to work at scale in business production workflow settings. 
 The framework aims to allow users to specifiy fully orchestrated agentic flows without using any code.
 
-<h1>Functional agentic framework</h1>
+<h1>Distributed functional agentic framework</h1>
 
 <img src="./images/_d376e6fa-4fea-409b-a841-00e47f35bdad.jpeg"  height="500">
 <br>
@@ -17,6 +17,7 @@ The framework aims to allow users to specifiy fully orchestrated agentic flows w
 
 * Code free AI agentic framework to orchestrate business flows in production
 * Fully deployable locally or at scale in the cloud
+* Serverless implementation
 * Agentic core supporting:
     * Multi-RAG - RAG micro knowledge base per role
     * In context (multi-shot) Learning  - using semantic or lexical similarity
@@ -27,6 +28,8 @@ The framework aims to allow users to specifiy fully orchestrated agentic flows w
 * GUI to help specify contextual and agentic flows
 * HTML, PDF & Github import tools
 * Full API to integrate with other systems/tools
+* Backed by a distributed scalable database backend (ElasticSearch/CosmosDB)
+* RAG search strategies can be lexical, semantic (vectorised), ontological (coming soon) and hybrid search strategies over RAG data
 
 # Aims
 
@@ -37,6 +40,7 @@ The framework aims to allow users to specifiy fully orchestrated agentic flows w
 * Deployable A/B
 * Secure
 * Open Source
+* Serverless
 * Framework will support the latest algorithmic understanding necessary to achieve best performance
 
 

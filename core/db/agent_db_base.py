@@ -53,6 +53,9 @@ class AgentDBBase:
     def get_session(self, session_token:str):
         return self.db_handler.get_session(session_token)
 
+    def delete_all_from_session(self, session_token):
+        return self.db_handler.delete_all_from_session(session_token)
+
     def similarity_search(self, input, distance_threshold=0.5, top_k = 5):
         return self.db_handler.similarity_search(input, distance_threshold, top_k)
 

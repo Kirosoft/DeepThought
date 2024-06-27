@@ -6,6 +6,7 @@ from core.security.security_utils import validate_request
 import json
 from core.agent.agent_config import AgentConfig
 from core.middleware.flow import Flow
+from core.security.security_utils import get_user_context
 
 flows = func.Blueprint()
 df_flows  = df.Blueprint()
@@ -104,19 +105,42 @@ async def run_flow(req: func.HttpRequest, client) -> func.HttpResponse:
 @df_flows.orchestration_trigger(context_name="context")
 def orchestrate_flow(context: df.DurableOrchestrationContext):
     input_data = context.get_input()  # Retrieve input data
+    finished = False
+    result = "ok"
 
-    docs = yield context.call_activity('execute_node', input_data)
-    # result2 = yield context.call_activity('run_adaptor', "2")
-    # result3 = yield context.call_activity('do_chunk', "3")
-    # result4 = yield context.call_activity('do_encode', "4")
-    
+    # load the flow
+    flow_name = input_data["flow_name"]
+    user_id = input_data["user_id"]
+    output = input_data["callback"]
 
-    return [docs]
+    user_settings = get_user_context(user_id)
+    agent_config = AgentConfig(user_settings_keys=user_settings["keys"])
+    flow_crud = Flow(agent_config, user_settings["user_id"], user_settings["user_tenant"])
+    flow = flow_crud.get_flow(flow_name)
+
+    while not finished:
+
+        # find all the input nodes
+        # setup an event listener for each
+        for input_node in flow_crud.find(flow, "input"):
+            question = yield context.WaitForExternalEvent("question")
+ 
+        winner = yield context.task_any([question])
+
+        if winner == question:
+            
+            result = yield context.call_activity("execute_node", question)
+
+            # send the result
+
+   
+
+    return [result]
 
 @df_flows.activity_trigger(input_name="inputdata")
 def execute_node(inputdata):
 
-    user_settings = inputdata["user_settings"]
-    agent_config = AgentConfig(user_settings_keys=user_settings["keys"])
+    #user_settings = inputdata["user_settings"]
+    #agent_config = AgentConfig(user_settings_keys=user_settings["keys"])
 
-    return "ok"
+    return f"question: {inputdata}"

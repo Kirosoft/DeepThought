@@ -17,17 +17,16 @@ headers = {
     'x-password': 'my_password'
     }
 
-#base_url = "http://localhost:7071/api"
-base_url = "https://deepthought-app.azurewebsites.net/api"
+base_url = "http://localhost:7071/api"
+#base_url = "https://deepthought-app.azurewebsites.net/api"
 
 url = f"{base_url}/request_auth"
 response = requests.get(url, headers=headers)
 
 token = json.loads(response.content.decode('utf-8'))
 
-url = f"{base_url}/run_agent"
 
-document = {"input": "what are the usability standards","role":"ukho_policy", "name":"run_agent"}
+document = {"input": "what are the usability standards","role":"ukho_policy", "name":"run_agent", "session_token":"test_session_token_must_be_16"}
 
 headers = {
     'Authorization': f'Bearer {token["token"]}',
@@ -36,6 +35,15 @@ headers = {
     }
 payload = json.dumps(document, ensure_ascii=False).encode('utf8')
 
+url = f"{base_url}/run_agent"
 response = requests.post(url, payload, headers=headers)
 response_json = response.json()
 print(response_json)
+
+
+# delete session
+document = {"name":"clear_session", "session_token":"test_session"}
+url = f"{base_url}/clear_session"
+response = requests.post(url, payload, headers=headers)
+print(response_json)
+

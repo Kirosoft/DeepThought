@@ -1,6 +1,8 @@
 
 import azure.functions as func
 import logging
+from core.agent.agent_config import AgentConfig
+from core.agent.agent_memory import AgentMemory
 from core.security.security_utils import validate_request
 from core.agent.agent_role import AgentRole
 
@@ -12,7 +14,7 @@ agent = func.Blueprint()
 @agent.route(auth_level=func.AuthLevel.ANONYMOUS)
 def run_agent(req: func.HttpRequest) -> func.HttpResponse:  
 
-    logging.info('tun_agent trigger from http')
+    logging.info('run_agent trigger from http')
 
     response = validate_request(req)
     if type(response) is func.HttpResponse:
@@ -41,6 +43,40 @@ def run_agent(req: func.HttpRequest) -> func.HttpResponse:
                     status_code=200,
                     headers=response_headers
                 )
+        except ValueError:
+            return func.HttpResponse(
+                "Invalid JSON",
+                status_code=400,
+                headers=response_headers
+            )
+    else:
+        return func.HttpResponse("Method not allowed", status_code=405, headers=response_headers)
+
+@agent.function_name(name="clear_session")
+@agent.route(auth_level=func.AuthLevel.ANONYMOUS)
+def clear_session(req: func.HttpRequest) -> func.HttpResponse:  
+
+    logging.info('clear_session trigger from http')
+
+    response = validate_request(req)
+    if type(response) is func.HttpResponse:
+        return response
+    else:
+        response_headers = response["response_headers"]
+        user_settings = response["user_settings"]
+        payload = response["payload"]
+    
+    if req.method == "POST":
+        try:
+            agent_config = AgentConfig(req.get_body().decode('utf-8'), user_settings_keys=user_settings["keys"])
+            agent_memory = AgentMemory(agent_config, user_settings["user_id"], user_settings["user_tenant"])
+            agent_memory.clear_session_history(agent_config.session_token)
+
+            return func.HttpResponse(
+                "{'result':'ok'}",
+                status_code=200,
+                headers=response_headers
+            )
         except ValueError:
             return func.HttpResponse(
                 "Invalid JSON",

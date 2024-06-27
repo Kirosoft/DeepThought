@@ -166,7 +166,6 @@ class AgentDBCosmos(AgentDBBase):
         
         return result
 
-
     def index(self, id:str, doc:object, ttl=-1):
 
         doc["id"] = id
@@ -180,6 +179,20 @@ class AgentDBCosmos(AgentDBBase):
 
     def delete(self, id:str):
         return self.get_container().delete_item(id, partition_key=[self.tenant, self.user_id, self.__data_type])
+
+    def delete_all_from_session(self, session_token):
+        # TODO: fix this security problem
+        query = f"SELECT * FROM c WHERE c.data_type = '{self.__data_type}' and c.tenant= '{self.tenant}' and c.user_id='{self.user_id}' and c.session_token='{session_token}'"
+
+        try:
+            # Fetch the items
+            items = list(self.get_container().query_items(query=query, enable_cross_partition_query=True))
+            for item in items:
+                # Delete each item
+                self.get_container().delete_item(item['id'], partition_key=[item["tenant"], item["user_id"], item["data_type"]])
+            print(f"Deleted session {len(items)} items successfully.")
+        except exceptions.CosmosHttpResponseError as e:
+            print('Deletion session failed:', e)
 
     def delete_all_by_datatype(self, data_type):
         # TODO: fix this security problem

@@ -41,7 +41,7 @@ params = {'id': "flow_sort_test"}
 
 #############################################
 # run the contexts orchestrator
-url = "http://localhost:7071/api/run_flow"
+url = "http://localhost:7071/api/run_agent"
 response = requests.get(url, params=params, headers=headers)
 response_json = response.json()
 print(response_json)

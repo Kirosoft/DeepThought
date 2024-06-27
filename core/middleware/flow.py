@@ -44,6 +44,10 @@ class Flow:
         
         return self.db_flows_user.delete(flow_name)
 
+    def find_nodes(self, graph, node_type):
+        return [node for node in graph["nodes"] if node["type"]==node_type]
+
+    # returns the execution order for the input graph
     def topological_sort(self, graph, from_node_id = -1):
         # Initialize the in-degree dictionary
         in_degree = defaultdict(int)

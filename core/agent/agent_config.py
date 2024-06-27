@@ -57,8 +57,8 @@ class AgentConfig:
         self.SERPER_API_KEY = user_settings_keys["SERPER_API_KEY"]
 
         # anthropic
-        self.ANTHROPIC_API_KEY = user_settings_keys["ANTHROPIC_API_KEY"]
-        self.ANTHROPIC_MODEL = user_settings_keys["ANTHROPIC_MODEL"]
+        # self.ANTHROPIC_API_KEY = user_settings_keys["ANTHROPIC_API_KEY"]
+        # self.ANTHROPIC_MODEL = user_settings_keys["ANTHROPIC_MODEL"]
         
 
     def __init_env_vars(self):

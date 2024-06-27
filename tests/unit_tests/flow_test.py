@@ -116,7 +116,7 @@ flow1 = {
         },
         {
             "id": 4,
-            "type": "roles/test_role",
+            "type": "input",
             "pos": {
                 "0": -85,
                 "1": 116,
@@ -585,3 +585,9 @@ order = flow.topological_sort(flow1)
 # Order should be:
 # 4, [5,6], [7,8,9]
 print("Nodes in order of execution:", [item["id"] for item in order])
+
+
+
+found = flow.find_nodes(flow1)
+
+print(f"Found input nodes: {found}")

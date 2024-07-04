@@ -15,7 +15,7 @@ The framework aims to allow users to specifiy fully orchestrated agentic flows w
 
 # Features
 
-* Code free AI agentic framework to orchestrate business flows in production
+* Code free Graph (DAG) AI agentic framework to orchestrate business flows in production
 * Fully deployable locally or at scale in the cloud
 * Serverless implementation
 * Agentic core supporting:

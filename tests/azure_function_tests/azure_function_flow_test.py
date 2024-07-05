@@ -23,7 +23,7 @@ token = json.loads(response.content.decode('utf-8'))
 
 ### Test Agent Execution ####
 
-url = "http://localhost:7071/api/flows"
+url = "http://localhost:7071/api/flows_crud"
 new_flow = {"name":"test_flow","last_node_id":2,"last_link_id":1,"nodes":[{"id":2,"type":"agents/Basic","pos":{"0":564,"1":292,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0},"size":{"0":210,"1":106},"flags":{},"order":1,"mode":0,"inputs":[{"name":"Input Request","type":"text","link":1}],"outputs":[{"name":"Answer","type":"text","links":None}],"title":"Agent","properties":{"flows":"ukho"},"widgets_values":[0.5,"default","multiline"]},{"id":1,"type":"agents/UserInput","pos":{"0":212,"1":258,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0},"size":{"0":210,"1":58},"flags":{},"order":0,"mode":0,"inputs":[],"outputs":[{"name":"UserText","type":"text","links":[1],"slot_index":0}],"title":"Agent","properties":{"output":"multiline"},"widgets_values":["multiline"]}],"links":[[1,1,0,2,0,"text"]],"groups":[],"config":{},"extra":{},"version":0.4}
 
 

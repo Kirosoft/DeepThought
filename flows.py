@@ -75,6 +75,28 @@ def flows_crud(req: func.HttpRequest) -> func.HttpResponse:
     else:
         return func.HttpResponse("Method not allowed", status_code=405, headers=response_headers)
 
+
+@df_flows.route(route="completion")
+@df_flows.durable_client_input(client_name="client")
+async def completion(req: func.HttpRequest, client) -> func.HttpResponse:  
+
+    logging.info('completion event')
+
+    response = validate_request(req)
+    if type(response) is func.HttpResponse:
+        return response
+    else:
+        response_headers = response["response_headers"]
+        instance_id = req.params.get("instance_id","")
+        payload = response["payload"]
+
+    await client.raise_event(instance_id, 'question', True)
+
+    logging.info('raised')
+
+    return client.create_check_status_response(req, instance_id)
+
+
 @df_flows.route(route="run_flow")
 @df_flows.durable_client_input(client_name="client")
 async def run_flow(req: func.HttpRequest, client) -> func.HttpResponse:  
@@ -96,7 +118,7 @@ async def run_flow(req: func.HttpRequest, client) -> func.HttpResponse:
         "id":req.params.get("id","")
     }
 
-    instance_id = await client.start_new("orchestrate_flow", None, input )
+    instance_id = await client.start_new("orchestrate_flow",None, input )
     logging.info(f"Started orchestration with ID = '{instance_id}'.")
 
     return client.create_check_status_response(req, instance_id)
@@ -109,11 +131,9 @@ def orchestrate_flow(context: df.DurableOrchestrationContext):
     result = "ok"
 
     # load the flow
-    flow_name = input_data["flow_name"]
-    user_id = input_data["user_id"]
-    output = input_data["callback"]
+    flow_name = input_data["id"]
+    user_settings = input_data["user_settings"]
 
-    user_settings = get_user_context(user_id)
     agent_config = AgentConfig(user_settings_keys=user_settings["keys"])
     flow_crud = Flow(agent_config, user_settings["user_id"], user_settings["user_tenant"])
     flow = flow_crud.get_flow(flow_name)
@@ -122,18 +142,12 @@ def orchestrate_flow(context: df.DurableOrchestrationContext):
 
         # find all the input nodes
         # setup an event listener for each
-        for input_node in flow_crud.find(flow, "input"):
-            question = yield context.WaitForExternalEvent("question")
+        for input_node in flow_crud.find_nodes(flow, "basic/input"):
+            question = yield context.wait_for_external_event("question")
  
-        winner = yield context.task_any([question])
-
-        if winner == question:
-            
-            result = yield context.call_activity("execute_node", question)
-
-            # send the result
-
-   
+            if question:
+                input_data = {"question":question, "node":input_node}
+                result = yield context.call_activity("execute_node", input_data)
 
     return [result]
 
@@ -143,4 +157,4 @@ def execute_node(inputdata):
     #user_settings = inputdata["user_settings"]
     #agent_config = AgentConfig(user_settings_keys=user_settings["keys"])
 
-    return f"question: {inputdata}"
+    logging.info(f"question: {inputdata}")

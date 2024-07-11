@@ -29,25 +29,180 @@ headers = {
     'x-user-id': '12345'
     }
 
-new_flow = {"name":"test_flow","last_node_id":2,"last_link_id":1,"nodes":[
-    {"id":2,"type":"agents/json_validator",
-        "pos":{"0":564,"1":292,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0},"size":{"0":210,"1":106},"flags":{},"order":1,"mode":0,
-        "inputs":[{"name":"Input Request","type":"text","link":1}],
-        "outputs":[{"name":"Answer","type":"text","links":None}],
-        "title":"JsonValidator",
-        "properties":{"flows":"ukho"},
-        "widgets_values":[0.5,"default","multiline"]},
+new_flow = {
+    "last_node_id": 3,
+    "last_link_id": 2,
+    "nodes": [
+        {
+            "id": 1,
+            "type": "basic/input",
+            "pos": {
+                "0": 212,
+                "1": 258,
+                "2": 0,
+                "3": 0,
+                "4": 0,
+                "5": 0,
+                "6": 0,
+                "7": 0,
+                "8": 0,
+                "9": 0
+            },
+            "size": {
+                "0": 210,
+                "1": 58
+            },
+            "flags": {},
+            "order": 0,
+            "mode": 0,
+            "inputs": [],
+            "outputs": [
+                {
+                    "name": "UserText",
+                    "type": "text",
+                    "links": [
+                        1
+                    ],
+                    "slot_index": 0
+                }
+            ],
+            "title": "Input",
+            "properties": {
+                "output": "multiline"
+            },
+            "widgets_values": [
+                "multiline"
+            ]
+        },
+        {
+            "id": 3,
+            "type": "basic/output",
+            "pos": {
+                "0": 1028,
+                "1": 354,
+                "2": 0,
+                "3": 0,
+                "4": 0,
+                "5": 0,
+                "6": 0,
+                "7": 0,
+                "8": 0,
+                "9": 0
+            },
+            "size": {
+                "0": 360,
+                "1": 266
+            },
+            "flags": {},
+            "order": 2,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "Input Request", 
+                    "type": "text",
+                    "link": 2
+                },
+                {
+                    "name": "Context",
+                    "type": "text",
+                    "link": None
+                },
+                {
+                    "name": "Examples",
+                    "type": "text",
+                    "link": None
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "Answer",
+                    "type": "text",
+                    "links": None
+                }
+            ],
+            "properties": {
 
-    {"id":1,"type":"basic/input",
-        "pos":{"0":212,"1":258,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0},"size":{"0":210,"1":58},"flags":{},"order":0,"mode":0,
-        "inputs":[],
-        "outputs":[{"name":"UserText","type":"text","links":[1],"slot_index":0}],
-        "title":"Input",
-        "properties":{"output":"multiline"},
-        "widgets_values":["multiline"]}],
-    
-    "links":[[1,1,0,2,0,"text"]],
-    "groups":[],"config":{},"extra":{},"version":0.4}
+            },
+            "widgets_values": [
+
+            ]
+        },
+        {
+            "id": 2,
+            "type": "roles/ukho_policy",
+            "pos": {
+                "0": 564,
+                "1": 292,
+                "2": 0,
+                "3": 0,
+                "4": 0,
+                "5": 0,
+                "6": 0,
+                "7": 0,
+                "8": 0,
+                "9": 0
+            },
+            "size": {
+                "0": 210,
+                "1": 106
+            },
+            "flags": {},
+            "order": 1,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "Input Request",
+                    "type": "text",
+                    "link": 1
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "Answer",
+                    "type": "text",
+                    "links": None
+                }
+            ],
+            "title": "UKHOPolicy",
+            "properties": {
+                "flows": "ukho"
+            },
+            "widgets_values": [
+                0.5,
+                "default",
+                "multiline"
+            ]
+        }
+    ],
+    "links": [
+        [
+            1,
+            1,
+            0,
+            2,
+            0,
+            "text"
+        ],
+        [
+            2,
+            2,
+            0,
+            3,
+            0,
+            "text"
+        ]
+    ],
+    "groups": [],
+    "config": {},
+    "extra": {},
+    "version": 0.4,
+    "name": "test_flow",
+    "level": "user",
+    "id": "test_flow",
+    "data_type": "flows",
+    "tenant": "ukho",
+    "user_id": "12345"
+}
 
 params = {'id': new_flow["name"]}
 url = "http://localhost:7071/api/flows_crud"
@@ -68,7 +223,7 @@ print(response_json)
 instance_id = response_json["id"]
 
 # raise the completion event
-params = {'instance_id': instance_id}
+params = {'instance_id': instance_id, 'question':'what is the coding policy for javascript'}
 url = "http://localhost:7071/api/completion"
 response = requests.get(url, params=params, headers=headers)
 response_json = response.json()

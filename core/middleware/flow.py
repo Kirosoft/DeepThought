@@ -47,6 +47,36 @@ class Flow:
     def find_nodes(self, graph, node_type):
         return [node for node in graph["nodes"] if node["type"]==node_type]
 
+    def get_node_from_id(self, graph, node_id):
+        for node in graph["nodes"]:
+            if node["id"]==node_id:
+                return node
+        
+        return None
+
+    def get_linked_nodes(self, graph, current_node):
+        node_lookup = {}
+        linked_nodes = []
+        nodes = graph["nodes"]
+        links = graph["links"]
+        link_lookup = {}
+
+        for link in links:
+            link_lookup[link[0]] = link
+        for node in nodes:
+            node_lookup[node["id"]]=node
+
+        link_groups = [output for output in node_lookup[current_node["id"]]["outputs"] if output["links"] is not None]
+
+        for link_group in link_groups:
+            if link_group["links"] is not None:
+                for link_id in link_group["links"]:
+                    neighbour_id = link_lookup[link_id][3]
+                    linked_nodes.append(node_lookup[neighbour_id])
+
+        return linked_nodes
+    
+
     # returns the execution order for the input graph
     def topological_sort(self, graph, from_node_id = -1):
         # Initialize the in-degree dictionary

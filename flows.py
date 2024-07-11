@@ -88,9 +88,10 @@ async def completion(req: func.HttpRequest, client) -> func.HttpResponse:
     else:
         response_headers = response["response_headers"]
         instance_id = req.params.get("instance_id","")
+        question = req.params.get("question","")
         payload = response["payload"]
 
-    await client.raise_event(instance_id, 'question', True)
+    await client.raise_event(instance_id, 'question', question)
 
     logging.info('raised')
 
@@ -147,14 +148,69 @@ def orchestrate_flow(context: df.DurableOrchestrationContext):
  
             if question:
                 input_data = {"question":question, "node":input_node}
-                result = yield context.call_activity("execute_node", input_data)
+                output_nodes = flow_crud.get_linked_nodes(flow, input_node)
+                res = yield context.call_http('GET', 'test')                
 
     return [result]
+
+
+@df_flows.activity_trigger(input_name="inputdata")
+def execute_input_node(inputdata):
+
+    #user_settings = inputdata["user_settings"]
+    #agent_config = AgentConfig(user_settings_keys=user_settings["keys"])
+    # set internal state based on the input
+    # call 'process' on all output linked nodes
+
+
+    logging.info(f"question: {inputdata}")
+
 
 @df_flows.activity_trigger(input_name="inputdata")
 def execute_node(inputdata):
 
     #user_settings = inputdata["user_settings"]
     #agent_config = AgentConfig(user_settings_keys=user_settings["keys"])
+    current_node = inputdata["node"]
+
+    # set internal state based on the inputs
+    # call our internal processing
+    # call 'process' on all output linked nodes
 
     logging.info(f"question: {inputdata}")
+
+
+@df_flows.activity_trigger(input_name="inputdata")
+def execute_output_node(inputdata):
+
+    #user_settings = inputdata["user_settings"]
+    #agent_config = AgentConfig(user_settings_keys=user_settings["keys"])
+    current_node = inputdata["node"]
+
+    # set internal state based on the input
+    # call 'process' on all output linked nodes
+
+
+    logging.info(f"question: {inputdata}")
+
+
+# Entity function called counter
+@df_flows.entity_trigger(context_name="context")
+def flow_node(context):
+    current_value = context.get_state(lambda: "")
+    operation = context.operation_name
+    if operation == "process":
+        input_data = context.get_input()
+        node_type = input_data["node_type"]
+        input_value = input_data["input"]
+        switch node_type:
+            case "input"
+                context.set_state(input_value)
+                break
+            
+            case "output":
+                current_value - input_data["input"]
+
+    elif operation == "get":
+        context.set_result(current_value)
+    context.set_state(current_value)

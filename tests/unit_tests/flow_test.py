@@ -588,6 +588,11 @@ print("Nodes in order of execution:", [item["id"] for item in order])
 
 
 
-found = flow.find_nodes(flow1)
+found = flow.find_nodes(flow1, "input")
 
 print(f"Found input nodes: {found}")
+
+node = flow.get_node_from_id(flow1, 6)
+
+linked_nodes = flow.get_linked_nodes(flow1, node)
+print(linked_nodes)

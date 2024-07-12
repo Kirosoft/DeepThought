@@ -79,23 +79,37 @@ def flows_crud(req: func.HttpRequest) -> func.HttpResponse:
 @df_flows.route(route="completion")
 @df_flows.durable_client_input(client_name="client")
 async def completion(req: func.HttpRequest, client) -> func.HttpResponse:  
-
     logging.info('completion event')
 
     response = validate_request(req)
-    if type(response) is func.HttpResponse:
+    if isinstance(response, func.HttpResponse):
         return response
-    else:
-        response_headers = response["response_headers"]
-        instance_id = req.params.get("instance_id","")
-        question = req.params.get("question","")
-        payload = response["payload"]
 
-    await client.raise_event(instance_id, 'question', question)
+    response_headers = response["response_headers"]
+    instance_id = req.params.get("instance_id", "")
+    question = req.params.get("question", "")
+    flow_name = req.params.get("flow_name", "")
+    payload = response["payload"]
 
-    logging.info('raised')
+    try:
+        user_settings = response["user_settings"]
+        agent_config = AgentConfig(user_settings_keys=user_settings["keys"])
+        flow_crud = Flow(agent_config, user_settings["user_id"], user_settings["user_tenant"])
+        flow = flow_crud.get_flow(flow_name)
 
-    return client.create_check_status_response(req, instance_id)
+        # route the question to all input nodes
+        for input_node in flow_crud.find_nodes(flow, "basic/input"):
+            entity_id = df.EntityId("flow_node", instance_id)
+            input_data = {"question": question, "node": input_node}
+            await client.signal_entity(entity_id, "process", input_data)
+
+        logging.info('completion events raised')
+
+        return client.create_check_status_response(req, instance_id, headers=response_headers)
+
+    except Exception as e:
+        logging.error(f"An error occurred during completion: {str(e)}")
+        return func.HttpResponse("An error occurred during processing", status_code=500)
 
 
 @df_flows.route(route="run_flow")
@@ -119,10 +133,11 @@ async def run_flow(req: func.HttpRequest, client) -> func.HttpResponse:
         "id":req.params.get("id","")
     }
 
-    instance_id = await client.start_new("orchestrate_flow",None, input )
+    instance_id = await client.start_new("orchestrate_flow",None, input)
     logging.info(f"Started orchestration with ID = '{instance_id}'.")
 
     return client.create_check_status_response(req, instance_id)
+
 
 
 @df_flows.orchestration_trigger(context_name="context")
@@ -139,78 +154,72 @@ def orchestrate_flow(context: df.DurableOrchestrationContext):
     flow_crud = Flow(agent_config, user_settings["user_id"], user_settings["user_tenant"])
     flow = flow_crud.get_flow(flow_name)
 
-    while not finished:
+    setup = {
+        "flow":json.dumps(flow),
+        "flow_name":flow_name,
+        "user_settings":json.dumps(user_settings),
+    }
 
-        # find all the input nodes
-        # setup an event listener for each
-        for input_node in flow_crud.find_nodes(flow, "basic/input"):
+    try:
+        # give each entity the context data it needs
+        for node in flow["nodes"]:
+            setup["node_id"] = node["id"]
+            setup["current_node"] = json.dumps(node)
+            entity_id = df.EntityId("flow_node", context.instance_id)
+            #setup["entity_id"] = entity_id
+            yield context.call_entity(entity_id, "setup", setup)
+
+        while not finished:
+
+            # find all the input nodes
+            # setup an event listener for each
             question = yield context.wait_for_external_event("question")
- 
+    
             if question:
-                input_data = {"question":question, "node":input_node}
-                output_nodes = flow_crud.get_linked_nodes(flow, input_node)
-                res = yield context.call_http('GET', 'test')                
+                pass
 
-    return [result]
+    except Exception as e:
+        logging.error(f"Error in orchestrate flow{str(e)}")
+        raise
 
-
-@df_flows.activity_trigger(input_name="inputdata")
-def execute_input_node(inputdata):
-
-    #user_settings = inputdata["user_settings"]
-    #agent_config = AgentConfig(user_settings_keys=user_settings["keys"])
-    # set internal state based on the input
-    # call 'process' on all output linked nodes
-
-
-    logging.info(f"question: {inputdata}")
-
-
-@df_flows.activity_trigger(input_name="inputdata")
-def execute_node(inputdata):
-
-    #user_settings = inputdata["user_settings"]
-    #agent_config = AgentConfig(user_settings_keys=user_settings["keys"])
-    current_node = inputdata["node"]
-
-    # set internal state based on the inputs
-    # call our internal processing
-    # call 'process' on all output linked nodes
-
-    logging.info(f"question: {inputdata}")
-
-
-@df_flows.activity_trigger(input_name="inputdata")
-def execute_output_node(inputdata):
-
-    #user_settings = inputdata["user_settings"]
-    #agent_config = AgentConfig(user_settings_keys=user_settings["keys"])
-    current_node = inputdata["node"]
-
-    # set internal state based on the input
-    # call 'process' on all output linked nodes
-
-
-    logging.info(f"question: {inputdata}")
+    return "ok"
 
 
 # Entity function called counter
+    # setup = {
+    #     "flow":flow,
+    #     "flow_crud":flow_crud,
+    #     "flow_name":flow_name,
+    #     "user_settings":user_settings,
+    #     "agent_config":agent_config
+    # }
 @df_flows.entity_trigger(context_name="context")
 def flow_node(context):
-    current_value = context.get_state(lambda: "")
-    operation = context.operation_name
-    if operation == "process":
-        input_data = context.get_input()
-        node_type = input_data["node_type"]
-        input_value = input_data["input"]
-        switch node_type:
-            case "input"
-                context.set_state(input_value)
-                break
+    current_value = context.get_state(lambda: {})
+    match context.operation_name:
+        case "process":
+            question = context.get_input()
             
-            case "output":
-                current_value - input_data["input"]
+            match current_value["current_node"]["type"]:
+                case "input":
+                    context.set_state(question)
+                    linked_nodes = current_value["flow_crud"].get_linked_nodes(current_value["flow"], current_value["current_node"])
+                    # call process on all linked nodes
+                    for node in linked_nodes:
+                        linked_entity_id = f"{context.instance_id}{node['id']}"
+                        result = context.call_entity(linked_entity_id, "process", question)
+                case "output":
+                    context.set_state(question)
+                case "role":
+                    context.set_state(question)
+                    current_value["flow_crud"]
+                case _:
+                    pass
+        case "setup":
+            str_obj = context.get_input()
+            input_data = json.loads(str_obj)
+            current_value.update(input_data)
+        case "get":
+            context.set_result(current_value)
 
-    elif operation == "get":
-        context.set_result(current_value)
     context.set_state(current_value)

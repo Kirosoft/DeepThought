@@ -596,3 +596,6 @@ node = flow.get_node_from_id(flow1, 6)
 
 linked_nodes = flow.get_linked_nodes(flow1, node)
 print(linked_nodes)
+
+linked_input_nodes = flow.get_linked_input_nodes(flow1, node)
+print(linked_input_nodes)

@@ -223,7 +223,7 @@ print(response_json)
 instance_id = response_json["id"]
 
 # raise the completion event
-params = {'instance_id': instance_id, 'question':'what is the coding policy for javascript'}
+params = {'instance_id': instance_id, 'question':'what is the coding policy for javascript', 'flow_name':new_flow["name"]}
 url = "http://localhost:7071/api/completion"
 response = requests.get(url, params=params, headers=headers)
 response_json = response.json()

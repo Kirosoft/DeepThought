@@ -18,7 +18,7 @@ logger.setLevel(logging.ERROR)
 ### Test Auth ####
 headers = {
     'Content-Type': 'application/json',
-    'x-user-id': '12345',
+    'x-user-id': 'ukho',
     'x-password': 'my_password'
     }
 
@@ -34,7 +34,7 @@ url = "http://localhost:7071/api/contexts_crud"
 headers = {
     'Authorization': f'Bearer {token["token"]}',
     'Content-Type': 'application/json',
-    'x-user-id': '12345'
+    'x-user-id': 'ukho'
     }
 
 params = {'id': "github1"}

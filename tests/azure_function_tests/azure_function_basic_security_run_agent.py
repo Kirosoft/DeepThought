@@ -26,7 +26,7 @@ response = requests.get(url, headers=headers)
 token = json.loads(response.content.decode('utf-8'))
 
 
-document = {"input": "what are the usability standards","role":"ukho_policy", "name":"run_agent", "session_token":"test_session_token_must_be_16"}
+document = {"input": "what are the github policies","role":"ukho_policy", "name":"run_agent", "session_token":"test_session_token_must_be_16"}
 
 headers = {
     'Authorization': f'Bearer {token["token"]}',

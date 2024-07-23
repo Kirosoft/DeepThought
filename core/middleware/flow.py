@@ -39,6 +39,12 @@ class Flow:
             return None
 
         return result
+    
+    def get_flow_groups(self, flows_name: str) -> str:
+        
+        flow = self.get_flow(flows_name)
+
+        return self.topological_sort(flow)
         
     def delete_flow(self, flow_name, level = "user"):
         
@@ -68,14 +74,14 @@ class Flow:
 
         #input_nodes = {input_slot["name"].replace(' ','_'):node_lookup[link_lookup[input_slot["link"]][1]] for input_slot in current_node["inputs"] if input_slot["link"] is not None}
         #input_nodes = {input_slot["name"].replace(' ','_'):node_lookup[link_lookup[input_slot["link"]][1]] for input_slot in current_node["inputs"] if input_slot["link"] is not None}
-        linked_nodes = [node_lookup[link_lookup[input_slot["link"]][1]] for input_slot in current_node["inputs"] if input_slot["link"] is not None]
-        input_nodes ={node["id"]:node for node in linked_nodes}
-        return input_nodes
+        linked_nodes = {input_slot["name"]:node_lookup[link_lookup[input_slot["link"]][1]] for input_slot in current_node["inputs"] if input_slot["link"] is not None}
+        #input_nodes ={node["id"]:node for node in linked_nodes}
+        return linked_nodes
 
     def get_linked_nodes(self, graph, current_node):
         node_lookup = {}
         linked_nodes = []
-        nodes = graph["nodes"]
+        nodes = graph["nodes"] 
         links = graph["links"]
         link_lookup = {}
 

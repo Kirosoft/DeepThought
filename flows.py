@@ -1,5 +1,6 @@
 import azure.functions as func
 import azure.durable_functions as df
+import os
 
 import logging
 from core.security.security_utils import validate_request
@@ -13,7 +14,7 @@ df_flows  = df.Blueprint()
 
 @flows.function_name(name="flows_crud")
 @flows.route(auth_level=func.AuthLevel.ANONYMOUS)
-def flows_crud(req: func.HttpRequest) -> func.HttpResponse:  
+def flows_crud(req: func.HttpRequest) -> func.HttpResponse:
 
     logging.info('flows CRUD')
 
@@ -24,7 +25,7 @@ def flows_crud(req: func.HttpRequest) -> func.HttpResponse:
         response_headers = response["response_headers"]
         user_settings = response["user_settings"]
         payload = response["payload"]
-    
+
     body = req.get_body().decode('utf-8')
     agent_config = AgentConfig(body, user_settings_keys=user_settings["keys"]) if body != '' else AgentConfig(user_settings_keys=user_settings["keys"])
 
@@ -78,13 +79,14 @@ def flows_crud(req: func.HttpRequest) -> func.HttpResponse:
 
 @df_flows.route(route="completion")
 @df_flows.durable_client_input(client_name="client")
-async def completion(req: func.HttpRequest, client: df.DurableOrchestrationClient) -> func.HttpResponse:  
+async def completion(req: func.HttpRequest, client: df.DurableOrchestrationClient) -> func.HttpResponse:
     logging.info('completion event')
 
     response = validate_request(req)
     if isinstance(response, func.HttpResponse):
         return response
 
+    headers = dict(req.headers)
     response_headers = response["response_headers"]
     instance_id = req.params.get("instance_id", "")
     question = req.params.get("question", "")
@@ -93,30 +95,77 @@ async def completion(req: func.HttpRequest, client: df.DurableOrchestrationClien
 
     try:
         user_settings = response["user_settings"]
-        agent_config = AgentConfig(user_settings_keys=user_settings["keys"])
-        flow_crud = Flow(agent_config, user_settings["user_id"], user_settings["user_tenant"])
-        flow = flow_crud.get_flow(flow_name)
+        data = {"instance_id":instance_id, "question":question, "user_settings":user_settings, "flow_name":flow_name, "headers":headers}
+        graph_run_id = await client.start_new("wait_for_entity_signal", None, data)
 
-        for node_list in flow_crud.topological_sort(flow):
-            node_group = []
-            node_group.append(node_list)
-            for node in node_group:
-                entity_id = df.EntityId("flow_node", f"{instance_id}-{node['id']}")
-                input_data = {"question": question}
-                await client.signal_entity(entity_id, "process", input_data)
+        logging.info(f'completion events raised {graph_run_id}')
 
-        logging.info('completion events raised')
-
-        return client.create_check_status_response(req, instance_id)
+        try:
+            # Wait for the orchestration to complete with a timeout
+            result = await client.wait_for_completion_or_create_check_status_response(
+                request=req,
+                instance_id=graph_run_id,
+                timeout_in_milliseconds=30000,  # 30 seconds timeout
+                retry_interval_in_milliseconds=500  # Check every half second
+            )
+            
+            if result:
+                return func.HttpResponse(f"Orchestration completed. Result: {result}")
+            else:
+                return func.HttpResponse("Orchestration timed out", status_code=408)
+        
+        except Exception as e:
+            return func.HttpResponse(f"An error occurred: {str(e)}", status_code=500)
 
     except Exception as e:
-        logging.error(f"An error occurred during completion: {str(e)}")
         return func.HttpResponse("An error occurred during processing", status_code=500)
 
+@df_flows.orchestration_trigger(context_name="context")
+def wait_for_entity_signal(context: df.DurableOrchestrationContext):
 
+    flow_params = context.get_input()
+    user_settings=flow_params["user_settings"]
+    agent_config = AgentConfig(user_settings_keys=user_settings["keys"])
+    flow_crud = Flow(agent_config, user_settings["user_id"], user_settings["user_tenant"])
+    flow_groups = flow_crud.get_flow_groups(flow_params["flow_name"])
+    flow = flow_crud.get_flow(flow_params["flow_name"])
+
+    for level, node_list in enumerate(flow_groups):
+        node_group = []
+        node_group.append(node_list)
+        for node in node_group:
+            payload = {"input": flow_params["question"]}
+            payload["role"] = node["name"]
+            payload["inputs"] = {}
+
+            input_nodes = flow_crud.get_linked_input_nodes(flow, node)
+            # GET - these can be done in parallel (collect all input data)
+            previous_node_data = [previous_node["id"] for previous_node in input_nodes.values()] if level > 0  else []
+
+            for link in input_nodes:
+                payload["inputs"][link] = context.call_entity(df.EntityId("flow_node", f"{flow_params['instance_id']}-{input_nodes[link]['id']}"), "get_result", {})
+           
+            # PROCESS these can be done in parallel
+            # TODO: construct role function call here
+            host_name = os.environ.get('WEBSITE_HOSTNAME','localhost:7071')
+            
+            try:
+                resp = yield context.call_http("POST", f"http://{host_name}/api/run_agent",payload, headers=flow_params["headers"])
+                # set the entity result value
+                res = context.call_entity(df.EntityId("flow_node", f"{flow_params['instance_id']}-{node['id']}"), "set_result", {"answer":resp["answer"]})
+            except Exception as e:
+                logging.error(f"wait_for_entity_signal: {str(e)}")
+
+
+    # collect the output values from the last row of nodes
+    result = "ok" #[( context.call_entity(df.EntityId("flow_node", f"{flow_params['instance_id']}-{out['id']}"), "get", {})) for out in flow_groups[-1]]
+
+    return f"Processed graph {result}"
+
+# runs the flow - used to setup the DAG
 @df_flows.route(route="run_flow")
 @df_flows.durable_client_input(client_name="client")
-async def run_flow(req: func.HttpRequest, client) -> func.HttpResponse:  
+async def run_flow(req: func.HttpRequest, client) -> func.HttpResponse:
 
     logging.info('run flow')
 
@@ -134,6 +183,7 @@ async def run_flow(req: func.HttpRequest, client) -> func.HttpResponse:
         "user_settings":user_settings,
         "id":req.params.get("id","")
     }
+    # TODO: validate the user identity here??
 
     instance_id = await client.start_new("orchestrate_flow",None, input)
     logging.info(f"Started orchestration with ID = '{instance_id}'.")
@@ -169,11 +219,11 @@ def orchestrate_flow(context: df.DurableOrchestrationContext):
             setup["node_id"] = node["id"]
             setup["current_node"] = node
             entity_id = df.EntityId("flow_node", f"{context.instance_id}-{node['id']}")
-            input_nodes = flow_crud.get_linked_input_nodes(flow, node) 
-            ids = [str(df.EntityId("flow_node", f"{context.instance_id}-{a}")) for a in input_nodes.keys()]
-            input_ids = ",".join(ids)
-            logging.info(f"input_nodes: {input_ids}")
-            yield context.call_entity(entity_id, "setup_inputs", ids)
+            # input_nodes = flow_crud.get_linked_input_nodes(flow, node)
+            # ids = [str(df.EntityId("flow_node", f"{context.instance_id}-{a}")) for a in input_nodes.keys()]
+            # input_ids = ",".join(ids)
+            # logging.info(f"input_nodes: {input_ids}")
+            # yield context.call_entity(entity_id, "setup_inputs", ids)
             yield context.call_entity(entity_id, "setup_node", node)
 
         while not finished:
@@ -181,7 +231,7 @@ def orchestrate_flow(context: df.DurableOrchestrationContext):
             # find all the input nodes
             # setup an event listener for each
             question = yield context.wait_for_external_event("question")
-    
+
             if question:
                 pass
 
@@ -192,7 +242,7 @@ def orchestrate_flow(context: df.DurableOrchestrationContext):
     return "ok"
 
 
-            
+
 # Entity function called counter
     # setup = {
     #     "flow":flow,
@@ -202,27 +252,25 @@ def orchestrate_flow(context: df.DurableOrchestrationContext):
     #     "agent_config":agent_config
     # }
 @df_flows.entity_trigger(context_name="context")
-def flow_node(context):
+def flow_node(context:df.DurableEntityContext):
     current_value = context.get_state(lambda: {})
     match context.operation_name:
-        case "process":
-            question = context.get_input()
         case "setup_node":
             try:
                 input_data = context.get_input()
                 current_value["node_info"] = input_data
+                current_value["result"] = ""
                 context.set_state(current_value)
             except Exception as e:
                 logging.error(f"Error in flow_node {str(e)}")
-        case "setup_inputs":
+
+        case "set_result":
             try:
                 input_data = context.get_input()
-                current_value["input_ids"] = input_data
+                current_value["result"] = input_data
                 context.set_state(current_value)
             except Exception as e:
                 logging.error(f"Error in flow_node {str(e)}")
-        case "get_value":
-            context.set_result(current_value)
-        case "get":
-            context.set_result(current_value)
+        case "get_result":
+            context.set_result(current_value["result"])
 

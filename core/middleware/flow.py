@@ -81,7 +81,7 @@ class Flow:
         for node in nodes:
             node_lookup[node["id"]]=node
 
-        linked_nodes = {input_slot["name"]:node_lookup[link_lookup[input_slot["link"]][1]] for input_slot in current_node["inputs"] if input_slot["link"] is not None}
+        linked_nodes = {input_slot["name"]:node_lookup[link_lookup[input_slot["link"]][1]] for input_slot in current_node["inputs"] if input_slot["link"] is not None} if "inputs" in current_node else {}
         return linked_nodes
 
     def get_linked_nodes(self, graph, current_node):

@@ -2,6 +2,7 @@ import azure.functions as func
 import azure.durable_functions as df
 import os
 import traceback
+from datetime import timedelta
 
 import logging
 from core.security.security_utils import validate_request
@@ -152,7 +153,6 @@ def wait_for_entity_signal(context: df.DurableOrchestrationContext):
                 payload["inputs"][link] = yield context.call_entity(df.EntityId("flow_node", f"{flow_params['instance_id']}-{input_nodes[link]['id']}"), "get_result", {})
            
             # PROCESS these can be done in parallel
-            # TODO: construct role function call here
             host_name = os.environ.get('WEBSITE_HOSTNAME','localhost:7071')
             
             try:
@@ -161,6 +161,11 @@ def wait_for_entity_signal(context: df.DurableOrchestrationContext):
                     case 'role':
                         resp = yield context.call_http("POST", f"http://{host_name}/api/run_agent",payload, headers=flow_params["headers"])
                         result = resp["content"] if resp["content"]  else {}
+                    case 'context': 
+                        result= payload["role"]
+                    # event nodes are not processed this way
+                    case 'events': 
+                        break
                     case 'basic':
                         match(payload['role']):
                             # input nodes - take input from outside the flow
@@ -171,8 +176,6 @@ def wait_for_entity_signal(context: df.DurableOrchestrationContext):
                                 result= payload["inputs"]
                             # context nodes - placeholder to specific a context definition
                             # can be used as input to any linked nodes
-                            case 'context': 
-                                result= node["properties"]["context_definition"]
 
                 # set the entity result value
                 res = yield context.call_entity(df.EntityId("flow_node", f"{flow_params['instance_id']}-{node['id']}"), "set_result", result)
@@ -247,21 +250,39 @@ def orchestrate_flow(context: df.DurableOrchestrationContext):
             setup["node_id"] = node["id"]
             setup["current_node"] = node
             entity_id = df.EntityId("flow_node", f"{context.instance_id}-{node['id']}")
-            # input_nodes = flow_crud.get_linked_input_nodes(flow, node)
-            # ids = [str(df.EntityId("flow_node", f"{context.instance_id}-{a}")) for a in input_nodes.keys()]
-            # input_ids = ",".join(ids)
-            # logging.info(f"input_nodes: {input_ids}")
-            # yield context.call_entity(entity_id, "setup_inputs", ids)
             yield context.call_entity(entity_id, "setup_node", node)
+        
+        event_nodes = flow_crud.find_nodes(flow, 'events/timer')
+        timer_map = {}
+        timer_tasks = []
+        for event_node in event_nodes:
+            interval = event_node["properties"]["interval"] if 'interval' in event_node["properties"] else 10000
+            timer_event = context.create_timer(context.current_utc_datetime + timedelta(milliseconds=interval))
+            timer_map[timer_event] = event_node
+            timer_tasks.append(timer_event)
+        question_event = context.wait_for_external_event("question")
 
         while not finished:
+            winner = yield context.task_any(timer_tasks)
 
-            # find all the input nodes
-            # setup an event listener for each
-            question = yield context.wait_for_external_event("question")
+            if winner in timer_map:
+                logging.error(f"Timer expired")
+                expired_node = timer_map[winner]
+                # remove the old one
+                del timer_map[winner]
+                timer_tasks.remove(winner)
+                # start a new one
+                interval = expired_node["properties"]["interval"] if 'interval' in expired_node["properties"] else 10000
+                timer_event = context.create_timer(context.current_utc_datetime + timedelta(milliseconds=interval))
+                timer_map[timer_event] = expired_node
+                timer_tasks.append(timer_event)
+                # 1. find the linked output nodes (only context nodes)
+                # 2. call the loader function
+                base_url = os.environ.get('WEBSITE_HOSTNAME','localhost:7071')
+                url = f"{base_url}/run_context"
 
-            if question:
-                pass
+            elif winner == question_event:
+                question_event = context.wait_for_external_event("question")
 
     except Exception as e:
         logging.error(f"Error in orchestrate flow{str(e)}")
@@ -301,4 +322,5 @@ def flow_node(context:df.DurableEntityContext):
                 logging.error(f"Error in flow_node {str(e)}")
         case "get_result":
             context.set_result(current_value["result"])
+
 

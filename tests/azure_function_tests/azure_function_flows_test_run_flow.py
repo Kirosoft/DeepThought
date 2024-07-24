@@ -30,12 +30,12 @@ headers = {
     }
 
 new_flow = {
-    "last_node_id": 4,
+    "last_node_id": 5,
     "last_link_id": 3,
     "nodes": [
         {
             "id": 4,
-            "type": "basic/context",
+            "type": "context/github1",
             "pos": {
                 "0": 196,
                 "1": 703,
@@ -53,12 +53,12 @@ new_flow = {
                 "1": 106
             },
             "flags": {},
-            "order": 1,
+            "order": 0,
             "mode": 0,
             "inputs": [
                 {
                     "name": "trigger",
-                    "type": "text",
+                    "type": -1,
                     "link": None
                 }
             ],
@@ -97,7 +97,7 @@ new_flow = {
                 "1": 266
             },
             "flags": {},
-            "order": 2,
+            "order": 3,
             "mode": 0,
             "inputs": [
                 {
@@ -176,7 +176,7 @@ new_flow = {
                 "1": 58
             },
             "flags": {},
-            "order": 0,
+            "order": 1,
             "mode": 0,
             "inputs": [],
             "outputs": [
@@ -215,7 +215,7 @@ new_flow = {
                 "1": 26
             },
             "flags": {},
-            "order": 3,
+            "order": 4,
             "mode": 0,
             "inputs": [
                 {
@@ -226,6 +226,34 @@ new_flow = {
             ],
             "outputs": [],
             "properties": {}
+        },
+        {
+            "id": 5,
+            "type": "events/timer",
+            "pos": [
+                -78,
+                619
+            ],
+            "size": {
+                "0": 140,
+                "1": 26
+            },
+            "flags": {},
+            "order": 2,
+            "mode": 0,
+            "outputs": [
+                {
+                    "name": "on_tick",
+                    "type": -1,
+                    "links": None,
+                    "slot_index": 0
+                }
+            ],
+            "properties": {
+                "interval": 50000,
+                "event": "tick"
+            },
+            "boxcolor": "#222"
         }
     ],
     "links": [

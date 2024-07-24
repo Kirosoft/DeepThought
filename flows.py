@@ -1,6 +1,7 @@
 import azure.functions as func
 import azure.durable_functions as df
 import os
+import traceback
 
 import logging
 from core.security.security_utils import validate_request
@@ -110,7 +111,7 @@ async def completion(req: func.HttpRequest, client: df.DurableOrchestrationClien
             )
             
             if result:
-                return func.HttpResponse(f"Orchestration completed. Result: {result}")
+                return func.HttpResponse(result.get_body())
             else:
                 return func.HttpResponse("Orchestration timed out", status_code=408)
         
@@ -134,8 +135,13 @@ def wait_for_entity_signal(context: df.DurableOrchestrationContext):
         node_group = []
         node_group.append(node_list)
         for node in node_group:
+            # user input
             payload = {"input": flow_params["question"]}
-            payload["role"] = node["name"]
+            operation = node["type"].split('/')[0]
+            role = node['type'].split('/')[1]
+            payload["operation"] = operation
+            payload["role"] = role
+            # connect based inputs
             payload["inputs"] = {}
 
             input_nodes = flow_crud.get_linked_input_nodes(flow, node)
@@ -143,24 +149,40 @@ def wait_for_entity_signal(context: df.DurableOrchestrationContext):
             previous_node_data = [previous_node["id"] for previous_node in input_nodes.values()] if level > 0  else []
 
             for link in input_nodes:
-                payload["inputs"][link] = context.call_entity(df.EntityId("flow_node", f"{flow_params['instance_id']}-{input_nodes[link]['id']}"), "get_result", {})
+                payload["inputs"][link] = yield context.call_entity(df.EntityId("flow_node", f"{flow_params['instance_id']}-{input_nodes[link]['id']}"), "get_result", {})
            
             # PROCESS these can be done in parallel
             # TODO: construct role function call here
             host_name = os.environ.get('WEBSITE_HOSTNAME','localhost:7071')
             
             try:
-                resp = yield context.call_http("POST", f"http://{host_name}/api/run_agent",payload, headers=flow_params["headers"])
+                result = ''
+                match(payload['operation']):
+                    case 'role':
+                        resp = yield context.call_http("POST", f"http://{host_name}/api/run_agent",payload, headers=flow_params["headers"])
+                        result = resp["content"] if resp["content"]  else {}
+                    case 'basic':
+                        match(payload['role']):
+                            case 'input':
+                                result = payload["input"]
+                            case 'output':
+                                result= payload["inputs"]
+
                 # set the entity result value
-                res = context.call_entity(df.EntityId("flow_node", f"{flow_params['instance_id']}-{node['id']}"), "set_result", {"answer":resp["answer"]})
+                res = yield context.call_entity(df.EntityId("flow_node", f"{flow_params['instance_id']}-{node['id']}"), "set_result", result)
             except Exception as e:
-                logging.error(f"wait_for_entity_signal: {str(e)}")
+                logging.error(f"wait_for_entity_signal: {traceback.format_exc()}")
 
 
     # collect the output values from the last row of nodes
-    result = "ok" #[( context.call_entity(df.EntityId("flow_node", f"{flow_params['instance_id']}-{out['id']}"), "get", {})) for out in flow_groups[-1]]
+    result = []
+    groups = []
+    groups.append(flow_groups[-1])
+    for out in groups:
+        node = yield context.call_entity(df.EntityId("flow_node", f"{flow_params['instance_id']}-{out['id']}"), "get_result", {})
+        result.append(node)
 
-    return f"Processed graph {result}"
+    return result
 
 # runs the flow - used to setup the DAG
 @df_flows.route(route="run_flow")

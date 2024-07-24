@@ -129,7 +129,7 @@ new_flow = {
         },
         {
             "id": 2,
-            "type": "roles/ukho_policy",
+            "type": "role/ukho_policy",
             "pos": {
                 "0": 564,
                 "1": 292,

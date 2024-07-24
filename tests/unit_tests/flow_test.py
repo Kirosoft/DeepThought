@@ -563,12 +563,8 @@ flow1 = {
     "ttl": -1,
     "data_type": "flows",
     "tenant": "ukho",
-    "user_id": "12345",
-    "_rid": "OT16ALmnWS6QCwAAAAAAAA==",
-    "_self": "dbs/OT16AA==/colls/OT16ALmnWS4=/docs/OT16ALmnWS6QCwAAAAAAAA==/",
-    "_etag": "\"4f016798-0000-1000-0000-665f3d0d0000\"",
-    "_attachments": "attachments/",
-    "_ts": 1717517581
+    "user_id": "12345"
+
 }
 
 order = flow.topological_sort(flow1)

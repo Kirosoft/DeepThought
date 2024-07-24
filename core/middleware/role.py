@@ -49,8 +49,11 @@ class Role:
 
         return result
     
-    def get_context(self, role):
-        if "options" in role and "context" in role["options"]:
+    def get_context(self, role, agent_config:AgentConfig = None):
+        # agentconfig input definition can override role based context
+        if agent_config is not None and agent_config.inputs is not None and 'context' in agent_config.inputs:
+            return agent_config.inputs["context"]
+        elif "options" in role and "context" in role["options"]:
             return role["options"]["context"]
         else:
             return ""

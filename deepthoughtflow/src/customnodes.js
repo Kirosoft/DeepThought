@@ -4,15 +4,16 @@ import {LiteGraph} from 'litegraph.js';
 LiteGraph.clearRegisteredTypes();
 
 import {AgentNode, UserInput} from './nodes/agentnode.js'
-import {ContextNode} from './nodes/contextnode.js'
+import {InputNode, OutputNode, ContextNode} from './nodes/contextnode.js'
 import {TestWidgetsNode} from './nodes/testwidget.js'
 import {Subgraph, GraphInput, GraphOutput} from './nodes/subgraph.js'
 
 
 
-LiteGraph.registerNodeType("agents/Basic", AgentNode );
-LiteGraph.registerNodeType("agents/UserInput", UserInput );
-LiteGraph.registerNodeType("agents/ContextNode", ContextNode );
+LiteGraph.registerNodeType("role/ukho_policy", AgentNode );
+LiteGraph.registerNodeType("basic/input", InputNode );
+LiteGraph.registerNodeType("basic/output", OutputNode );
+LiteGraph.registerNodeType("basic/context", ContextNode );
 
 LiteGraph.registerNodeType("features/widgets", TestWidgetsNode );
 LiteGraph.registerNodeType("graph/group", Subgraph );

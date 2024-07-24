@@ -50,7 +50,7 @@ class AgentRole:
         options = {}
 
         if self.agent_memory is None:
-            context = self.role.get_context(role)
+            context = self.role.get_context(role, self.agent_config)
             self.agent_memory = AgentMemory(self.agent_config, self.user_id, self.tenant, context)
 
         # user can override the examples 
@@ -66,7 +66,10 @@ class AgentRole:
             {f"Example output: {role['examples']}" if role['examples'] != "" else ""}
             {f"output format: JSON SCHEMA [{','.join(output_format_json)}] do not invent any new fields or change the output scehma in any way. Any UNESCAPED characters should be escaped. Ensuer there are no NEWLINE characters inserted. Ensure there are no back slashes or enescaped characters.The answer to the user should just be text and not JSON" if len(output_format_json) != 0 else ""}
         """           
+        # TODO: ICL Mode - In Context Learning
+        # TODO: AutoRoute - use the input to fine the agent role automatically
 
+        # RAG - context injection
         # build the function message
         # transform the search results into json payload
         if self.role.is_rag(role):
@@ -76,7 +79,7 @@ class AgentRole:
 
         messages.append({"role":"system", "content":system_prompt})
 
-        # session history
+        # ASSISTANT - Session history
         # TODO: does the session history need to be sequenced to replay in the right order?
         if (not self.agent_config.new_session):
             session_results = self.agent_memory.get_session_history(self.agent_config.session_token)

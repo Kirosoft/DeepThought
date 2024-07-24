@@ -123,7 +123,12 @@ class AgentConfig:
         self.parent_role=self.body.get("parent_role","")  
 
     def __get_input(self):
+        # TODO: security check the input text
         self.input = self.body.get('input', '')
+
+        # when used in a flow, the payload can have named inputs/value pairs from input connections
+        self.inputs = self.body.get('inputs',{})
+        
         return self.input
 
     def is_valid(self):

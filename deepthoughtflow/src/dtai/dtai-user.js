@@ -15,7 +15,7 @@ export class DTAI_User {
             return DTAI_User.instance;
         }
 
-        this.user = user ?? "12345";
+        this.user = user ?? "ukho";
         this.password = tenant ?? "my_password"
         this.token = null;
     }

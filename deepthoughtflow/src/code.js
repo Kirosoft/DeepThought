@@ -169,9 +169,9 @@ function createContextDerivedClass(context) {
             super();
 			this.title = context.name;
 			this.properties = {
-				name: context.name, 
-				loader:context.loader, 
-				loader_args_url:context.loader_args.url
+				name: context.name
+				// loader:context.loader, 
+				// loader_args_url:context.loader_args.url
 			};
         }
     };

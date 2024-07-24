@@ -112,16 +112,16 @@ export class GraphInput  extends LGraphNode {
 
     constructor() {
         super();
-        this.addOutput("", "number");
+        this.addOutput("ouput", "text");
         this.name_in_graph = "";
         this.title = "Input";
         this.desc = "Input of the graph";
     
-        this.properties = {
-            name: "",
-            type: "number",
-            value: 0
-        };
+        // this.properties = {
+        //     name: "",
+        //     type: "number",
+        //     value: 0
+        // };
 
         // Setup widgets with arrow functions to maintain 'this' context
         this.name_widget = this.addWidget("text", "Name", this.properties.name, (v) => {
@@ -148,7 +148,7 @@ export class GraphInput  extends LGraphNode {
     }
 
     onConfigure() {
-        this.updateType();
+        //this.updateType();
     }
 
     updateType() {
@@ -234,33 +234,33 @@ export class GraphInput  extends LGraphNode {
 export class GraphOutput extends LGraphNode {
     constructor() {
         super();
-        this.addInput("", "number");
+        this.addInput("input", "text");
         this.name_in_graph = "";
         this.title = "GraphOutput";
         this.desc = "Ouput of the graph";
     
-        this.properties = {
-            name: "",
-            type: "number",
-            value: 0
-        };
+        // this.properties = {
+        //     name: "",
+        //     type: "text",
+        //     value: ""
+        // };
 
-        // Setup widgets with arrow functions to maintain 'this' context
-        this.name_widget = this.addWidget("text", "Name", this.properties.name, (v) => {
-            if (!v) return;
-            this.setProperty("name", v);
-        });
+        // // Setup widgets with arrow functions to maintain 'this' context
+        // this.name_widget = this.addWidget("text", "Name", this.properties.name, (v) => {
+        //     if (!v) return;
+        //     this.setProperty("name", v);
+        // });
 
-        this.type_widget = this.addWidget("text", "Type", this.properties.type, (v) => {
-            this.setProperty("type", v);
-        });
+        // this.type_widget = this.addWidget("text", "Type", this.properties.type, (v) => {
+        //     this.setProperty("type", v);
+        // });
 
-        this.value_widget = this.addWidget("number", "Value", this.properties.value, (v) => {
-            this.setProperty("value", v);
-        });
+        // this.value_widget = this.addWidget("text", "Value", this.properties.value, (v) => {
+        //     this.setProperty("value", v);
+        // });
 
         this.widgets_up = true;
-        this.size = [180, 90];
+        this.size = [90, 45];
     }
 
     // Methods to handle widget interactions and updates
@@ -270,7 +270,7 @@ export class GraphOutput extends LGraphNode {
     }
 
     onConfigure() {
-        this.updateType();
+        //this.updateType();
     }
 
     updateType() {

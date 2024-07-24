@@ -163,10 +163,16 @@ def wait_for_entity_signal(context: df.DurableOrchestrationContext):
                         result = resp["content"] if resp["content"]  else {}
                     case 'basic':
                         match(payload['role']):
+                            # input nodes - take input from outside the flow
                             case 'input':
                                 result = payload["input"]
+                            # output nodes - carry the results that will be sent outside the flow
                             case 'output':
                                 result= payload["inputs"]
+                            # context nodes - placeholder to specific a context definition
+                            # can be used as input to any linked nodes
+                            case 'context': 
+                                result= node["properties"]["context_definition"]
 
                 # set the entity result value
                 res = yield context.call_entity(df.EntityId("flow_node", f"{flow_params['instance_id']}-{node['id']}"), "set_result", result)

@@ -21,27 +21,25 @@ export class ContextNode  extends LGraphNode {
     initWidgets() {
         var _this = this;
 
-        this.name = this.addWidget("text", "Name", this.properties.name, function(v) {}, { multiline: true, property: "name" });
-        this.loader = this.addWidget("text", "Loader", this.properties.loader, function(v) {}, { multiline: true, property: "loader" });
-        this.loader_args_url = this.addWidget("text", "URL", this.properties.loader_args_url, function(v) {}, { multiline: true, property: "loader_args_url" });
-        this.save = this.addWidget("button", "Save Context", "default", async function(v) { 
-            console.log("save context");
-            _this.properties.name = _this.title;
-            var res = await dtai.saveContext(JSON.stringify(_this.properties))
+        this.context_definition = this.addWidget("text", "context definition", this.properties.name, function(v) {}, { multiline: false, property: "name" });
+        // this.save = this.addWidget("button", "Save Context", "default", async function(v) { 
+        //     console.log("save context");
+        //     _this.properties.name = _this.title;
+        //     var res = await dtai.saveContext(JSON.stringify(_this.properties))
 
-            console.log(res);
-        });
-        this.test_role = this.addWidget("button", "Refresh Context", "default", async function(v) { 
-            console.log("Refresh started");
-            _this.properties.name = _this.title;
+        //     console.log(res);
+        // });
+        // this.test_role = this.addWidget("button", "Refresh Context", "default", async function(v) { 
+        //     console.log("Refresh started");
+        //     _this.properties.name = _this.title;
 
-            // TODO: maybe save here?
-        });
+        //     // TODO: maybe save here?
+        // });
     }
 
     initIO() {
-        this.addInput("Trigger", "text");
-        this.addOutput("Context", "text");
+        this.addInput("trigger", "text");
+        this.addOutput("context", "text");
     }
 
     onAdded() {
@@ -61,3 +59,75 @@ export class ContextNode  extends LGraphNode {
     }
 }
 
+export class InputNode  extends LGraphNode {
+
+    constructor() {
+        super();
+        this.initIO();
+        this.size = this.computeSize();
+        this.serialize_widgets = true;
+        // this.title = this.properties.name;
+        //this.properties = this.constructor.properties;
+    }
+
+    initWidgets() {
+        var _this = this;
+
+    }
+
+    initIO() {
+        this.addOutput("ouput", "text");
+    }
+
+    onAdded() {
+        console.log('on load');
+        this.initWidgets();
+    }
+
+    onExecute() {
+        console.log('on execute');
+    }
+
+    computeSize() {
+        var size = super.computeSize();
+        size[0] += 150;
+        return size;
+    }
+}
+
+
+export class OutputNode  extends LGraphNode {
+
+    constructor() {
+        super();
+        this.initIO();
+        this.size = this.computeSize();
+        this.serialize_widgets = true;
+        // this.title = this.properties.name;
+        //this.properties = this.constructor.properties;
+    }
+
+    initWidgets() {
+        var _this = this;
+
+    }
+
+    initIO() {
+        this.addInput("input", "text");
+    }
+
+    onAdded() {
+        console.log('on load');
+        this.initWidgets();
+    }
+
+    onExecute() {
+        console.log('on execute');
+    }
+
+    computeSize() {
+        var size = super.computeSize();
+        size[0] += 150;
+        return size;
+    }
+}

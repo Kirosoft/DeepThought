@@ -31,7 +31,7 @@ headers = {
 
 new_flow = {
     "last_node_id": 5,
-    "last_link_id": 3,
+    "last_link_id": 4,
     "nodes": [
         {
             "id": 4,
@@ -66,7 +66,7 @@ new_flow = {
                 {
                     "name": "context_definition",
                     "type": "text",
-                    "links": None
+                    "links": [3]
                 }
             ],
             "title": "UKHOPolicy",
@@ -245,12 +245,12 @@ new_flow = {
                 {
                     "name": "on_tick",
                     "type": -1,
-                    "links": None,
+                    "links": [4],
                     "slot_index": 0
                 }
             ],
             "properties": {
-                "interval": 50000,
+                "interval": 60*5,
                 "event": "tick"
             },
             "boxcolor": "#222"
@@ -280,6 +280,14 @@ new_flow = {
             2,
             0,
             "text"
+        ],
+        [
+            4,
+            5,
+            0,
+            4,
+            0,
+            -1
         ]
     ],
     "groups": [],

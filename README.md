@@ -19,7 +19,7 @@ The framework aims to allow users to specifiy fully orchestrated agentic flows w
 * Fully deployable locally or at scale in the cloud
 * Serverless implementation
 * Agentic core supporting:
-    * Multi-RAG - RAG micro knowledge base per role
+    * Multi-RAG - RAG micro knowledge base on a per role basis
     * In context (multi-shot) Learning  - using semantic or lexical similarity
     * Multi-agent session learning
     * Using tools (API calling)
@@ -33,7 +33,7 @@ The framework aims to allow users to specifiy fully orchestrated agentic flows w
 
 # Aims
 
-* No code agentic flows
+* 'No code' agentic flows
 * Self documenting flows
 * Observable - logging/monitoring
 * Testable flows

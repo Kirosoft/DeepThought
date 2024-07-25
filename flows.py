@@ -209,10 +209,12 @@ async def run_flow(req: func.HttpRequest, client) -> func.HttpResponse:
         payload = response["payload"]
 
     #body = req.get_body().decode('utf-8')
+    headers = dict(req.headers)
 
     input = {
         "user_settings":user_settings,
-        "id":req.params.get("id","")
+        "id":req.params.get("id",""),
+        "headers": headers
     }
     # TODO: validate the user identity here??
 
@@ -232,6 +234,7 @@ def orchestrate_flow(context: df.DurableOrchestrationContext):
     # load the flow
     flow_name = input_data["id"]
     user_settings = input_data["user_settings"]
+    headers = input_data["headers"]
 
     agent_config = AgentConfig(user_settings_keys=user_settings["keys"])
     flow_crud = Flow(agent_config, user_settings["user_id"], user_settings["user_tenant"])
@@ -257,7 +260,7 @@ def orchestrate_flow(context: df.DurableOrchestrationContext):
         timer_tasks = []
         for event_node in event_nodes:
             interval = event_node["properties"]["interval"] if 'interval' in event_node["properties"] else 10000
-            timer_event = context.create_timer(context.current_utc_datetime + timedelta(milliseconds=interval))
+            timer_event = context.create_timer(context.current_utc_datetime + timedelta(seconds=interval))
             timer_map[timer_event] = event_node
             timer_tasks.append(timer_event)
         question_event = context.wait_for_external_event("question")
@@ -265,21 +268,34 @@ def orchestrate_flow(context: df.DurableOrchestrationContext):
         while not finished:
             winner = yield context.task_any(timer_tasks)
 
-            if winner in timer_map:
-                logging.error(f"Timer expired")
+            if winner in timer_tasks:
+                logging.error(f"Timer expired {timer_map[winner]['id']}")
+                timer_index = timer_tasks.index(winner)
                 expired_node = timer_map[winner]
+                interval = expired_node["properties"]["interval"] if 'interval' in expired_node["properties"] else 10000
+                timer_tasks[timer_index] = context.create_timer(context.current_utc_datetime + timedelta(seconds=interval))
+                
                 # remove the old one
                 del timer_map[winner]
-                timer_tasks.remove(winner)
-                # start a new one
-                interval = expired_node["properties"]["interval"] if 'interval' in expired_node["properties"] else 10000
-                timer_event = context.create_timer(context.current_utc_datetime + timedelta(milliseconds=interval))
-                timer_map[timer_event] = expired_node
-                timer_tasks.append(timer_event)
+                timer_map[timer_tasks[timer_index]] = expired_node
+
+                # # start a new one
+                # 
+                # timer_event = 
+                # timer_map[timer_event] = expired_node
+                # timer_tasks.append(timer_event)
+
                 # 1. find the linked output nodes (only context nodes)
+                output_nodes = flow_crud.get_linked_nodes(flow, expired_node)
                 # 2. call the loader function
-                base_url = os.environ.get('WEBSITE_HOSTNAME','localhost:7071')
-                url = f"{base_url}/run_context"
+                for out_node in output_nodes:
+                    # only context nodes can be triggered by events
+                    if out_node["type"].split('/')[0] == "context":
+                        base_url = os.environ.get('WEBSITE_HOSTNAME','localhost:7071')
+                        context_definition_name = out_node["type"].split('/')[1]
+                        url = f"http://{base_url}/api/run_context?id={context_definition_name}"
+                        r = yield context.call_http("Get", url, headers=headers)
+                        logging.error(f"Called {str(r)}")
 
             elif winner == question_event:
                 question_event = context.wait_for_external_event("question")
@@ -287,6 +303,12 @@ def orchestrate_flow(context: df.DurableOrchestrationContext):
     except Exception as e:
         logging.error(f"Error in orchestrate flow{str(e)}")
         raise
+    finally:
+        for node in flow_nodes:
+            entity_id = df.EntityId("flow_node", f"{context.instance_id}-{node['id']}")
+            context.signal_entity(entity_id, "delete")
+
+        logging.error(f"Orchestrate flow ***Terminated***")
 
     return "ok"
 
@@ -322,5 +344,7 @@ def flow_node(context:df.DurableEntityContext):
                 logging.error(f"Error in flow_node {str(e)}")
         case "get_result":
             context.set_result(current_value["result"])
+        case "delete":
+            context.delete_state()
 
 

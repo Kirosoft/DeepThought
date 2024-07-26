@@ -31,7 +31,7 @@ headers = {
 
 new_flow = {
     "last_node_id": 6,
-    "last_link_id": 5,
+    "last_link_id": 6,
     "nodes": [
         {
             "id": 4,
@@ -59,7 +59,7 @@ new_flow = {
                 {
                     "name": "trigger",
                     "type": -1,
-                    "link": None
+                    "link": [4]
                 }
             ],
             "outputs": [
@@ -281,7 +281,7 @@ new_flow = {
                 {
                     "name": "trigger",
                     "type": -1,
-                    "link": None
+                    "link": [6]
                 }
             ],
             "outputs": [
@@ -338,6 +338,14 @@ new_flow = {
             6,
             0,
             4,
+            0,
+            -1
+        ],
+        [
+            6,
+            5,
+            0,
+            6,
             0,
             -1
         ]

@@ -30,8 +30,8 @@ headers = {
     }
 
 new_flow = {
-    "last_node_id": 5,
-    "last_link_id": 4,
+    "last_node_id": 6,
+    "last_link_id": 5,
     "nodes": [
         {
             "id": 4,
@@ -111,9 +111,9 @@ new_flow = {
                     "link": 3
                 },
                 {
-                    "name": "Examples",
+                    "name": "icl_context",
                     "type": "text",
-                    "link": None
+                    "link": 5
                 }
             ],
             "outputs": [
@@ -250,10 +250,54 @@ new_flow = {
                 }
             ],
             "properties": {
-                "interval": 60*5,
+                "interval": 60*60,
                 "event": "tick"
             },
             "boxcolor": "#222"
+        },
+        {
+            "id": 6,
+            "type": "context/icl_test",
+            "pos": {
+                "0": 350,
+                "1": 703,
+                "2": 0,
+                "3": 0,
+                "4": 0,
+                "5": 0,
+                "6": 0,
+                "7": 0,
+                "8": 0,
+                "9": 0
+            },
+            "size": {
+                "0": 210,
+                "1": 106
+            },
+            "flags": {},
+            "order": 0,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "trigger",
+                    "type": -1,
+                    "link": None
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "context_definition",
+                    "type": "text",
+                    "links": [3]
+                }
+            ],
+            "title": "ICL Test",
+            "properties": {
+                "context_definition": "icl_test"
+            },
+            "widgets_values": [
+                0.5
+            ]
         }
     ],
     "links": [
@@ -284,6 +328,14 @@ new_flow = {
         [
             4,
             5,
+            0,
+            4,
+            0,
+            -1
+        ],
+        [
+            5,
+            6,
             0,
             4,
             0,

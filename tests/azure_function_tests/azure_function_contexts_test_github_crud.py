@@ -48,8 +48,10 @@ new_context = {
     "adaptor_args": {},
     "rag_options": {
         "chunk_size": 1000,
-        "overlap": 250,
-        "strategy": "basic"
+        "chunk_overlap": 250,
+        "separator": "\n\n",
+        "strategy": "CharacterTextSplitter",
+        "is_regex": False        
     }
 }
 

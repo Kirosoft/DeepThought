@@ -103,7 +103,11 @@ json_validator_role = {
     "examples": ["$bess"],
     "tools": [],
     "options": {
-        "rag_mode": True
+        "chunk_size": 1000,
+        "chunk_overlap": 250,
+        "separator": "\n\n",
+        "strategy": "CharacterTextSplitter",
+        "is_regex": False        
     },
     "input": "what are the usability standards",
     "session_token": "",

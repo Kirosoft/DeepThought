@@ -32,7 +32,7 @@ token = json.loads(response.content.decode('utf-8'))
 contexts_crud_url = "http://localhost:7071/api/contexts_crud"
 contexts_run_url = "http://localhost:7071/api/run_context"
 
-def create_context(name, url):
+def create_context(name, urls):
     return {
         "id": name,
         "tenant": "ukho",
@@ -41,7 +41,7 @@ def create_context(name, url):
         "name": name,
         "loader": "pdf_file_loader",
         "loader_args": {
-            "url": url,
+            "url": ",".join(urls),
         },
         "adaptor": "html_to_text",
         "adaptor_args": {},
@@ -55,12 +55,14 @@ def create_context(name, url):
         }
     }
 
-iho_object_catalogue = create_context("iho_object_catalogue","https://iho.int/uploads/user/pubs/standards/s-57/31ApAch1.pdf")
-iho_attribute_catalogue = create_context("iho_attribute_catalogue", "https://iho.int/uploads/user/pubs/standards/s-57/31ApAch2.pdf")
-iho_attribute_object_cross_reference = create_context("iho_attribute_object_cross_reference", "https://iho.int/uploads/user/pubs/standards/s-57/31XREF.pdf")
-iho_s57_product_specification = create_context("iho_s57_product_specification", "https://iho.int/uploads/user/pubs/standards/s-57/20ApB1.pdf")
-iho_s57_product_supplement_3 = create_context("iho_s57_product_supplement","https://iho.int/uploads/user/pubs/standards/s-57/S-57_e3.1_Supp3_Jun14_EN.pdf")
-s57_sources = [iho_object_catalogue, iho_attribute_catalogue, iho_attribute_object_cross_reference, iho_s57_product_specification, iho_s57_product_supplement_3]
+urls = [
+    "https://iho.int/uploads/user/pubs/standards/s-57/31ApAch1.pdf",
+    "https://iho.int/uploads/user/pubs/standards/s-57/31ApAch2.pdf",
+    "https://iho.int/uploads/user/pubs/standards/s-57/31XREF.pdf",
+    "https://iho.int/uploads/user/pubs/standards/s-57/20ApB1.pdf",
+    "https://iho.int/uploads/user/pubs/standards/s-57/S-57_e3.1_Supp3_Jun14_EN.pdf"
+]
+context_definition_s57 = create_context('s57',urls)
 
 headers_post_auth = {
     'Authorization': f'Bearer {token["token"]}',
@@ -68,14 +70,14 @@ headers_post_auth = {
     'x-user-id': '12345'
     }
 
-for source in s57_sources:
-    # create a new context
-    payload = json.dumps(source, ensure_ascii=False).encode('utf8')
-    response = requests.post(contexts_crud_url, payload, headers=headers_post_auth)
-    response_json = response.json()
-    print(response_json)
+# create a new context
+payload = json.dumps(context_definition_s57, ensure_ascii=False).encode('utf8')
+response = requests.post(contexts_crud_url, payload, headers=headers_post_auth)
+response_json = response.json()
+print(response_json)
 
-    response = requests.get(contexts_run_url, params={"id":source["id"]}, headers=headers_post_auth)
-    response_json = response.json()
-    print(response_json)
+# run the context loader
+response = requests.get(contexts_run_url, params={"id":context_definition_s57["id"]}, headers=headers_post_auth)
+response_json = response.json()
+print(response_json)
 

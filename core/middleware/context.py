@@ -92,11 +92,20 @@ class Context:
     def process_content(self, docs, context_name, version):
         
         db_vector_chunks = AgentDBBase(self.agent_config, f'{self.agent_config.INDEX_VECTOR}_{context_name}_v{version}', self.user_id, self.tenant)
+        context = self.get_context(context_name)
+        options = context['rag_options'] if 'rag_options' in context else {}
+        chunk_size = options['chunk_size'] if 'chunk_size' in options else 5000
+        chunk_overlap = options['chunk_overlap'] if 'chunk_overlap' in options else 100
+        separator = options['separator'] if 'separator' in options else "\n\n"
+        is_regex = options['is_regex'] if 'is_regex' in options else False
+        strategy = options['strategy'] if 'strategy' in options else 'CharacterTextSplitter'
 
         for doc in docs:
 
-            text_splitter = CharacterTextSplitter(chunk_size=5000, chunk_overlap=100)
-            chunks = text_splitter.split_text(doc.page_content)
+            match strategy:
+                case 'CharacterTextSplitter':
+                    text_splitter = CharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap, separator=separator,is_separator_regex=is_regex)
+                    chunks = text_splitter.split_text(doc.page_content)
 
             # Adding metadata to documents
             for i, chunk in enumerate(chunks):

@@ -17,8 +17,8 @@ headers = {
     'x-password': 'my_password'
     }
 
-#base_url = "http://localhost:7071/api"
-base_url = "https://deepthought-app.azurewebsites.net/api"
+base_url = "http://localhost:7071/api"
+#base_url = "https://deepthought-app.azurewebsites.net/api"
 
 url = f"{base_url}/request_auth"
 response = requests.get(url, headers=headers)

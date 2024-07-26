@@ -4,6 +4,7 @@ import json
 import logging
 import urllib3
 import types
+from collections import namedtuple
 
 # langchain loaders
 from langchain.document_loaders import GithubFileLoader
@@ -21,6 +22,7 @@ loader_types = types.SimpleNamespace()
 loader_types.GITHUB_FILE_LOADER = "github_file_loader"
 loader_types.HTML_FILE_LOADER = "html_file_loader"
 loader_types.PDF_FILE_LOADER = "pdf_file_loader"
+loader_types.TEXT_FILE_LOADER = "text_file_loader"
 
 class Document(object):
     metadata = {}
@@ -58,6 +60,9 @@ class Loader:
             {"name":"firecrawl_key","mandatory":True, "default":"$FIRECRAWL_API_KEY"}
         ])
         self.register_loader(loader_types.PDF_FILE_LOADER, [
+            {"name":"url", "mandatory":True}
+        ])
+        self.register_loader(loader_types.TEXT_FILE_LOADER, [
             {"name":"url", "mandatory":True}
         ])
                                                                     
@@ -143,16 +148,43 @@ class Loader:
                     try: 
                         loader_args_spec = Loader.__loaders[loader_name]
                         loader_args  = self.get_args(loader_args_spec, input_args)
+                        result = []
 
-                        f = urllib.request.urlopen(loader_args["url"]).read()
-                        pdf_bytes = BytesIO(f)
-                        pdf_reader = PyPDF2.PdfReader(pdf_bytes)
+                        urls = loader_args["url"].split(",")
 
-                        result = [Document(page.extract_text(), {}) for page in pdf_reader.pages]
+                        for source in urls:
+                            f = urllib.request.urlopen(source).read()
+                            pdf_bytes = BytesIO(f)
+                            pdf_reader = PyPDF2.PdfReader(pdf_bytes)
+
+                            for page in pdf_reader.pages:
+                                result.append(Document(page.extract_text(), {})) 
+
                         return result
                     except Exception as e:
                         logging.error(f"error running loader: {e}")
                         return []
+            case loader_types.TEXT_FILE_LOADER:
+                    try: 
+                        loader_args_spec = Loader.__loaders[loader_name]
+                        loader_args  = self.get_args(loader_args_spec, input_args)
+                        result = []
+
+                        urls = loader_args["url"].split(",")
+
+                        for source in urls:
+                            f = urllib.request.urlopen(source)
+                            data = f.read()
+                            f.close()
+                            # TODO: read the bytes into the array
+                            #result.append(Document(page.extract_text(), {}) for page in pdf_reader.pages)
+                            page = namedtuple('literal', 'page_content metadata')(page_content=data.decode("utf-8"), metadata={"source":source})
+                            result.append(page)
+
+                        return result
+                    except Exception as e:
+                        logging.error(f"error running loader: {e}")
+                        return []                    
         return None
 
 

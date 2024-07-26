@@ -18,6 +18,7 @@ class AgentRole:
         self.tool = Tool(self.agent_config, user_id, tenant)
         self.spec = Spec(self.agent_config, user_id, tenant)
         self.agent_memory = None
+        self.icl_memory = None
 
     def run_agent(self, body):
         self.agent_config.update_from_body(body)
@@ -53,6 +54,10 @@ class AgentRole:
             context = self.role.get_context(role, self.agent_config)
             self.agent_memory = AgentMemory(self.agent_config, self.user_id, self.tenant, context)
 
+        if self.icl_memory is None:
+            icl_context = self.role.get_icl_context(role, self.agent_config)
+            self.icl_memory = AgentMemory(self.agent_config, self.user_id, self.tenant, icl_context)
+
         # user can override the examples 
         output_format_json = self.spec.get_specs(role['output_format']) if 'output_format' in role else []
 
@@ -63,10 +68,15 @@ class AgentRole:
             {role["role"] if "role" in role else ""}
             {f"Expected input: {role['expected_input']}" if role['expected_input'] != "" else ""}
             {f"Think about your response. If all the INPUT was provided and the OUTPUT seems complete, OUTPUT [[**FINISHED**]] OR [[**NOT_FINISHED**]] if not finished. You *MUST* output one or the other based on the circumstances."}
-            {f"Example output: {role['examples']}" if role['examples'] != "" else ""}
+            {f"Example output: {role['examples']}" if role['examples'] != "" and self.icl_memory is not None else ""}
             {f"output format: JSON SCHEMA [{','.join(output_format_json)}] do not invent any new fields or change the output scehma in any way. Any UNESCAPED characters should be escaped. Ensuer there are no NEWLINE characters inserted. Ensure there are no back slashes or enescaped characters.The answer to the user should just be text and not JSON" if len(output_format_json) != 0 else ""}
         """           
-        # TODO: ICL Mode - In Context Learning
+        # ICL Mode - In Context Learning
+        if self.role.is_icl(role):
+            system_prompt += f"Example responses:\n"
+            for doc in self.icl_memory.get_context(self.agent_config.input):
+                system_prompt += f"{doc['content']}"
+
         # TODO: AutoRoute - use the input to fine the agent role automatically
 
         # RAG - context injection

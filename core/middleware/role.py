@@ -57,16 +57,41 @@ class Role:
             return role["options"]["context"]
         else:
             return ""
-
-    def is_rag(self, role) -> bool:
+        
+    def get_icl_context(self, role, agent_config:AgentConfig = None):
+        # agentconfig input definition can override role based context
+        if agent_config is not None and agent_config.inputs is not None and 'icl_context' in agent_config.inputs:
+            return agent_config.inputs["icl_context"]
+        elif "options" in role and "icl_context" in role["options"]:
+            return role["options"]["icl_context"]
+        else:
+            return ""
+        
+    def is_rag(self, role, agent_config:AgentConfig = None) -> bool:
         is_rag = False
 
         try:
-            is_rag = role["options"]["context"] != ""
+            if agent_config is not None and agent_config.inputs is not None and 'context' in agent_config.inputs and agent_config.inputs["context"] != '':
+                return True
+            elif "options" in role and "context" in role["options"] and role["options"]["context"] != '':
+                return True
         except Exception as err:
             logging.info(f"Rag option not set {err}")
 
         return is_rag
+        
+    def is_icl(self, role, agent_config:AgentConfig = None) -> bool:
+        is_icl = False
+
+        try:
+            if agent_config is not None and agent_config.inputs is not None and 'icl_context' in agent_config.inputs and agent_config.inputs["icl_context"] != '':
+                return True
+            elif "options" in role and "icl_context" in role["options"] and role["options"]["icl_context"] != '':
+                return True
+        except Exception as err:
+            logging.info(f"ICL option not set {err}")
+
+        return is_icl
         
     def delete_role(self, role_name, level = "user"):
         

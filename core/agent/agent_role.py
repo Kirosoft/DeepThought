@@ -3,6 +3,7 @@ import logging
 
 from core.agent.agent_config import AgentConfig
 from core.agent.agent_memory import AgentMemory
+from core.agent.agent_memory_role import AgentMemoryRole
 from core.llm.llm_base import LLMBase
 from core.middleware.role import Role
 from core.middleware.tool import Tool
@@ -46,7 +47,9 @@ class AgentRole:
     # for example the template includes the '{% for doc in docs -%}' expecting data
     # should be inserted
     def get_completed_prompt(self, role_name:str) -> object:
-        role = self.role.get_role(role_name)
+        
+        role = self.role.get_role(role_name, self.agent_config.input)
+
         messages = []
         options = {}
 

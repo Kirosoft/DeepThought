@@ -1,4 +1,5 @@
 from core.agent.agent_config import AgentConfig
+from core.agent.agent_memory_role import AgentMemoryRole
 from core.db.agent_db_base import AgentDBBase
 from urllib.parse import unquote
 import json
@@ -17,6 +18,7 @@ class Role:
         self.agent_config = agent_config
         self.db_roles_user = AgentDBBase(self.agent_config, self.agent_config.INDEX_ROLES, user_id, tenant)
         self.db_roles_system = AgentDBBase(self.agent_config, self.agent_config.INDEX_ROLES, "system", "system")
+        self.agent_memory_roles = AgentMemoryRole(agent_config, user_id, tenant)
 
     def load_all_roles(self):
         system_roles = list(self.db_roles_system.get_all())
@@ -35,10 +37,14 @@ class Role:
             return self.db_roles_system.index(role["name"], role)
 
 
-    def get_role(self, role_name: str) -> str:
+    def get_role(self, role_name: str, input_data) -> str:
         
         # determine role, default user_id, default tenant
-        result = self.db_roles_user.get(role_name)
+        # if the role name is 'auto' then semantically lookup the closest role
+        if role_name=="auto":
+            result = self.agent_memory_roles.get_context(input_data)
+        else:
+            result = self.db_roles_user.get(role_name)
 
         if result is None:
             result = self.db_roles_system.get(role_name)
@@ -48,7 +54,7 @@ class Role:
                 return None
 
         return result
-    
+
     def get_context(self, role, agent_config:AgentConfig = None):
         # agentconfig input definition can override role based context
         if agent_config is not None and agent_config.inputs is not None and 'context' in agent_config.inputs:

@@ -1,5 +1,5 @@
 # TODO:
-
+tractor hst
 * Fix the timer auth token expiration in flows
 * Fix the UI to work with settable properties
 * support new nodes like: subflow, validate (compare ), log
@@ -8,6 +8,15 @@
 * Self learning roles
 * fix the github actions deployment
 * use LLM routing to lowest cost agent?
+
+# WIP
+
+* aim: allow the user to create a new role, associated contexts and tools from the terminal
+* revisit tool calling so that agents (roles) can call other agents (which is a kind of tool). Tools can be 'azure functions' and specs define the parameters for tools.
+* templates for tools? - should they inherit?
+* LLM defined tools
+* LLM defined UI for tools
+* prefetch for agents based on available tools/contexts
 
 Done:
 <strike>auto agentic routing</strike>

@@ -50,6 +50,9 @@ class AgentRole:
         
         role = self.role.get_role(role_name, self.agent_config.input)
 
+        tools = self.tool.load_all_tools() if "options" in role and "prefetch_tools" in role["options"] and "prefetch_tools" in role["options"] and role["options"]["prefetch_tools"] else None
+        roles = self.role.load_all_roles() if "options" in role and "prefetch_roles" in role["options"] and "prefetch_roles" in role["options"] and role["options"]["prefetch_roles"] else None
+
         messages = []
         options = {}
 
@@ -109,7 +112,8 @@ class AgentRole:
 
         tools  = self.tool.get_tools(role["tools"]) if "tools" in role and len(role["tools"]) > 0 else []
 
+        # allow LLM model overrides on a per role basis
         if "options" in role and "model_override" in role["options"]:
             options["model_override"] = role["options"]["model_override"]
 
-        return {"messages":messages, "tools":tools, "options":options, "output_format_json":output_format_json}
+        return {"messages":messages, "tools":tools, "options":options, "output_format_json":output_format_json, "role":role["name"]}

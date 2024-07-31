@@ -92,7 +92,7 @@ class LLMBase:
                     "tool_calls":  [] if completion.choices[0].finish_reason != "tool_calls" else str(completion.choices[0].message.tool_calls),
                     "answer": completion['message']['content'],
                     "timestamp": datetime.now().isoformat(),
-                    "role":self.agent_config.role,
+                    "role": completed_prompt["role"],
                     "parent_role":self.agent_config.parent_role,
                     "session_token":self.agent_config.session_token
                 }

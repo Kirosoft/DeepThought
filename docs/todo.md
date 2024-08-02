@@ -1,5 +1,4 @@
 # TODO:
-tractor hst
 * Fix the timer auth token expiration in flows
 * Fix the UI to work with settable properties
 * support new nodes like: subflow, validate (compare ), log
@@ -16,9 +15,12 @@ tractor hst
 * templates for tools? - should they inherit?
 * LLM defined tools
 * LLM defined UI for tools
-* prefetch for agents based on available tools/contexts
+* prefetch for agents based on available tools/roles/contexts
+* Contexts text lookup mode rather than just RAG
 
 Done:
+<strike>Update all loaders to support multi url/file sources</strike>
+<strike>db layer now checks for 'valid_fields' attribute and removes any fields not listed</strike>
 <strike>auto agentic routing</strike>
 <strike>in-context learning added to flows</strike>
 <strike>in-context learning added to run_agent</strike>

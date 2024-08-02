@@ -79,12 +79,42 @@ class AgentDBCosmos(AgentDBBase):
                 
         return self.container
 
+    def check_for_valid_fields(self, collection):
+        results = []
+        for row in collection:
+            # if a valid fields list exists then remove
+            # all fields that are not listed in the valid
+            # field list
+            if row is not None and "valid_fields" in row:
+
+                valid_fields = row["valid_fields"]
+                field_list = list(row.keys()).copy()
+                new_row = {}
+
+                for key in field_list:
+                    try:
+                        if key in valid_fields:
+                            new_row[key] = row[key]
+                    except:
+                        # not all things can be removed
+                        # but we don't care
+                        pass
+                
+                results.append(new_row)
+            else:
+                results.append(row)
+
+        return results        
+
     def get(self, id:str, user_id = None, tenant = None):
         try:
             # if user_id and tenant are not supplied override with the defaults
             user_id = user_id if user_id is not None else self.user_id
             tenant = tenant if tenant is not None else self.tenant
             data = self.get_container().read_item(item=id, partition_key=[tenant, user_id, self.__data_type])
+
+            data = self.check_for_valid_fields([data])[0]
+
         except Exception  as err:
             data = None
             logging.info(f"{err} Could not find {id} in ${self.index} with partition_key {[tenant, user_id, self.__data_type]}")
@@ -97,11 +127,13 @@ class AgentDBCosmos(AgentDBBase):
             user_id = user_id if user_id is not None else self.user_id
             tenant = tenant if tenant is not None else self.tenant
 
-            data = self.get_container().query_items(
+            collection = self.get_container().query_items(
                         query="SELECT * FROM c",
                         enable_cross_partition_query=False,  # Ensure cross-partition querying is disabled
                         partition_key=[tenant, user_id, self.__data_type]  # Specify the partition key
                     )
+            
+            data = self.check_for_valid_fields(list(collection))
 
         except Exception  as err:
             data = None
@@ -115,6 +147,9 @@ class AgentDBCosmos(AgentDBBase):
 
         query = f"SELECT * FROM C where C.id in ('{','.join(docs)}')"
         result = self.get_container().query_items(query, enable_cross_partition_query=True, partition_key=[self.tenant, self.user_id, self.__data_type])
+
+        result = self.check_for_valid_fields(result)
+
         return result
 
 

@@ -50,7 +50,7 @@ class Loader:
         Loader.__loaders = {}
         self.register_loader(loader_types.GITHUB_FILE_LOADER, [
                 {"name":"repo", "mandatory":True}, 
-                {"name":"filter","mandatory":True, "default":".md"}, 
+                {"name":"filter","mandatory":True, "default":[".md"]}, 
                 {"name":"github_api_url","mandatory": True, "default":"https://api.github.com" },
                 {"name":"github_key","mandatory": True, "default":"$GITHUB_KEY" }
             ])
@@ -115,13 +115,11 @@ class Loader:
 
                         loader = GithubFileLoader(
                             repo=loader_args["repo"],
-                            # TODO: this key should come from the user profile?
                             access_token=loader_args["github_key"],
                             github_api_url=loader_args["github_api_url"],
-                            file_filter=lambda file_path: file_path.endswith(
-                                loader_args["filter"]
-                            ),  
-                        )
+                            file_filter=lambda file_path: any(file_path.endswith(arg_path) for arg_path in loader_args["filter"])
+                            )  
+                        
                         result = loader.load()
                         return result
                     except Exception as e:
@@ -132,27 +130,28 @@ class Loader:
                     try: 
                         loader_args_spec = Loader.__loaders[loader_name]
                         loader_args  = self.get_args(loader_args_spec, input_args)
+                        results = []
 
-                        loader = FireCrawlLoader(
-                            api_key=loader_args["firecrawl_key"],
-                            # TODO: this key should come from the user profile?
-                            url=loader_args["url"],
-                            mode=loader_args["mode"],
-                        )
-                        result = loader.load()
-                        return result
+                        for url in loader_args["url"]:
+                            loader = FireCrawlLoader(
+                                api_key=loader_args["firecrawl_key"],
+                                url=url,
+                                mode=loader_args["mode"],
+                            )
+                            result = loader.load()
+                            results.append(result)
+                        return results
                     except Exception as e:
                         logging.error(f"error running loader: {e}")
                         return []
+
             case loader_types.PDF_FILE_LOADER:
                     try: 
                         loader_args_spec = Loader.__loaders[loader_name]
                         loader_args  = self.get_args(loader_args_spec, input_args)
                         result = []
 
-                        urls = loader_args["url"].split(",")
-
-                        for source in urls:
+                        for source in loader_args["url"]:
                             f = urllib.request.urlopen(source).read()
                             pdf_bytes = BytesIO(f)
                             pdf_reader = PyPDF2.PdfReader(pdf_bytes)
@@ -170,9 +169,7 @@ class Loader:
                         loader_args  = self.get_args(loader_args_spec, input_args)
                         result = []
 
-                        urls = loader_args["url"].split(",")
-
-                        for source in urls:
+                        for source in loader_args["url"]:
                             f = urllib.request.urlopen(source)
                             data = f.read()
                             f.close()

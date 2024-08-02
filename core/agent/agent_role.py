@@ -7,6 +7,7 @@ from core.agent.agent_memory_role import AgentMemoryRole
 from core.llm.llm_base import LLMBase
 from core.middleware.role import Role
 from core.middleware.tool import Tool
+from core.middleware.context import Context
 from core.middleware.spec import Spec
 
 class AgentRole:
@@ -18,6 +19,7 @@ class AgentRole:
         self.role = Role(self.agent_config, user_id, tenant)
         self.tool = Tool(self.agent_config, user_id, tenant)
         self.spec = Spec(self.agent_config, user_id, tenant)
+        self.context = Context(self.agent_config, user_id, tenant)
         self.agent_memory = None
         self.icl_memory = None
 
@@ -52,6 +54,7 @@ class AgentRole:
 
         tools = self.tool.load_all_tools() if "options" in role and "prefetch_tools" in role["options"] and "prefetch_tools" in role["options"] and role["options"]["prefetch_tools"] else None
         roles = self.role.load_all_roles() if "options" in role and "prefetch_roles" in role["options"] and "prefetch_roles" in role["options"] and role["options"]["prefetch_roles"] else None
+        roles = self.context.load_all_roles() if "options" in role and "prefetch_roles" in role["options"] and "prefetch_roles" in role["options"] and role["options"]["prefetch_roles"] else None
 
         messages = []
         options = {}

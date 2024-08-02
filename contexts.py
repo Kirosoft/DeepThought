@@ -127,7 +127,7 @@ def run_loader(inputdata):
     loader = Loader(agent_config, user_settings["user_id"], user_settings["tenant"])
 
     docs = loader.run(context["loader"], context["loader_args"])
-    if len(docs) > 0:
+    if docs != None and len(docs) > 0:
         next_version = context["current_version"]+1
 
         result = context_crud.process_content(docs, context["id"], next_version)

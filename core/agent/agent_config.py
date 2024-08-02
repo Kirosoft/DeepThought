@@ -70,6 +70,7 @@ class AgentConfig:
         self.INDEX_HISTORY = os.getenv("INDEX_HISTORY", "ai_history")
         self.INDEX_TOOLS = os.getenv("INDEX_TOOLS", "ai_tools")
         self.INDEX_VECTOR = os.getenv("INDEX_VECTOR", "ai_vector")
+        self.INDEX_TEXT = os.getenv("INDEX_TEXT", "ai_text")
         self.INDEX_SPECS = os.getenv("INDEX_SPECS", "ai_specs")
         self.INDEX_USER = os.getenv("INDEX_USER", "ai_user")
         self.INDEX_FLOWS = os.getenv("INDEX_FLOWS", "ai_flows")

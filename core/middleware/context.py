@@ -88,17 +88,22 @@ class Context:
         full_context_name = f'{self.agent_config.INDEX_VECTOR}_{context_name}_v{version}'
         db_vector_chunks = AgentDBBase(self.agent_config, full_context_name, self.user_id, self.tenant)
         db_vector_chunks.set_ttl_for_data_type(full_context_name, ttl_seconds)
-        
-    def process_content(self, docs, context_name, version):
-        
+    
+    def process_text_content(self, docs, context_name, version, options):
+        text_db = AgentDBBase(self.agent_config, f'{self.agent_config.INDEX_TEXT}_{context_name}_v{version}', self.user_id, self.tenant)
+        for doc in docs:
+            text_db["url"] = doc.metadata["source"] if "source" in doc.metadata else ""
+            text_db["path"] = doc.metadata["path"] if "path" in doc.metadata else ""
+            text_db.index(id=doc["id"], doc=doc)
+
+    def process_vector_content(self, docs, context_name, version, rag_options):
+
         db_vector_chunks = AgentDBBase(self.agent_config, f'{self.agent_config.INDEX_VECTOR}_{context_name}_v{version}', self.user_id, self.tenant)
-        context = self.get_context(context_name)
-        options = context['rag_options'] if 'rag_options' in context else {}
-        chunk_size = options['chunk_size'] if 'chunk_size' in options else 5000
-        chunk_overlap = options['chunk_overlap'] if 'chunk_overlap' in options else 100
-        separator = options['separator'] if 'separator' in options else "\n\n"
-        is_regex = options['is_regex'] if 'is_regex' in options else False
-        strategy = options['strategy'] if 'strategy' in options else 'CharacterTextSplitter'
+        chunk_size = rag_options['chunk_size'] if 'chunk_size' in rag_options else 5000
+        chunk_overlap = rag_options['chunk_overlap'] if 'chunk_overlap' in rag_options else 100
+        separator = rag_options['separator'] if 'separator' in rag_options else "\n\n"
+        is_regex = rag_options['is_regex'] if 'is_regex' in rag_options else False
+        strategy = rag_options['strategy'] if 'strategy' in rag_options else 'CharacterTextSplitter'
 
         for doc in docs:
 
@@ -125,7 +130,16 @@ class Context:
                 vector_doc["encoded"] = encoded
 
                 db_vector_chunks.index(id=encoded, doc=vector_doc)
-    
+
+    def process_content(self, docs, context_name, version):
+        context = self.get_context(context_name)
+        rag_options = context['rag_options'] if 'rag_options' in context else None
+
+        if rag_options is not None:
+            self.process_vector_content(docs, context_name, version, rag_options)
+        else:
+            self.process_text_content(docs, context_name, version, context["options"])
+
 
 
 

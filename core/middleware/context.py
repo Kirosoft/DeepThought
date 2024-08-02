@@ -10,7 +10,7 @@ from langchain_community.document_loaders import TextLoader
 from langchain_text_splitters import CharacterTextSplitter
 import base64
 import numpy as np
-
+from os import path
 
 urllib3.disable_warnings()
 
@@ -92,9 +92,12 @@ class Context:
     def process_text_content(self, docs, context_name, version, options):
         text_db = AgentDBBase(self.agent_config, f'{self.agent_config.INDEX_TEXT}_{context_name}_v{version}', self.user_id, self.tenant)
         for doc in docs:
-            text_db["url"] = doc.metadata["source"] if "source" in doc.metadata else ""
-            text_db["path"] = doc.metadata["path"] if "path" in doc.metadata else ""
-            text_db.index(id=doc["id"], doc=doc)
+            text_doc = {}
+            text_doc["url"] = doc.metadata["source"] if "source" in doc.metadata else ""
+            text_doc["path"] = doc.metadata["path"] if "path" in doc.metadata else ""
+            text_doc["content"] = doc.page_content
+            head, tail= path.split(text_doc["path"])
+            text_db.index(id=tail, doc=text_doc)
 
     def process_vector_content(self, docs, context_name, version, rag_options):
 

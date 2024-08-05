@@ -16,9 +16,12 @@
 * LLM defined tools
 * LLM defined UI for tools
 * prefetch for agents based on available tools/roles/contexts
-* Contexts text lookup mode rather than just RAG
+* 
 
 Done:
+<Strike>Run agent returns conversing role when 'auto' mode is used.</strike>
+<Strike>Added 'valid_fields' to all objects stored to ensure fields not listed are not returned</strike>
+<Strike>Contexts support text lookup mode rather than just RAG</strike>
 <strike>Update all loaders to support multi url/file sources</strike>
 <strike>db layer now checks for 'valid_fields' attribute and removes any fields not listed</strike>
 <strike>auto agentic routing</strike>

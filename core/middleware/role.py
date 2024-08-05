@@ -16,6 +16,8 @@ class Role:
 
     def __init__(self, agent_config, user_id, tenant):
         self.agent_config = agent_config
+        self.user_id = user_id
+        self.tenant = tenant
         self.db_roles_user = AgentDBBase(self.agent_config, self.agent_config.INDEX_ROLES, user_id, tenant)
         self.db_roles_system = AgentDBBase(self.agent_config, self.agent_config.INDEX_ROLES, "system", "system")
         self.agent_memory_roles = AgentMemoryRole(agent_config, user_id, tenant)
@@ -52,6 +54,14 @@ class Role:
             if result is None:
                 logging.error(f"Request role not found {role_name}")
                 return None
+
+        # check for role_override
+        if "options" in result and "role_override" in result["options"] and result["options"]["role_override"] and "role_override_conext" in result["options"]:
+            # load the context to inject the role - assumed text mode at the moment
+            role_override_context = AgentDBBase(self.agent_config, self.agent_config.INDEX_TEXT, self.user_id, self.tenant, result["options"]["role_overrides_context"])
+            override_role = role_override_context.get(result[id])
+            if override_role is not None:
+                result["role"] = override_role
 
         return result
 

@@ -61,8 +61,6 @@ class AgentMemoryRole:
         similarity = dot_product / (norm1 * norm2)
         return similarity
     
-
-    
     def get_context(self, input_data, min_threshold = 0.20):
         highest_score = -1
         highest_id = -1

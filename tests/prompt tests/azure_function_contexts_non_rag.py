@@ -31,25 +31,22 @@ token = json.loads(response.content.decode('utf-8'))
 
 url = "http://localhost:7071/api/contexts_crud"
 new_context = {
-    "id": "deepthought_ai",
-    "tenant": "ukho",
-    "user_id": "12345",
-    "data_type": "context_definition",
-    "name": "deepthought_ai",
-    "loader": "pdf_file_loader",
+    "id": "deepthoughtai",
+    "name": "deepthoughtai",
+    "loader": "github_file_loader",
     "loader_args": {
-        "url": "https://site-port-of-tyne.s3.amazonaws.com/media/Notice%20to%20Mariners%20Index%202024.pdf",
+        "repo": "Kirosoft/DeepThought",
+        "access_token": "$GITHUB_ACCESS_TOKEN",
+        "filter": [
+            ".role"
+        ],
+        "api_url": "https://api.github.com"
     },
+    "options": {},
     "adaptor": "html_to_text",
+    "current_version": 1,
     "adaptor_args": {},
-    "current_version":0,
-    "rag_options": {
-        "chunk_size": 1000,
-        "chunk_overlap": 250,
-        "separator": "\n\n",
-        "strategy": "CharacterTextSplitter",
-        "is_regex": False        
-    }
+    "level": "user"
 }
 
 
@@ -68,23 +65,6 @@ response_json = response.json()
 print(response_json)
 
 # get the new context
-response = requests.get(url, params=params, headers=headers)
-response_json = response.json()
-print(response_json)
-
-# get the  all the contexts
-response = requests.get(url, headers=headers)
-response_json = response.json()
-print(response_json)
-
-
-# delete the new context
-# response = requests.delete(url, params=params, headers=headers)
-# response_json = response.json()
-# print(response_json)
-
-
-# get the  context (should be blank)
 response = requests.get(url, params=params, headers=headers)
 response_json = response.json()
 print(response_json)

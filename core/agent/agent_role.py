@@ -50,11 +50,11 @@ class AgentRole:
     # should be inserted
     def get_completed_prompt(self, role_name:str) -> object:
         
+        # get the role or find an auto assigned one
         role = self.role.get_role(role_name, self.agent_config.input)
 
         tools = self.tool.load_all_tools() if "options" in role and "prefetch_tools" in role["options"] and "prefetch_tools" in role["options"] and role["options"]["prefetch_tools"] else None
         roles = self.role.load_all_roles() if "options" in role and "prefetch_roles" in role["options"] and "prefetch_roles" in role["options"] and role["options"]["prefetch_roles"] else None
-        roles = self.context.load_all_roles() if "options" in role and "prefetch_roles" in role["options"] and "prefetch_roles" in role["options"] and role["options"]["prefetch_roles"] else None
 
         messages = []
         options = {}
@@ -86,8 +86,6 @@ class AgentRole:
             for doc in self.icl_memory.get_context(self.agent_config.input):
                 system_prompt += f"{doc['content']}"
 
-        # TODO: AutoRoute - use the input to fine the agent role automatically
-
         # RAG - context injection
         # build the function message
         # transform the search results into json payload
@@ -99,7 +97,6 @@ class AgentRole:
         messages.append({"role":"system", "content":system_prompt})
 
         # ASSISTANT - Session history
-        # TODO: does the session history need to be sequenced to replay in the right order?
         if (not self.agent_config.new_session):
             session_results = self.agent_memory.get_session_history(self.agent_config.session_token)
             for session in session_results:

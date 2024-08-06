@@ -19,49 +19,49 @@
 * 
 
 Done:
-<Strike>Agent roles can now be sourced from github - allows version control of role descriptions</strike><br/>
-<Strike>Run agent returns conversing role when 'auto' mode is used.</strike><br/>
-<Strike>Added 'valid_fields' to all objects stored to ensure fields not listed are not returned</strike><br/>
-<Strike>Contexts support text lookup mode rather than just RAG</strike><br/>
-<strike>Update all loaders to support multi url/file sources</strike><br/>
-<strike>db layer now checks for 'valid_fields' attribute and removes any fields not listed</strike><br/>
-<strike>auto agentic routing</strike><br/>
-<strike>in-context learning added to flows</strike><br/>
-<strike>in-context learning added to run_agent</strike><br/>
-<strike>Add parsing support to the doc chunking</strike><br/>
-<strike>support multiple txt doc sources for a single context</strike><br/>
-<strike>support multiple pdf doc sources for a single context</strike><br/>
-<strike>Context updates now have a versioning system so vectors can be updated and old values removed automatically</strike><br/>
-<strike>Added durable timers to support mini context (RAG) updates</strike><br/>
-<strike>Full agentic DAG(flows) now supported on the backend using durable orchestrations</strike><br/>
-<Strike>Add support for Anthropic</strike><br/>
-<Strike>Optional secrets now come from user account</strike><br/>
-<Strike>RAG import from github repo</strike><br/>
-<strike>role CRUD definitions to system, tenant or user</strike><br/>
-<Strike>specs CRUD (system, tenant userid)</strike><br/>
-<Strike>tools CRUD (system, tenant userid)</strike><br/>
-<Strike>flow CRUD (system, tenant, user)</strike><br/>
-<strike>* Multi-tenant support added to database and functions<br/></strike><br/>
-<Strike>* Support multiple users<br/></strike><br/>
-<strike>* Security - Added auth API to ensure secrets are not needed to be stored browser side<br></strike><br/>
-<strike>* Security - Added rate limiting to the API<br></strike><br/>
-<strike>* Security - Added request balance<br></strike><br/>
-<strike>* Initial flow client created<br></strike><br/>
-<strike>* Moved user options into DB<br></strike><br/>
-<strike>* Implemented JWT token auth scheme<br></strike><br/>
-<strike>* Security- Origin checks on requests<br></strike><br/>
-<strike>* fix the ollama sdk to support function calling<br></strike><br/>
-<Strike>* Local cosmodb init is slow ... <br></strike><br/>
-<strike>* develop a job posting agent demo<br></strike><br/>
-<Strike>* agent input expectation for multihop questions<br></strike><br/>
-<Strike>* Improved LLM prompting i.e. system prompt, context, tools, examples <br></strike><br/>
-<Strike>* Support JSON schema specification LLM outputs<br></strike><br/>
-<strike>* LLM Model overrides from templates e.g. change the llm model based on the role<br></strike><br/>
-<Strike>* rework <b>function calling</b> - now known as tools<br></strike><br/>
-<Strike>* Add support for Grok<br/></strike><br/>
-<strike>* Add support for local AI model - LLama3 - DONE<br></strike><br/>
-<strike>* Add support for a local and cloud vector/nosql database option - CosmosDB - DONE<br></strike><br/>
-<strike>* Support <b>RAG</b> <br></strike><br/>
-<strike>* Support <b>session memory</b> (Feature)</strike><br/>
+Agent roles can now be sourced from github - allows version control of role descriptions<br/>
+Run agent returns conversing role when 'auto' mode is used.<br/>
+Added 'valid_fields' to all objects stored to ensure fields not listed are not returned<br/>
+Contexts support text lookup mode rather than just RAG<br/>
+Update all loaders to support multi url/file sources<br/>
+db layer now checks for 'valid_fields' attribute and removes any fields not listed<br/>
+auto agentic routing<br/>
+in-context learning added to flows<br/>
+in-context learning added to run_agent<br/>
+Add parsing support to the doc chunking<br/>
+support multiple txt doc sources for a single context<br/>
+support multiple pdf doc sources for a single context<br/>
+Context updates now have a versioning system so vectors can be updated and old values removed automatically<br/>
+Added durable timers to support mini context (RAG) updates<br/>
+Full agentic DAG(flows) now supported on the backend using durable orchestrations<br/>
+Add support for Anthropic<br/>
+Optional secrets now come from user account<br/>
+RAG import from github repo<br/>
+role CRUD definitions to system, tenant or user<br/>
+specs CRUD (system, tenant userid)<br/>
+tools CRUD (system, tenant userid)<br/>
+flow CRUD (system, tenant, user)<br/>
+* Multi-tenant support added to database and functions<br/><br/>
+* Support multiple users<br/><br/>
+* Security - Added auth API to ensure secrets are not needed to be stored browser side<br><br/>
+* Security - Added rate limiting to the API<br><br/>
+* Security - Added request balance<br><br/>
+* Initial flow client created<br><br/>
+* Moved user options into DB<br><br/>
+* Implemented JWT token auth scheme<br><br/>
+* Security- Origin checks on requests<br><br/>
+* fix the ollama sdk to support function calling<br><br/>
+* Local cosmodb init is slow ... <br><br/>
+* develop a job posting agent demo<br><br/>
+* agent input expectation for multihop questions<br><br/>
+* Improved LLM prompting i.e. system prompt, context, tools, examples <br><br/>
+* Support JSON schema specification LLM outputs<br><br/>
+* LLM Model overrides from templates e.g. change the llm model based on the role<br><br/>
+* rework <b>function calling</b> - now known as tools<br><br/>
+* Add support for Grok<br/><br/>
+* Add support for local AI model - LLama3 - DONE<br><br/>
+* Add support for a local and cloud vector/nosql database option - CosmosDB - DONE<br><br/>
+* Support <b>RAG</b> <br><br/>
+* Support <b>session memory</b> (Feature)<br/>
 
 

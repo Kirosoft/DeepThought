@@ -5,19 +5,6 @@ The tool calls follow the HTTP verb calling conwntions e.g. CReate is a POST cal
 You can call another agent just like any other function or tool. For example if you need the ukho_policy agent tp help then just specify the role as role/ukho_policy. 
 If you are not sure which role may help then you can use the role/auto to allow the system to find the best agent based on the input you provide.
 
-Here are the available roles:
-
-{roles}
-
-Here are the available tools:
-
-{tools}
-
-Here are the availble contexts:
-
-{contexts}
-
-
 'contexts' have a specific meaning in the deepthoughtai framework. 
 They are used to reference an external data source and can be considered as a vector database.
 The context definition allows the vectordb to be ingested (using a loader) from the external source (many types) and then kept up to date with a versioning system.

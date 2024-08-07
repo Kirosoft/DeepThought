@@ -1,6 +1,7 @@
 from core.agent.agent_config import AgentConfig
 from core.agent.agent_memory_role import AgentMemoryRole
 from core.db.agent_db_base import AgentDBBase
+from core.middleware.context import Context
 from urllib.parse import unquote
 import json
 import logging
@@ -21,6 +22,7 @@ class Role:
         self.db_roles_user = AgentDBBase(self.agent_config, self.agent_config.INDEX_ROLES, user_id, tenant)
         self.db_roles_system = AgentDBBase(self.agent_config, self.agent_config.INDEX_ROLES, "system", "system")
         self.agent_memory_roles = AgentMemoryRole(agent_config, user_id, tenant)
+        self.context = Context(agent_config, user_id, tenant)
 
     def load_all_roles(self):
         system_roles = list(self.db_roles_system.get_all())
@@ -56,12 +58,16 @@ class Role:
                 return None
 
         # check for role_override
-        if "options" in result and "role_override" in result["options"] and result["options"]["role_override"] and "role_override_conext" in result["options"]:
+        if "options" in result and "role_override" in result["options"] and result["options"]["role_override"] and "role_override_context" in result["options"]:
             # load the context to inject the role - assumed text mode at the moment
-            role_override_context = AgentDBBase(self.agent_config, self.agent_config.INDEX_TEXT, self.user_id, self.tenant, result["options"]["role_overrides_context"])
-            override_role = role_override_context.get(result[id])
+            context_data_db = self.context.get_latest_context_data(result["options"]["role_override_context"])
+            role_override_context = AgentDBBase(self.agent_config, context_data_db, self.user_id, self.tenant)
+            override_role = role_override_context.get(result["name"]+".role")
             if override_role is not None:
-                result["role"] = override_role
+                result["role"] = override_role['content']
+            override_schema = role_override_context.get(result["name"]+".schema")
+            if override_schema is not None:
+                result["schema"] = override_schema['content']
 
         return result
 

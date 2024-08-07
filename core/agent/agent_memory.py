@@ -17,6 +17,7 @@ class AgentMemory:
         context_crud = Context(self.agent_config, self.user_id, self.tenant)
         context_name = self.context if self.context != "" else "default"
 
+        # TODO: refactor this into context cruid
         # find the latest version of this context
         # default to version 1 if none found
         version = 1

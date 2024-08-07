@@ -9,6 +9,8 @@ from core.middleware.role import Role
 from core.middleware.tool import Tool
 from core.middleware.context import Context
 from core.middleware.spec import Spec
+from  core.utils.schema import create_dynamic_model
+import json
 
 class AgentRole:
 
@@ -116,4 +118,14 @@ class AgentRole:
         if "options" in role and "model_override" in role["options"]:
             options["model_override"] = role["options"]["model_override"]
 
-        return {"messages":messages, "tools":tools, "options":options, "output_format_json":output_format_json, "role":role["name"]}
+        schema = None
+        if "schema" in role:
+            try:
+                schema_obj = json.loads(role["schema"])
+                schema_model = create_dynamic_model(schema_obj).schema()
+                #schema_model["name"]=role["name"]
+                schema = {"type":"json_schema", "json_schema":{"schema":schema_model, "name":role["name"]}}
+            except:
+                logging.error('run_agent - schema validation failed: %s',role['schema'])
+
+        return {"messages":messages, "tools":tools, "options":options, "output_format_json":output_format_json, "role":role["name"], "schema":schema}

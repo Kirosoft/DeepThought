@@ -36,6 +36,7 @@ class Context:
         # TODO: tenant contexts?
         return { "system_contexts": system_contexts, "user_contexts": user_contexts}
 
+    # context definition
     def save_context(self, context, level = "user"):
         # TODO: split out context data to be context seachable?
         if level == "user":
@@ -46,6 +47,7 @@ class Context:
             return self.db_contexts_system.index(context["name"], context)
 
 
+    # context definition
     def get_context(self, context_name: str) -> str:
         
         # determine context, default user_id, default tenant
@@ -61,6 +63,7 @@ class Context:
         return result
 
         
+    # context definition
     def delete_context(self, context_name, level = "user"):
         
         if (level == "user"):
@@ -89,6 +92,19 @@ class Context:
         db_vector_chunks = AgentDBBase(self.agent_config, full_context_name, self.user_id, self.tenant)
         db_vector_chunks.set_ttl_for_data_type(full_context_name, ttl_seconds)
     
+    # returns the name of the latest data db for the context definition
+    def get_latest_context_data(self, context_name):
+        result = None
+        context = self.get_context(context_name)
+        if context is not None:
+            version = 1 if not 'current_version' in context else context['current_version']
+            if 'rag_options' in context:
+                result = f'{self.agent_config.INDEX_VECTOR}_{context_name}_v{version}'
+            else:
+                result = f'{self.agent_config.INDEX_TEXT}_{context_name}_v{version}'
+
+        return result
+
     def process_text_content(self, docs, context_name, version, options):
         text_db = AgentDBBase(self.agent_config, f'{self.agent_config.INDEX_TEXT}_{context_name}_v{version}', self.user_id, self.tenant)
         for doc in docs:

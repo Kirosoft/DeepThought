@@ -50,7 +50,7 @@ policy = {
 
 
 SchemaModel = create_dynamic_model(policy)
-schema_model = SchemaModel.schema_json(indent=2)
+schema_model = SchemaModel.schema()
 print(schema_model)
 
 
@@ -83,7 +83,7 @@ new_context = {
     },
     "options": {},
     "adaptor": "html_to_text",
-    "current_version": 1,
+    "current_version": 3,
     "adaptor_args": {},
     "level": "user"
 }
@@ -98,10 +98,10 @@ headers = {
 params = {'id': new_context["id"]}
 
 # create a new context
-payload = json.dumps(new_context, ensure_ascii=False).encode('utf8')
-response = requests.post(url, payload, headers=headers)
-response_json = response.json()
-print(response_json)
+# payload = json.dumps(new_context, ensure_ascii=False).encode('utf8')
+# response = requests.post(url, payload, headers=headers)
+# response_json = response.json()
+# print(response_json)
 
 # get the new context
 response = requests.get(url, params=params, headers=headers)
@@ -109,11 +109,11 @@ response_json = response.json()
 print(response_json)
 
 
-# run the loader
+#run the loader
 url = f"{base_url}/run_context"
-response = requests.get(url, params=params, headers=headers)
-response_json = response.json()
-print(response_json)
+# response = requests.get(url, params=params, headers=headers)
+# response_json = response.json()
+# print(response_json)
 
 #test - a prompt using 'auto' role mode
 document = {"input": "I would like to create a new role called quiz_master, this should generate 10 new pub quiz questions on a variety of topics","role":"auto", "name":"run_agent", "session_token":"this_should_be_random"}

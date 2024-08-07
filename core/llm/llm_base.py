@@ -8,6 +8,7 @@ from datetime import datetime
 import random, string
 import json
 import anthropic
+import logging
 
 llm_types = types.SimpleNamespace()
 llm_types.OPENAI = "openai"
@@ -32,7 +33,7 @@ class LLMBase:
             case llm_types.ANTHROPIC:
                 return self.agent_config.ANTHROPIC_MODEL
             
-    def process_ai_completion(self, completion):
+    def process_ai_completion(self, completion, role):
         # todo: assumes the answer object schema
         answer = completion.choices[0].message.content
         answer_type = ""
@@ -52,13 +53,34 @@ class LLMBase:
             "answer_type": answer_type,
             "answer": "" if completion.choices[0].finish_reason == "tool_calls" else answer,
             "timestamp": datetime.now().isoformat(),
-            "role":completion["role"],
+            "role":role,
             "parent_role":self.agent_config.parent_role,
             "session_token":self.agent_config.session_token
         }
 
         return doc
 
+    def process_ai_error(self, error, role):
+        # todo: assumes the answer object schema
+        answer = str(error)
+        answer_type = ""
+
+
+        doc={
+            "id": ''.join(random.choices(string.ascii_letters + string.digits, k=self.agent_config.SESSION_ID_CHARS)), 
+            "input": self.agent_config.input,
+            "finish_reason": answer,
+            "tool_calls":  [] ,
+            "answer_type": answer_type,
+            "answer": answer,
+            "timestamp": datetime.now().isoformat(),
+            "role":role,
+            "parent_role":self.agent_config.parent_role,
+            "session_token":self.agent_config.session_token
+        }
+
+        return doc
+    
     def inference(self, completed_prompt:object, llm_type:str = "", llm_model:str = "", temperature = 0.0):
 
         if "options" in completed_prompt and "model_override" in completed_prompt["options"]:
@@ -73,9 +95,16 @@ class LLMBase:
             case llm_types.OPENAI:
                 client =  OpenAI(api_key=self.agent_config.OPENAI_API_KEY)
                 #completion = client.chat.completions.create(model=llm_model, messages=completed_prompt["messages"], tools=completed_prompt["tools"])
-                completion = client.chat.completions.create(model=llm_model, messages=completed_prompt["messages"], 
-                                                            tools = None if len(completed_prompt['tools']) == 0 else completed_prompt['tools'])
-                return self.process_ai_completion(completion)
+                
+                try:
+                    completion = client.chat.completions.create(model=llm_model, messages=completed_prompt["messages"], 
+                                                            tools = None if len(completed_prompt['tools']) == 0 else completed_prompt['tools'], response_format=completed_prompt['schema'])
+
+                except Exception as e:
+                    logging.error(f'inference error {str(e)}')
+                    return self.process_ai_error(e, completed_prompt["role"])
+                
+                return self.process_ai_completion(completion, completed_prompt["role"])
             
             case llm_types.OLLAMA:
                 client = Client(host=self.agent_config.OLLAMA_ENDPOINT)

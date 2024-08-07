@@ -20,7 +20,7 @@
         "role_override":true,
         "role_override_context":"deepthoughtai",
         "use_structured_output":true,
-        "use_reasoning":True
+        "use_reasoning":true
     },
     "level":"user"
 }

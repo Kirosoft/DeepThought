@@ -52,7 +52,7 @@ class LLMBase:
             "answer_type": answer_type,
             "answer": "" if completion.choices[0].finish_reason == "tool_calls" else answer,
             "timestamp": datetime.now().isoformat(),
-            "role":self.agent_config.role,
+            "role":completion["role"],
             "parent_role":self.agent_config.parent_role,
             "session_token":self.agent_config.session_token
         }

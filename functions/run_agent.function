@@ -1,0 +1,9 @@
+{
+    "name":"run_agent",
+    "input": "this contains the input the callee would like an answer for",
+    "role":["auto","role","context", "flow", "function", "schema"],
+    "function_call_type":["create", "update", "load", "loadall", "run"],
+    "session_history":"",
+    "answer":"if there is an answer it goes here",
+    "answer_type:["more_input", "call_function", "finished"]
+}

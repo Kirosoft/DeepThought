@@ -77,13 +77,13 @@ new_context = {
         "repo": "Kirosoft/DeepThought",
         "access_token": "$GITHUB_ACCESS_TOKEN",
         "filter": [
-            ".role",".schema"
+            ".role",".schema",".function"
         ],
-        "api_url": "https://api.github.com"
+        "api_url": "https://api.github.com",
+        "current_version": 3,
     },
     "options": {},
     "adaptor": "html_to_text",
-    "current_version": 3,
     "adaptor_args": {},
     "level": "user"
 }
@@ -110,13 +110,30 @@ print(response_json)
 
 
 #run the loader
-url = f"{base_url}/run_context"
+# url = f"{base_url}/run_context"
 # response = requests.get(url, params=params, headers=headers)
 # response_json = response.json()
 # print(response_json)
 
+# create a function definition
+function_definition = \
+{
+        "name": "run_agent",
+        "schema": "function definition goes here",
+        "options": {
+            "schema_override":True,
+            "schema_override_context":"deepthoughtai"
+        }
+}
+
+# url = f"{base_url}/functions_crud"
+# payload = json.dumps(function_definition, ensure_ascii=False).encode('utf8')
+# response = requests.post(url, payload, headers=headers)
+# response_json = response.json()
+# print(response_json)
+
 #test - a prompt using 'auto' role mode
-document = {"input": "I would like to create a new role called quiz_master, this should generate 10 new pub quiz questions on a variety of topics","role":"auto", "name":"run_agent", "session_token":"this_should_be_random"}
+document = {"input": "I would like to create a new role called quiz_master, this should generate 10 new pub quiz questions on a variety of topics. The topics will be provided via a new context","role":"auto", "name":"run_agent"}
 
 headers = {
     'Authorization': f'Bearer {token["token"]}',

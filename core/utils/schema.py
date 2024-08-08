@@ -16,6 +16,7 @@ def infer_pydantic_type(value: Any) -> Any:
     elif isinstance(value, list):
         if value:
             return List[infer_pydantic_type(value[0])]
+
         return List[Any]
     elif isinstance(value, dict):
         return create_dynamic_model(value)

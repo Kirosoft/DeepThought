@@ -2,7 +2,7 @@ import azure.functions as func
 import azure.durable_functions as df
 import logging
 
-from tools import tools
+from functions import function
 from security import security
 from agent import agent
 from roles import roles
@@ -19,7 +19,7 @@ logger.setLevel(logging.ERROR)
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 
-app.register_functions(tools) 
+app.register_functions(function) 
 app.register_functions(security) 
 app.register_functions(agent)
 app.register_functions(roles)

@@ -6,9 +6,9 @@ from core.agent.agent_memory import AgentMemory
 from core.agent.agent_memory_role import AgentMemoryRole
 from core.llm.llm_base import LLMBase
 from core.middleware.role import Role
-from core.middleware.tool import Tool
+from core.middleware.function_definition import FunctionDefinition
 from core.middleware.context import Context
-from core.middleware.spec import Spec
+from core.middleware.schema_definition import SchemaDefinition
 from  core.utils.schema import create_dynamic_model
 import json
 
@@ -19,8 +19,8 @@ class AgentRole:
         self.user_id = user_id
         self.tenant = tenant
         self.role = Role(self.agent_config, user_id, tenant)
-        self.tool = Tool(self.agent_config, user_id, tenant)
-        self.spec = Spec(self.agent_config, user_id, tenant)
+        self.function_manager = FunctionDefinition(self.agent_config, user_id, tenant)
+        self.spec = SchemaDefinition(self.agent_config, user_id, tenant)
         self.context = Context(self.agent_config, user_id, tenant)
         self.agent_memory = None
         self.icl_memory = None
@@ -55,7 +55,7 @@ class AgentRole:
         # get the role or find an auto assigned one
         role = self.role.get_role(role_name, self.agent_config.input)
 
-        tools = self.tool.load_all_tools() if "options" in role and "prefetch_tools" in role["options"] and "prefetch_tools" in role["options"] and role["options"]["prefetch_tools"] else None
+        tools = self.function_manager.load_all_tools() if "options" in role and "prefetch_tools" in role["options"] and "prefetch_tools" in role["options"] and role["options"]["prefetch_tools"] else None
         roles = self.role.load_all_roles() if "options" in role and "prefetch_roles" in role["options"] and "prefetch_roles" in role["options"] and role["options"]["prefetch_roles"] else None
 
         messages = []
@@ -70,7 +70,8 @@ class AgentRole:
             self.icl_memory = AgentMemory(self.agent_config, self.user_id, self.tenant, icl_context)
 
         # user can override the examples 
-        output_format_json = self.spec.get_specs(role['output_format']) if 'output_format' in role else []
+        # TODO: probably deprecated with openai structure response mode
+        output_format_json = "" #self.spec.get_specs(role['output_format']) if 'output_format' in role else []
 
         # construct the system prompt
         # TODO: detect if the output is a spec and prompt the whole spec as JSON {spec}
@@ -112,7 +113,7 @@ class AgentRole:
         }
         messages.append(user_prompt)
 
-        tools  = self.tool.get_tools(role["tools"]) if "tools" in role and len(role["tools"]) > 0 else []
+        tools  = self.function_manager.get_function_definitions(role["tools"]) if "tools" in role and len(role["tools"]) > 0 else []
 
         # allow LLM model overrides on a per role basis
         if "options" in role and "model_override" in role["options"]:

@@ -1,46 +1,12 @@
 {
     "version": "0.2.0",
     "configurations": [
-    
-        
-        {
-            "name": "Import roles",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "./roles/update_roles.py",
-            "args":["./roles"],
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "Import tools",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "./tools/update_tools.py",
-            "args":["f:/deepthought/tools/"],
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "Import specifications",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "./specifications/update_specifications.py",
-            "args":["f:/deepthought/specifications/"],
-            "console": "integratedTerminal"
-        },
         {
              "name": "Azure Functions",
             "type": "python",
             "request": "attach",
             "port": 9091,
             "preLaunchTask": "func: host start"
-        },
-        {
-            "name": "Import context",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "./context/__init__.py",
-            "args":[],
-            "console": "integratedTerminal"
         }
     ]
 }

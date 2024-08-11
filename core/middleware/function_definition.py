@@ -3,6 +3,7 @@ from urllib.parse import unquote
 import json
 import logging
 from core.middleware.context import Context
+from  core.utils.schema import create_dynamic_model
 
 class FunctionDefinition:
 
@@ -38,11 +39,20 @@ class FunctionDefinition:
                 logging.error(f"Request function not found {function_name}")
 
         if result is not None and "options" in result and "schema_override_context" in result["options"]:
-            context_data_db = self.context_manager.get_latest_context_data(result["options"]["schema_override_context"])
-            function_override_context = AgentDBBase(self.agent_config, context_data_db, self.user_id, self.tenant)
-            override_schema = function_override_context.get(result["name"]+".function")
-            result["schema"] = override_schema["content"]
+            try:
+                context_data_db = self.context_manager.get_latest_context_data(result["options"]["schema_override_context"])
+                function_override_context = AgentDBBase(self.agent_config, context_data_db, self.user_id, self.tenant)
+                override_function_definition = function_override_context.get(result["name"]+".function")
 
+                # convert to a formal json schema
+                schema_obj = json.loads(override_function_definition["content"])
+                schema_model = create_dynamic_model(schema_obj).schema()
+                #schema_model["name"]=role["name"]
+                schema = {"type":"function", "function":{"name":schema_obj["name"], "description":schema_obj["description"], "parameters": schema_model}, "strict":True}
+
+                result["schema"] = schema
+            except Exception as err:
+                logging.error(f"Failed to define schema for {err}")
         return result
     
     def get_function_definitions(self, function_names) -> list[object]:
@@ -50,6 +60,17 @@ class FunctionDefinition:
 
         try:
             function_defs = [self.get_function_definition(func_name) for func_name in function_names]
+
+        except Exception as err:
+            print(f"Unable to find function {function_names} definition {err}")
+        
+        return function_defs
+
+    def get_function_schemas(self, function_names) -> list[object]:
+        function_defs = []
+
+        try:
+            function_defs = [self.get_function_definition(func_name)["schema"] for func_name in function_names]
 
         except Exception as err:
             print(f"Unable to find function {function_names} definition {err}")

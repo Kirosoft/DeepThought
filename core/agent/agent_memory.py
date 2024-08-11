@@ -24,11 +24,14 @@ class AgentMemory:
 
         try:
             context_definition = context_crud.get_context(context_name)
-            version = context_definition["current_version"] if "current_version" in context_definition else 1
-            self.__vector_store = AgentDBBase(self.agent_config, 
-                                    f"{self.agent_config.INDEX_VECTOR}{'' if context_name=='' else '_'}{context_name}_v{version}", user_id, tenant)
+            if context_definition:
+                version = context_definition["current_version"] if "current_version" in context_definition else 1
+                self.__vector_store = AgentDBBase(self.agent_config,  f"{self.agent_config.INDEX_VECTOR}{'' if context_name=='' else '_'}{context_name}_v{version}", user_id, tenant)
+            else:
+                logging.warning(f"Could not find context config defintion {context_name}")
+
         except Exception as err:
-            logging.error(f"Could not find context config defintion {self.context} {err}")
+            logging.error(f"Could not find context config defintion {context_name} {err}")
             self.__vector_store = None
         
         self.__history_store = AgentDBBase(self.agent_config, self.agent_config.INDEX_HISTORY, user_id, tenant)

@@ -113,7 +113,7 @@ class AgentRole:
         }
         messages.append(user_prompt)
 
-        tools  = self.function_manager.get_function_definitions(role["tools"]) if "tools" in role and len(role["tools"]) > 0 else []
+        tools  = self.function_manager.get_function_schemas(role["tools"]) if "tools" in role and len(role["tools"]) > 0 else []
 
         # allow LLM model overrides on a per role basis
         if "options" in role and "model_override" in role["options"]:

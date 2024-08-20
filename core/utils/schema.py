@@ -1,5 +1,9 @@
 from pydantic import BaseModel, create_model, EmailStr
 from typing import Any, Dict, List, Union
+from enum import Enum, auto
+
+def create_enum_from_list(name, strings):
+    return Enum(name, {string.upper(): string for string in strings})
 
 def infer_pydantic_type(value: Any) -> Any:
     if isinstance(value, int):
@@ -15,7 +19,11 @@ def infer_pydantic_type(value: Any) -> Any:
         return bool
     elif isinstance(value, list):
         if value:
-            return List[infer_pydantic_type(value[0])]
+            if (isinstance(value[0], str) and value[0].startswith("@")):
+                enum_name = value[0][1:]
+                return create_enum_from_list(enum_name, value[1:])
+            else:
+                return List[infer_pydantic_type(value[0])]
 
         return List[Any]
     elif isinstance(value, dict):

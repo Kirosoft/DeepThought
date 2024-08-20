@@ -113,6 +113,7 @@ class AgentRole:
         }
         messages.append(user_prompt)
 
+        # TODO: tools are being renamed to be functions as this matches the OPenAI definition for structured outputs more closely
         tools  = self.function_manager.get_function_schemas(role["tools"]) if "tools" in role and len(role["tools"]) > 0 else []
 
         # allow LLM model overrides on a per role basis
@@ -120,7 +121,7 @@ class AgentRole:
             options["model_override"] = role["options"]["model_override"]
 
         schema = None
-        if "schema" in role:
+        if "schema" in role and role["schema"] is not None and role["schema"] != "":
             try:
                 schema_obj = json.loads(role["schema"])
                 schema_model = create_dynamic_model(schema_obj).schema()

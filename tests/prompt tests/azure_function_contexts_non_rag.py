@@ -142,8 +142,34 @@ headers = {
     }
 payload = json.dumps(document, ensure_ascii=False).encode('utf8')
 
+print("----------------------------------------------------------------------------------------------------------------------------")
 url = f"{base_url}/run_agent"
 response = requests.post(url, payload, headers=headers)
 response_json = response.json()
 print(response_json)
+
+if response_json["answer_type"] == "user_input_needed":
+    print(f"ANSWER: {response_json['answer']}")
+    # spoof a user response
+    print("----------------------------------------------------------------------------------------------------------------------------")
+    document = {"input": "the data source will be from a github repo, which will store the questions","role":response_json["role"], "name":"run_agent", "session_token":response_json["session_token"]}
+    payload = json.dumps(document, ensure_ascii=False).encode('utf8')
+    url = f"{base_url}/run_agent"
+    response = requests.post(url, payload, headers=headers)
+    response_json = response.json()
+    print(response_json)
+    
+
+
+# tool_arguments = json.loads(response_json["tool_arguments"])
+# print(tool_arguments)
+
+# print("----------------------------------------------------------------------------------------------------------------------------")
+# url = f"{base_url}/run_agent"
+# document = {"input": "The topic should be based on science questions","role":"role", "name":"run_agent", "session":response_json["session_token"]}
+# payload = json.dumps(document, ensure_ascii=False).encode('utf8')
+# response = requests.post(url, payload, headers=headers)
+# response_json = response.json()
+# print(response_json)
+
 

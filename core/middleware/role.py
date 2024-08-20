@@ -65,9 +65,9 @@ class Role:
             override_role = role_override_context.get(result["name"]+".role")
             if override_role is not None:
                 result["role"] = override_role['content']
-            override_schema = role_override_context.get(result["name"]+".schema")
-            if override_schema is not None:
-                result["schema"] = override_schema['content']
+            # override_schema = role_override_context.get(result["name"]+".schema")
+            # if override_schema is not None:
+            #     result["schema"] = override_schema['content']
 
         return result
 

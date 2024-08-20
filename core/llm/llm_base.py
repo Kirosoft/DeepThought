@@ -45,11 +45,21 @@ class LLMBase:
         else:
             answer_type="user_input_needed"
 
+        tool_name = ''
+        tool_arguments = ''
+
+        if completion.choices[0].finish_reason == "tool_calls":
+            tool_call = completion.choices[0].message.tool_calls[0]
+            tool_name = tool_call.function.name
+            tool_arguments = json.dumps(tool_call.function.arguments)
+
         doc={
             "id": ''.join(random.choices(string.ascii_letters + string.digits, k=self.agent_config.SESSION_ID_CHARS)), 
             "input": self.agent_config.input,
             "finish_reason": completion.choices[0].finish_reason,
             "tool_calls":  [] if completion.choices[0].finish_reason != "tool_calls" else str(completion.choices[0].message.tool_calls),
+            "tool_name": tool_name,
+            "tool_arguments": tool_arguments,
             "answer_type": answer_type,
             "answer": "" if completion.choices[0].finish_reason == "tool_calls" else answer,
             "timestamp": datetime.now().isoformat(),

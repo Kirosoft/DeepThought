@@ -7,13 +7,14 @@
     "tools": ["@enum_available_tools", "run_agent"],
     "options": {
         "rag_mode": false,
-        "context": "",
+        "context": "the context name must be valid if rag_mode is true",
         "icl_mode": false,
-        "icl_context": "",
+        "icl_context": "the context name must be valid if icl_mode is true",
         "role_override": true,
-        "role_override_context": "deepthoughtai",
+        "role_override_context": "a valid context name if role_override is true",
         "use_structured_output": true,
-        "use_reasoning": true
+        "use_reasoning": true,
+        "schema_override_context":"a valid context name or empty if not required"
     },
     "valid_fields": [
         "name",

@@ -1,10 +1,7 @@
 {
-    "name":"run_agent",
-    "description":"runs an agent which can help with the role specified in the 'role' property. Auto role will select the best matching role based on the input to the agent",
-    "input": "this contains the input the callee would like an answer for",
-    "role":["auto","role","context", "flow", "function", "schema", "backend_code", "ui_code", "applet"],
-    "function_call_type":["create", "update", "load", "loadall", "run"],
-    "session_history":"",
-    "answer":"if there is an answer it goes here",
-    "answer_type":["more_input", "call_function", "finished"]
+    "input": "what you would like the function or agent to be called to do and what you need before that function/role returns back to you",
+    "role":["@enum_role_selection", "auto","role//context", "role//flow", "function", "schema", "backend_code", "ui_code", "applet"],
+    "function_call_type":["@enum_call_type", "create", "update", "load", "loadall", "run"],
+    "answer":"once you have an answer it goes here",
+    "result_type":["@result_type_enum", "user_input_requested", "call_function", "call_role", "finished"]
 }

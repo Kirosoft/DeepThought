@@ -1,0 +1,29 @@
+{
+    "id":"the name of the role to create, update, delete or list, this is empty of a list_all operation",
+    "opereration":["@enum_operation", "create", "update", "delete", "list", "list_all"],
+    "name":"name of the role",
+    "role": "a full and detailed breakdown describing exactly what the role does and how it should do it. Include a simple example of the the expected output if appropriate",
+    "expected_input": "specific detail about what is expected as input",
+    "tools": ["@enum_available_tools", "run_agent"],
+    "options": {
+        "rag_mode": false,
+        "context": "",
+        "icl_mode": false,
+        "icl_context": "",
+        "role_override": true,
+        "role_override_context": "deepthoughtai",
+        "use_structured_output": true,
+        "use_reasoning": true
+    },
+    "valid_fields": [
+        "name",
+        "description",
+        "role",
+        "expected_input",
+        "examples",
+        "tools",
+        "options",
+        "level"
+    ],
+    "level": "system"
+}

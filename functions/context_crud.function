@@ -19,6 +19,7 @@
         "separator": "\n\n",
         "strategy": "CharacterTextSplitter",
         "is_regex": false
-    }
+    },
+    "options": {}
 }
-}
+

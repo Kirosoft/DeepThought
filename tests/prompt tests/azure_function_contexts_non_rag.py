@@ -162,18 +162,39 @@ while not finished:
             url = f"{base_url}/run_agent"
             response = requests.post(url, payload, headers=headers)
             response_json = response.json()
-            print(response_json)
+            #print(response_json)
             
         case "tool_calls":
             url = f"{base_url}/{response_json['tool_name']}"
             tool_arguments = json.loads(json.loads(response_json["tool_arguments"]))
-            tool_arguments["session_token"] = response_json["session_token"]
-            tool_arguments["parent_role"] = response_json["role"]
-            tool_arguments["role"] = tool_arguments["role"].split("//")[1] if "//" in tool_arguments["role"] else tool_arguments["role"]
-            payload = json.dumps(tool_arguments, ensure_ascii=False).encode('utf8')
-            response = requests.post(url, payload, headers=headers)
-            response_json = response.json()
-            print(response_json)
+            if response_json['tool_name'] == "run_agent":
+                tool_arguments["session_token"] = response_json["session_token"]
+                tool_arguments["parent_role"] = response_json["role"]
+                tool_arguments["role"] = tool_arguments["role"].split("//")[1] if "//" in tool_arguments["role"] else tool_arguments["role"]
+                print(f"Contacting agent: {tool_arguments['role']} with input: {tool_arguments['input']} -  session token: {response_json['session_token']}")
+                payload = json.dumps(tool_arguments, ensure_ascii=False).encode('utf8')
+                response = requests.post(url, payload, headers=headers)
+                response_json = response.json()
+                #print(response_json)
+            else:
+                # run the tool
+                print(f"running tool: tool:{response_json['tool_name']} with input: {tool_arguments['input']} -  session token: {response_json['session_token']}")
+                payload = json.dumps(tool_arguments, ensure_ascii=False).encode('utf8')
+                response = requests.post(url, payload, headers=headers)
+                response_json = response.json()
+                print(response_json)
+                if response.status_code == 200:
+                    # the tool call succeeded
+                    input = f"operation {response_json['operation']} {response_json['id']} succeeded"
+                    arguments = {"input":input, "name":"run_agent", "role":response_json["role"], "session_token":response_json["session_token"]}
+                    print(f"Sending tool response to agent {response_json['role']}: {tool_arguments['tool_name']} with answer: {input} -  session token: {response_json['session_token']}")
+
+                    payload = json.dumps(tool_arguments, ensure_ascii=False).encode('utf8')
+                    response = requests.post(url, payload, headers=headers)
+                    response_json = response.json()
+                    #print(response_json)
+                else:
+                    print("Something went wrong")
 
         case "completed":
             finished = True

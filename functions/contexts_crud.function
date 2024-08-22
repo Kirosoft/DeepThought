@@ -3,7 +3,7 @@
     "opereration":["@enum_operation", "create", "update", "delete", "list", "list_all"],
     "id": "",
     "name": "",
-    "loader": ["@enum_loader_types", "github_file_loader", "html_file_loader", "pdf_file_loader", "text_file_loader"]
+    "loader": ["@enum_loader_types", "github_file_loader", "html_file_loader", "pdf_file_loader", "text_file_loader"],
     "loader_args": {
         "repo": "a github repo",
         "access_token": "a github access token or a string starting with $ indicating a lookup in the user profile to get the token",
@@ -22,4 +22,3 @@
     },
     "options": {}
 }
-

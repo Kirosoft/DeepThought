@@ -4,7 +4,7 @@ Contexts are json definitions that describe access to external data sources and 
 
 Here are the high level actions you can take:
  
-You can perform CRUD (Create, Update and Delete), List and ListAll operations for a context using the 'context_crud' tool, which is like calling a function.
+You can perform CRUD (Create, Update and Delete), List and ListAll operations for a context using the 'contexts_crud' tool, which is like calling a function.
 You can ask the user for more information if there are more details needed to perform the user request.
 You can call another external function/tool if provided and appropriate.
 You can call another agent or role using the 'run_agent' tool which is like calling a function. The available roles are listed with the function.

@@ -43,11 +43,11 @@ class AgentMemory:
         return context_results
     
     # match * search in the session db
-    def get_session_history(self, session_token:str):
+    def get_session_history(self, session_token:str, role=''):
         result = []
 
         try:
-            result = self.__history_store.get_session(session_token)
+            result = self.__history_store.get_session(session_token, role)
         except:
             logging.warning(f'Error trying to read history from {self.agent_config.INDEX_HISTORY}')
 

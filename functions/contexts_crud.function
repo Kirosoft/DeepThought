@@ -1,6 +1,6 @@
 {
     "id":"the name of the context to create, update, delete or list, this is empty of a list_all operation",
-    "opereration":["@enum_operation", "create", "update", "delete", "list", "list_all"],
+    "operation":["@enum_operation", "create", "update", "delete", "list", "list_all"],
     "id": "",
     "name": "",
     "loader": ["@enum_loader_types", "github_file_loader", "html_file_loader", "pdf_file_loader", "text_file_loader"],

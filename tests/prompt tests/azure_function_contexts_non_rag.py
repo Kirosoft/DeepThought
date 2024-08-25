@@ -51,7 +51,7 @@ policy = {
 
 SchemaModel = create_dynamic_model(policy)
 schema_model = SchemaModel.schema()
-print(schema_model)
+#print(schema_model)
 
 
 
@@ -157,7 +157,7 @@ while not finished:
             print(f"ANSWER: {response_json['answer']}")
             
             user_input = input("> ")
-            document = {"input": user_input,"role":response_json["role"], "name":"run_agent", "session_token":response_json["session_token"]}
+            document = {"input": user_input,"role":response_json["role"],"parent_role":response_json["parent_role"], "name":"run_agent", "session_token":response_json["session_token"]}
             payload = json.dumps(document, ensure_ascii=False).encode('utf8')
             url = f"{base_url}/run_agent"
             response = requests.post(url, payload, headers=headers)
@@ -167,31 +167,43 @@ while not finished:
         case "tool_calls":
             url = f"{base_url}/{response_json['tool_name']}"
             tool_arguments = json.loads(json.loads(response_json["tool_arguments"]))
+            tool_id=response_json['id']
+
             if response_json['tool_name'] == "run_agent":
+                #### running agent ####
                 tool_arguments["session_token"] = response_json["session_token"]
-                tool_arguments["parent_role"] = response_json["role"]
+                # move current call into the parent stack
+                tool_arguments["parent_role"].push({"role":response_json["role"], "id":response_json["answer"]["tool_calls"][0]["id"]}) 
                 tool_arguments["role"] = tool_arguments["role"].split("//")[1] if "//" in tool_arguments["role"] else tool_arguments["role"]
-                print(f"Contacting agent: {tool_arguments['role']} with input: {tool_arguments['input']} -  session token: {response_json['session_token']}")
+                print(f"Contacting agent: {tool_arguments['role']} {tool_id} with input: {tool_arguments['input']} -  session token: {response_json['session_token']}")
                 payload = json.dumps(tool_arguments, ensure_ascii=False).encode('utf8')
                 response = requests.post(url, payload, headers=headers)
                 response_json = response.json()
                 #print(response_json)
             else:
                 # run the tool
-                print(f"running tool: tool:{response_json['tool_name']} with input: {json.dumps(tool_arguments)} -  session token: {response_json['session_token']}")
+                print(f"running tool: tool:{response_json['tool_name']}[{tool_id}] with input: {json.dumps(tool_arguments)} -  session token: {response_json['session_token']}")
                 payload = json.dumps(tool_arguments, ensure_ascii=False).encode('utf8')
-                response = requests.post(url, payload, headers=headers)
-                response_json = response.json()
-                print(response_json)
-                if response.status_code == 200:
+                tool_response = requests.post(url, payload, headers=headers)
+                tool_response_json = tool_response.json()
+                #print(tool_response_json)
+                if tool_response.status_code == 200:
                     # the tool call succeeded
-                    input = f"operation {tool_arguments['operation']} {response_json['id']} succeeded"
-                    arguments = {"input":input, "name":"run_agent", "role":response_json["role"], "session_token":response_json["session_token"]}
-                    print(f"Sending tool response to agent {response_json['role']}: {tool_arguments['tool_name']} with answer: {input} -  session token: {response_json['session_token']}")
+                    message = f"operation {tool_arguments['operation']} {response_json['tool_name']} succeeded"
+                    function_response = {
+                        "role":"tool",
+                        "content":message,
+                        "tool_call_id":response_json["answer"]["tool_calls"][0]["id"]
+                    }
+                    arguments = {"input":function_response, "name":"run_agent", "role":response_json["role"], "session_token":response_json["session_token"]}
+                    print(f"Sending tool response to agent {response_json['role']}: {response_json['tool_name']} with answer: {input} -  session token: {response_json['session_token']}")
 
-                    payload = json.dumps(tool_arguments, ensure_ascii=False).encode('utf8')
+                    document = {"input": arguments,"role":response_json["role"],"parent_role":response_json["parent_role"], "name":"run_agent", "session_token":response_json["session_token"]}
+                    payload = json.dumps(document, ensure_ascii=False).encode('utf8')
+                    url = f"{base_url}/run_agent"
                     response = requests.post(url, payload, headers=headers)
                     response_json = response.json()
+                    # TODO: make sure we respond like the tool call was successfull
                     #print(response_json)
                 else:
                     print("Something went wrong")
@@ -202,6 +214,10 @@ while not finished:
         case "error":
             finished = True
         case default:
+            # pop the parent role
+            role = response_json["parent_role"].pop()
+            # respond back with the correct tool id
+
             finished = True
 
 

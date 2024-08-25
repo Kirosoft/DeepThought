@@ -51,12 +51,14 @@ class AgentRole:
     # for example the template includes the '{% for doc in docs -%}' expecting data
     # should be inserted
     def get_completed_prompt(self, role_name:str) -> object:
-        
+
+        input = self.agent_config.input
+    
         # get the role or find an auto assigned one
-        role = self.role.get_role(role_name, self.agent_config.input)
+        role = self.role.get_role(role_name, input)
 
         tools = self.function_manager.load_all_tools() if "options" in role and "prefetch_tools" in role["options"] and "prefetch_tools" in role["options"] and role["options"]["prefetch_tools"] else None
-        roles = self.role.load_all_roles() if "options" in role and "prefetch_roles" in role["options"] and "prefetch_roles" in role["options"] and role["options"]["prefetch_roles"] else None
+        #roles = self.role.load_all_roles() if "options" in role and "prefetch_roles" in role["options"] and "prefetch_roles" in role["options"] and role["options"]["prefetch_roles"] else None
 
         messages = []
         options = {}
@@ -84,16 +86,16 @@ class AgentRole:
             {f"output format: JSON SCHEMA [{','.join(output_format_json)}] do not invent any new fields or change the output scehma in any way. Any UNESCAPED characters should be escaped. Ensuer there are no NEWLINE characters inserted. Ensure there are no back slashes or enescaped characters.The answer to the user should just be text and not JSON" if len(output_format_json) != 0 else ""}
         """           
         # ICL Mode - In Context Learning
-        if self.role.is_icl(role):
+        if self.role.is_icl(role) and isinstance(input, str):
             system_prompt += f"Example responses:\n"
-            for doc in self.icl_memory.get_context(self.agent_config.input):
+            for doc in self.icl_memory.get_context(input):
                 system_prompt += f"{doc['content']}"
 
         # RAG - context injection
         # build the function message
         # transform the search results into json payload
-        if self.role.is_rag(role):
-            for doc in self.agent_memory.get_context(self.agent_config.input):
+        if self.role.is_rag(role) and isinstance(input, str):
+            for doc in self.agent_memory.get_context(input):
                 system_prompt += f"NAME: {doc['path']}"
                 system_prompt += f"CONTENT: {doc['content']}"
 
@@ -101,17 +103,17 @@ class AgentRole:
 
         # ASSISTANT - Session history
         if (not self.agent_config.new_session):
-            session_results = self.agent_memory.get_session_history(self.agent_config.session_token)
+            session_results = self.agent_memory.get_session_history(self.agent_config.session_token, role["name"])
             for session in session_results:
                 messages.append({"role":"user", "content":session["input"]})
-                messages.append({"role":"system", "content":session["answer"]})
+                messages.append({"role":"system", "content":session["answer"]}) if isinstance(session["answer"], str) else messages.append(session["answer"])
 
         # consuct the latest input as the last message
         user_prompt = {
             "role":"user",
-            "content": self.agent_config.input
+            "content": input
         }
-        messages.append(user_prompt)
+        messages.append(user_prompt) if isinstance(input, str) else messages.append(input['input'])
 
         # TODO: tools are being renamed to be functions as this matches the OPenAI definition for structured outputs more closely
         tools  = self.function_manager.get_function_schemas(role["tools"]) if "tools" in role and len(role["tools"]) > 0 else []

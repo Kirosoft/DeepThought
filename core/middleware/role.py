@@ -45,7 +45,7 @@ class Role:
         
         # determine role, default user_id, default tenant
         # if the role name is 'auto' then semantically lookup the closest role
-        if role_name=="auto":
+        if role_name=="auto" and isinstance(input_data, str):
             result = self.agent_memory_roles.get_context(input_data)
         else:
             result = self.db_roles_user.get(role_name)

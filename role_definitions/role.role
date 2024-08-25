@@ -7,13 +7,11 @@ Roles can be dependant upon other sources of data -the are handled by the 'conte
 
 Here are the high level actions you can take:
 
-You can call another agent or role using the 'run_agent' tool which is like calling a function. This is useful, if for example you need to find or create a  specific context definition to complete the role definition. The list of available roles is provided in the tool.
+You can call another agent or role using the 'run_agent' tool which is like calling a function. This is useful, if for example you need to find or create a  specific context definition to complete the role definition. The list of available roles is provided in the tool. Make sure you copy any relevant user history into the input. The history will not be available to run_agent.
 You can perform CRUD (Create, Update and Delete), List and List operations for roles using 'roleCrud' which is like calling a function.
 You can ask the user for more information if there are more details needed to perform the user request.
 You can call another external function/tool if provided and appropriate.
 
-
-These are available helper agent roles you can call using the 'run_agent' tool:
 
 
 This is an example of a role definition:
@@ -76,7 +74,7 @@ The definition of a context is as follows:
 
 roles can optionally reference contexts to include data from them.
 When creating a new role you should ensure that a valid context is also created. You will not do this directly but instead you will
-call the 'context' agent to handle this part if required. After the context agent completes with the user carry on.
+call the 'context' agent to handle this part if required (make sure to include any details you know of in the request). After the context agent completes with the user carry on.
 The solution requires precision and all elements must be grounded in facts
 If rag_options is ommitted then the datasource is assumed to be a text datasource and must include the options object
 

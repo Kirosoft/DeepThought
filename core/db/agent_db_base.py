@@ -50,8 +50,8 @@ class AgentDBBase:
     def multi_get(self, docs):
         return self.db_handler.multi_get(docs)
 
-    def get_session(self, session_token:str):
-        return self.db_handler.get_session(session_token)
+    def get_session(self, session_token:str, role):
+        return self.db_handler.get_session(session_token, role)
 
     def delete_all_from_session(self, session_token):
         return self.db_handler.delete_all_from_session(session_token)

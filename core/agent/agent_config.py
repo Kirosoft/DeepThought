@@ -121,7 +121,7 @@ class AgentConfig:
         else:
             self.new_session = False
             
-        self.parent_role=self.body.get("parent_role","")  
+        self.parent_role=self.body.get("parent_role",[])  
 
     def __get_input(self):
         # TODO: security check the input text

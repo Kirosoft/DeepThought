@@ -173,7 +173,8 @@ while not finished:
                 #### running agent ####
                 tool_arguments["session_token"] = response_json["session_token"]
                 # move current call into the parent stack
-                tool_arguments["parent_role"].push({"role":response_json["role"], "id":response_json["answer"]["tool_calls"][0]["id"]}) 
+                tool_arguments["parent_role"] = response_json['parent_role']
+                tool_arguments["parent_role"].append({"role":response_json["role"], "id":response_json["answer"]["tool_calls"][0]["id"]}) 
                 tool_arguments["role"] = tool_arguments["role"].split("//")[1] if "//" in tool_arguments["role"] else tool_arguments["role"]
                 print(f"Contacting agent: {tool_arguments['role']} {tool_id} with input: {tool_arguments['input']} -  session token: {response_json['session_token']}")
                 payload = json.dumps(tool_arguments, ensure_ascii=False).encode('utf8')
@@ -208,15 +209,28 @@ while not finished:
                 else:
                     print("Something went wrong")
 
-        case "completed":
-            finished = True
+        case "complete":
+            # pop the parent role
+            next_role = response_json["parent_role"].pop() if len(response_json["parent_role"])>0 else None
+            message = f"operation run_agent {response_json['role']} succeeded"
+            # respond back with the correct tool id
+            if next_role is not None:
+                function_response = {"input":{
+                    "role":"tool",
+                    "content":message,
+                    "tool_call_id":next_role['id']
+                }}
+                document = {"input": function_response,"role":next_role["role"],"parent_role":response_json["parent_role"], "name":"run_agent", "session_token":response_json["session_token"]}
+                payload = json.dumps(document, ensure_ascii=False).encode('utf8')
+                url = f"{base_url}/run_agent"
+                response = requests.post(url, payload, headers=headers)
+                response_json = response.json()
+            else:
+                finished = True
 
         case "error":
             finished = True
         case default:
-            # pop the parent role
-            role = response_json["parent_role"].pop()
-            # respond back with the correct tool id
 
             finished = True
 

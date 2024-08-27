@@ -135,6 +135,8 @@ function_definition = \
 #test - a prompt using 'auto' role mode
 document = {"input": "I would like to create a new role called quiz_master, this should generate 10 new pub quiz questions on a variety of topics. The topics will be provided via a new context","role":"auto", "name":"run_agent"}
 
+user_input = "quiz_topics is the id and name, the data will come from github repo: https://github.com/Kirosoft/DeepThoughtData - look for files ending .quiz, use standard rag options"
+
 headers = {
     'Authorization': f'Bearer {token["token"]}',
     'Content-Type': 'application/json',

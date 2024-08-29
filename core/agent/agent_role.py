@@ -82,7 +82,7 @@ class AgentRole:
             {role["role"] if "role" in role else ""}
             {f"Expected input: {role['expected_input']}" if role['expected_input'] != "" else ""}
             {f"Think about your response. If all the INPUT was provided and the OUTPUT seems complete, OUTPUT [[**FINISHED**]] OR [[**NOT_FINISHED**]] if not finished. You *MUST* output one or the other based on the circumstances."}
-            {f"Example output: {role['examples']}" if role['examples'] != "" and self.icl_memory is not None else ""}
+            {f"Example output: {role['examples']}" if "examples" in role and role['examples'] != "" and self.icl_memory is not None else ""}
             {f"output format: JSON SCHEMA [{','.join(output_format_json)}] do not invent any new fields or change the output scehma in any way. Any UNESCAPED characters should be escaped. Ensuer there are no NEWLINE characters inserted. Ensure there are no back slashes or enescaped characters.The answer to the user should just be text and not JSON" if len(output_format_json) != 0 else ""}
         """           
         # ICL Mode - In Context Learning
@@ -105,7 +105,7 @@ class AgentRole:
         if (not self.agent_config.new_session):
             session_results = self.agent_memory.get_session_history(self.agent_config.session_token, role["name"])
             for session in session_results:
-                messages.append({"role":"user", "content":session["input"]})
+                messages.append({"role":"user", "content":session["input"]}) if isinstance(session["input"], str) else messages.append(session["input"]["input"])
                 messages.append({"role":"system", "content":session["answer"]}) if isinstance(session["answer"], str) else messages.append(session["answer"])
 
         # consuct the latest input as the last message
@@ -128,7 +128,7 @@ class AgentRole:
                 schema_obj = json.loads(role["schema"])
                 schema_model = create_dynamic_model(schema_obj).schema()
                 #schema_model["name"]=role["name"]
-                schema = {"type":"json_schema", "json_schema":{"schema":schema_model, "name":role["name"]}}
+                schema = {"type":"json_schema", "json_schema":{"schema":schema_model, "name":role["name"], "strict":True}}
             except:
                 logging.error('run_agent - schema validation failed: %s',role['schema'])
 

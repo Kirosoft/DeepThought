@@ -192,16 +192,15 @@ while not finished:
                 #print(tool_response_json)
                 if tool_response.status_code == 200:
                     # the tool call succeeded
-                    message = f"operation {tool_arguments['operation']} {response_json['tool_name']} succeeded"
-                    function_response = {
+                    function_response = {"input":{
                         "role":"tool",
-                        "content":message,
+                        "content":f"{response_json['tool_name']} succeeded",
                         "tool_call_id":response_json["answer"]["tool_calls"][0]["id"]
-                    }
-                    arguments = {"input":function_response, "name":"run_agent", "role":response_json["role"], "session_token":response_json["session_token"]}
+                    }}
                     print(f"Sending tool response to agent {response_json['role']}: {response_json['tool_name']} with answer: {input} -  session token: {response_json['session_token']}")
 
-                    document = {"input": arguments,"role":response_json["role"],"parent_role":response_json["parent_role"], "name":"run_agent", "session_token":response_json["session_token"]}
+                    ################ Send the tool response ##################
+                    document = {"input": function_response,"role":response_json["role"],"parent_role":response_json["parent_role"], "name":"run_agent", "session_token":response_json["session_token"]}
                     payload = json.dumps(document, ensure_ascii=False).encode('utf8')
                     url = f"{base_url}/run_agent"
                     response = requests.post(url, payload, headers=headers)
@@ -228,12 +227,14 @@ while not finished:
                 response = requests.post(url, payload, headers=headers)
                 response_json = response.json()
             else:
+                print("all done")
                 finished = True
 
         case "error":
+            print("OK that went wrong")
             finished = True
         case default:
-
+            print("Unexpected item in the bagging area")
             finished = True
 
 

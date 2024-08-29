@@ -27,7 +27,9 @@ class AgentMemoryRole:
         roles = self.user_roles.get_all()
 
         for id, role in enumerate(roles):
-            embedding_vector=self.embedding.get_embedding(role["name"] + " "+role["description"] +" " + role["role"]+ " "+ role["expected_input"]).data[0].embedding
+            role_description = role["name"] +" " + role["role"]+ " "+ role["expected_input"]
+            role_description += " "+role["description"] if "description" in role else ""
+            embedding_vector=self.embedding.get_embedding(role_description).data[0].embedding
             role["embedding"] = embedding_vector
             self.memory[id] = role
 

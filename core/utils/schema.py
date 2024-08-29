@@ -1,4 +1,4 @@
-from pydantic import BaseModel, create_model, EmailStr
+from pydantic import BaseModel, Field, create_model, EmailStr
 from typing import Any, Dict, List, Union
 from enum import Enum, auto
 
@@ -32,5 +32,5 @@ def infer_pydantic_type(value: Any) -> Any:
         return Any
 
 def create_dynamic_model(json_data: Dict[str, Any]) -> BaseModel:
-    fields = {key: (infer_pydantic_type(value), ...) for key, value in json_data.items()}
+    fields = {key: (infer_pydantic_type(value), Field(default=value)) for key, value in json_data.items()}
     return create_model('DynamicModel', **fields)

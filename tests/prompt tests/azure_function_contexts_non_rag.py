@@ -8,8 +8,6 @@ import logging
 import urllib3
 import requests
 
-from  core.utils.schema import create_dynamic_model
-
 urllib3.disable_warnings()
 
 base_url = "http://localhost:7071/api"
@@ -19,223 +17,137 @@ base_url = "http://localhost:7071/api"
 logger = logging.getLogger('azure')
 logger.setLevel(logging.ERROR)
 
-# quick schema test
+token = None
 
-policy = {
-    "name": "ukho_policy",
-    "description": "You are an AI assistant using the following passages to answer the user questions on policies and software coding standards at the UKHO (UK Hydrogrpahic Office). ",
-    "role": "You should also use the content in any of the links in the passages as SOURCES. Each passage has a NAME which is the title of the document. After your answer, leave a blank line and then give the source html link(s) of the passages you answered from. Put them in a <br> separated list, prefixed with SOURCES and do not adjust the embedded html data in the source links:.",
-    "expected_input": "a question about a UKHO software engineering policy or coding standard",
-    "expected_output": "a detailed and specific job posting ",
-    "output_format": [],
-    "examples": [
-        "Example: Question: What is the meaning of life? Response: The meaning of life is 42. SOURCES: <a href='https://some/web/reference>'>Hitchhiker's Guide to the Galaxy</a>"
-    ],
-    "options": {
-        "rag_mode": True,
-        "context": "github1",
-        "icl_mode": True,
-        "icl_context": "icl_test",
-		"prefetch_tool_mode":True,
-		"prefetch_role_mode":True,
-		"prefetch_context_mode":True,
-        "model_override":"groq:llama-3.1-405b-reasoning",
-        "role_override":True,
-        "role_override_context":"deepthoughtai",
-        "use_structured_output":True,
-        "use_reasoning":True
-    },
-    "level":"user"
-}
+def get_header_auth():
 
-
-SchemaModel = create_dynamic_model(policy)
-schema_model = SchemaModel.schema()
-#print(schema_model)
-
-
-
-### Test Auth ####
-headers = {
-    'Content-Type': 'application/json',
-    'x-user-id': 'ukho',
-    'x-password': 'my_password'
-    }
-
-url = f"{base_url}/request_auth"
-response = requests.get(url, headers=headers)
-
-token = json.loads(response.content.decode('utf-8'))
-
-### Create the a github reader for .role and .schema files ####
-url = f"{base_url}/contexts_crud"
-new_context = {
-    "id": "deepthoughtai",
-    "name": "deepthoughtai",
-    "loader": "github_file_loader",
-    "loader_args": {
-        "repo": "Kirosoft/DeepThought",
-        "access_token": "$GITHUB_ACCESS_TOKEN",
-        "filter": [
-            ".role",".schema",".function"
-        ],
-        "api_url": "https://api.github.com",
-        "current_version": 3,
-    },
-    "options": {},
-    "adaptor": "html_to_text",
-    "adaptor_args": {},
-    "level": "user"
-}
-
-
-headers = {
-    'Authorization': f'Bearer {token["token"]}',
-    'Content-Type': 'application/json',
-    'x-user-id': 'ukho'
-    }
-
-params = {'id': new_context["id"]}
-
-# create a new context
-# payload = json.dumps(new_context, ensure_ascii=False).encode('utf8')
-# response = requests.post(url, payload, headers=headers)
-# response_json = response.json()
-# print(response_json)
-
-# get the new context
-response = requests.get(url, params=params, headers=headers)
-response_json = response.json()
-print(response_json)
-
-
-#run the loader
-# url = f"{base_url}/run_context"
-# response = requests.get(url, params=params, headers=headers)
-# response_json = response.json()
-# print(response_json)
-
-# create a function definition
-function_definition = \
-{
-        "name": "run_agent",
-        "schema": "function definition goes here",
-        "options": {
-            "schema_override":True,
-            "schema_override_context":"deepthoughtai"
+    ### Test Auth ####
+    headers = {
+        'Content-Type': 'application/json',
+        'x-user-id': 'ukho',
+        'x-password': 'my_password'
         }
-}
 
-# url = f"{base_url}/functions_crud"
-# payload = json.dumps(function_definition, ensure_ascii=False).encode('utf8')
-# response = requests.post(url, payload, headers=headers)
-# response_json = response.json()
-# print(response_json)
+    url = f"{base_url}/request_auth"
+    response = requests.get(url, headers=headers)
 
-#test - a prompt using 'auto' role mode
-document = {"input": "I would like to create a new role called quiz_master, this should generate 10 new pub quiz questions on a variety of topics. The topics will be provided via a new context","role":"auto", "name":"run_agent"}
+    token = json.loads(response.content.decode('utf-8'))
 
-user_input = "quiz_topics is the id and name, the data will come from github repo: https://github.com/Kirosoft/DeepThoughtData - look for files ending .quiz, use standard rag options"
+    return token
 
-headers = {
-    'Authorization': f'Bearer {token["token"]}',
-    'Content-Type': 'application/json',
-    'x-user-id': 'ukho'
-    }
-payload = json.dumps(document, ensure_ascii=False).encode('utf8')
+def function_response(message, id):
+    return  {"input":{
+        "role":"tool",
+        "content":message,
+        "tool_call_id":id
+    }}
 
-print("----------------------------------------------------------------------------------------------------------------------------")
-url = f"{base_url}/run_agent"
-response = requests.post(url, payload, headers=headers)
-response_json = response.json()
-print(response_json)
+def run_tool(document, tool_name="run_agent"):
+    global token
 
-finished = False
+    if token is None:
+        token = get_header_auth()
 
-while not finished:
+    headers = {
+        'Authorization': f'Bearer {token["token"]}',
+        'Content-Type': 'application/json',
+        'x-user-id': 'ukho'
+        }
+    payload = json.dumps(document, ensure_ascii=False).encode('utf8')
+
     print("----------------------------------------------------------------------------------------------------------------------------")
-    match response_json["answer_type"]:
-        case "user_input_needed":
-            print(f"ANSWER: {response_json['answer']}")
-            
-            user_input = input("> ")
-            document = {"input": user_input,"role":response_json["role"],"parent_role":response_json["parent_role"], "name":"run_agent", "session_token":response_json["session_token"]}
-            payload = json.dumps(document, ensure_ascii=False).encode('utf8')
-            url = f"{base_url}/run_agent"
-            response = requests.post(url, payload, headers=headers)
-            response_json = response.json()
-            #print(response_json)
-            
-        case "tool_calls":
-            url = f"{base_url}/{response_json['tool_name']}"
-            tool_arguments = json.loads(json.loads(response_json["tool_arguments"]))
-            tool_id=response_json['id']
+    url = f"{base_url}/{tool_name}"
+    response = requests.post(url, payload, headers=headers)
 
-            if response_json['tool_name'] == "run_agent":
-                #### running agent ####
-                tool_arguments["session_token"] = response_json["session_token"]
-                # move current call into the parent stack
-                tool_arguments["parent_role"] = response_json['parent_role']
-                tool_arguments["parent_role"].append({"role":response_json["role"], "id":response_json["answer"]["tool_calls"][0]["id"]}) 
-                tool_arguments["role"] = tool_arguments["role"].split("//")[1] if "//" in tool_arguments["role"] else tool_arguments["role"]
-                print(f"Contacting agent: {tool_arguments['role']} {tool_id} with input: {tool_arguments['input']} -  session token: {response_json['session_token']}")
-                payload = json.dumps(tool_arguments, ensure_ascii=False).encode('utf8')
-                response = requests.post(url, payload, headers=headers)
-                response_json = response.json()
-                #print(response_json)
-            else:
-                # run the tool
-                print(f"running tool: tool:{response_json['tool_name']}[{tool_id}] with input: {json.dumps(tool_arguments)} -  session token: {response_json['session_token']}")
-                payload = json.dumps(tool_arguments, ensure_ascii=False).encode('utf8')
-                tool_response = requests.post(url, payload, headers=headers)
-                tool_response_json = tool_response.json()
-                #print(tool_response_json)
-                if tool_response.status_code == 200:
-                    # the tool call succeeded
-                    function_response = {"input":{
-                        "role":"tool",
-                        "content":f"{response_json['tool_name']} succeeded",
-                        "tool_call_id":response_json["answer"]["tool_calls"][0]["id"]
-                    }}
-                    print(f"Sending tool response to agent {response_json['role']}: {response_json['tool_name']} with answer: {input} -  session token: {response_json['session_token']}")
+    if response.status_code == 200:
+        response_json = response.json()
 
-                    ################ Send the tool response ##################
-                    document = {"input": function_response,"role":response_json["role"],"parent_role":response_json["parent_role"], "name":"run_agent", "session_token":response_json["session_token"]}
-                    payload = json.dumps(document, ensure_ascii=False).encode('utf8')
-                    url = f"{base_url}/run_agent"
-                    response = requests.post(url, payload, headers=headers)
-                    response_json = response.json()
-                    # TODO: make sure we respond like the tool call was successfull
-                    #print(response_json)
-                else:
-                    print("Something went wrong")
+        if tool_name != 'run_agent':
+            ################ Send the tool response ##################
+            document = {"input": function_response(f"{tool_name} succeeded", document["call_id"]),
+                        "role":document["role"],"parent_role":document["parent_role"], "name":"run_agent", "session_token":document["session_token"]}
+            response_json = run_agent(document)
 
-        case "complete":
-            # pop the parent role
-            next_role = response_json["parent_role"].pop() if len(response_json["parent_role"])>0 else None
-            message = f"operation run_agent {response_json['role']} succeeded"
-            # respond back with the correct tool id
-            if next_role is not None:
-                function_response = {"input":{
-                    "role":"tool",
-                    "content":message,
-                    "tool_call_id":next_role['id']
-                }}
-                document = {"input": function_response,"role":next_role["role"],"parent_role":response_json["parent_role"], "name":"run_agent", "session_token":response_json["session_token"]}
-                payload = json.dumps(document, ensure_ascii=False).encode('utf8')
-                url = f"{base_url}/run_agent"
-                response = requests.post(url, payload, headers=headers)
-                response_json = response.json()
-            else:
-                print("all done")
+        print(response_json["answer"] if response_json["answer_type"] != "done" else "Done") 
+
+        handle_agent_response(response_json)
+        return {"answer_type":"done"}
+    else:
+        return {"answer_type":response_json["error"]}
+
+def run_agent(document):
+    return run_tool(document, "run_agent")
+
+def handle_complete(response_json):
+    # pop the parent role
+    next_role = response_json["parent_role"].pop() if len(response_json["parent_role"]) > 0 else None
+    # respond back with the correct tool id
+    if next_role is not None:
+        message = f"operation run_agent {response_json['role']} succeeded"
+        document = {"input": function_response(message, next_role['id']),"role":next_role["role"],"parent_role":response_json["parent_role"], "name":"run_agent", "session_token":response_json["session_token"]}
+        response_json = run_agent(document)
+    else:
+        print("all done")
+        response_json = {"answer_type":"done"}
+
+    return response_json
+
+def handle_tool_call(response_json):
+    tool_arguments = json.loads(json.loads(response_json["tool_arguments"]))
+    tool_arguments["session_token"] = response_json["session_token"]
+    tool_arguments["parent_role"] = response_json['parent_role']
+
+    call_id = response_json["answer"]["tool_calls"][0]["id"]
+    tool_arguments["call_id"] = call_id
+
+    if response_json['tool_name'] == "run_agent":
+        #### running agent ####
+        # move current call into the parent stack
+        tool_arguments["role"] = tool_arguments["role"].split("//")[1] if "//" in tool_arguments["role"] else tool_arguments["role"]
+        tool_arguments["parent_role"].append({"role":response_json["role"], "id":call_id}) 
+
+        response_json = run_agent(tool_arguments)
+    else:
+        # run the tool
+        tool_arguments["role"] = response_json['role']
+        response_json = run_tool(tool_arguments, response_json['tool_name'])
+
+    return response_json
+
+def handle_agent_response(response_json):
+    finished = False
+
+    while not finished:
+        match response_json["answer_type"]:
+            case "user_input_needed":
+                print(f"ANSWER: {response_json['answer']}")
+                
+                user_input = input("> ")
+                document = {"input": user_input,"role":response_json["role"],"parent_role":response_json["parent_role"], "name":"run_agent", "session_token":response_json["session_token"]}
+                response_json = run_agent(document)
+                
+            case "tool_calls":
+                response_json = handle_tool_call(response_json)
+
+            case "complete":
+                response_json = handle_complete(response_json)
+
+            case "done":
                 finished = True
 
-        case "error":
-            print("OK that went wrong")
-            finished = True
-        case default:
-            print("Unexpected item in the bagging area")
-            finished = True
+            case "error":
+                print("OK that went wrong")
+                finished = True
+            case default:
+                print("Unexpected item in the bagging area")
+                finished = True
 
+# Main Execution
+if __name__ == "__main__":
+    # test input
+    document = {"input": "I would like to create a new role called quiz_master, this should generate 10 new pub quiz questions on a variety of topics. The topics will be provided via a new context","role":"auto", "name":"run_agent"}
+    user_input = "quiz_topics is the id and name, the data will come from github repo: https://github.com/Kirosoft/DeepThoughtData - look for files ending .quiz, use standard rag options"
+
+    run_agent(document)
 
 

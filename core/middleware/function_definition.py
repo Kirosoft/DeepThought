@@ -52,7 +52,7 @@ class FunctionDefinition:
 
                 result["schema"] = schema
             except Exception as err:
-                logging.error(f"Failed to define schema for {function_name} {err}")
+                logging.error(f"Failed to define schema for {function_name} {err}") 
         return result
     
     def get_function_definitions(self, function_names) -> list[object]:

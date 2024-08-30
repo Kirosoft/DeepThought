@@ -19,13 +19,13 @@
 
 * revisit tool calling so that agents (roles) can call other agents (which is a kind of tool). Tools can be 'azure functions' and specs define the parameters for tools.
 
-schema's are used to defined response_format and are optionally defined as part of roles
-roles are used to define the behaviour of an agent
-role_definition is the prompt that describes the role to the LLM
-function_definitions are objects that hold the function schema and other meta data to describe functions that can be called
 
 
 Done:
+* schema's are used to defined response_format and are optionally defined as part of roles
+* roles are used to define the behaviour of an agent
+* role_definition is the prompt that describes the role to the LLM
+* function_definitions are objects that hold the function schema and other meta data to describe functions that can be called
 * Now supports schema override like role overrides from contexts
 * You can now define a <b>response_format</b> that is deterministic (openai models only) in each role - add 'schema' to role
 * Agent roles can now be sourced from github - allows version control of role descriptions

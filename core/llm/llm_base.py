@@ -126,7 +126,7 @@ class LLMBase:
                     return self.process_ai_error(e, completed_prompt["role"])
                 
                 return self.process_ai_completion(completion, completed_prompt["role"])
-            
+
             case llm_types.OLLAMA:
                 client = Client(host=self.agent_config.OLLAMA_ENDPOINT)
                 options =   {

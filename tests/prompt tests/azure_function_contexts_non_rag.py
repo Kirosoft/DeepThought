@@ -57,14 +57,25 @@ def run_tool(document, tool_name="run_agent"):
 
     print("----------------------------------------------------------------------------------------------------------------------------")
     url = f"{base_url}/{tool_name}"
-    response = requests.post(url, payload, headers=headers)
+
+    operation = document["operation"] if "operation" in document else "default"
+
+    match operation:
+        case "update" | "create" | "default":
+            response = requests.post(url, payload, headers=headers)
+        case "list" | "list_all":
+            response = requests.get(url, payload, headers=headers)
+        case "delete":
+            response = requests.delete(url, payload, headers=headers)
+        case default:
+            response = requests.post(url, payload, headers=headers)
 
     if response.status_code == 200:
         response_json = response.json()
 
         if tool_name != 'run_agent':
             ################ Send the tool response ##################
-            document = {"input": function_response(f"{tool_name} succeeded", document["call_id"]),
+            document = {"input": function_response(f"{tool_name} succeeded - response: {response_json}", document["call_id"]),
                         "role":document["role"],"parent_role":document["parent_role"], "name":"run_agent", "session_token":document["session_token"]}
             response_json = run_agent(document)
 
@@ -73,7 +84,7 @@ def run_tool(document, tool_name="run_agent"):
         handle_agent_response(response_json)
         return {"answer_type":"done"}
     else:
-        return {"answer_type":response_json["error"]}
+        return {"answer_type":response["reason"]}
 
 def run_agent(document):
     return run_tool(document, "run_agent")
@@ -147,7 +158,15 @@ if __name__ == "__main__":
     # test input
     document = {"input": "I would like to create a new role called quiz_master, this should generate 10 new pub quiz questions on a variety of topics. The topics will be provided via a new context","role":"auto", "name":"run_agent"}
     user_input = "quiz_topics is the id and name, the data will come from github repo: https://github.com/Kirosoft/DeepThoughtData - look for files ending .quiz, use standard rag options"
+    finished = False
 
-    run_agent(document)
+    while not finished:
+        user_input = input(">> ")
 
+        if (user_input == "quit" or user_input=="exit"):
+            finished = True
+        else:
+            document = {"input": user_input,"role":"auto", "name":"run_agent"}
+            run_agent(document)
 
+    print("Exit")

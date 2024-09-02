@@ -28,53 +28,62 @@ def contexts_crud(req: func.HttpRequest) -> func.HttpResponse:
     
     body = req.get_body().decode('utf-8')
     agent_config = AgentConfig(body, user_settings_keys=user_settings["keys"]) if body != '' else AgentConfig(user_settings_keys=user_settings["keys"])
+    operation_type = req.method
+    item_id = req.params.get("id") if req.params is not None else None
 
-    if req.method == "POST":
-        try:
-            json_body = json.loads(body)
-            context = Context(agent_config, user_settings["user_id"], user_settings["user_tenant"])
-            result = context.save_context(json_body)
-            response_str = json.dumps(result, ensure_ascii=False).encode('utf8')
-            return func.HttpResponse(response_str, headers=response_headers, status_code=200)
-        except ValueError:
-            return func.HttpResponse(
-                "Invalid JSON",
-                status_code=400,
-                headers=response_headers
-            )
-    if req.method == "DELETE":
-        try:
-            item_id = req.params.get('id')
-            context = Context(agent_config, user_settings["user_id"], user_settings["user_tenant"])
-            result = context.delete_context(item_id)
-            response_str = json.dumps(result, ensure_ascii=False).encode('utf8')
-            return func.HttpResponse(response_str, headers=response_headers, status_code=200)
-        except ValueError:
-            return func.HttpResponse(
-                "Invalid JSON",
-                status_code=400,
-                headers=response_headers
-            )
-    elif req.method == "GET":
-        try:
-            item_id = req.params.get('id')
-            context = Context(agent_config, user_settings["user_id"], user_settings["user_tenant"])
-            if item_id is not None:
-                result = context.get_context(item_id)
-            else:
-                result = context.load_all_contexts()
+    try:
+        # optional setting overrides when called as a tool
+        json_body = json.loads(body)
+        operation_type = json_body['operation'] if json_body is not None and "operation" in json_body else operation_type
+        item_id = json_body['id'] if 'id' in json_body else item_id
+    except Exception as err:
+        logging.debug(f"Debug Warning: optional payload overrides: {err}")
 
-            logging.info('Loaded contexts')
-            response_str = json.dumps(result, ensure_ascii=False).encode('utf8')
-            return func.HttpResponse(response_str, headers=response_headers, status_code=200)
-        except ValueError:
-            return func.HttpResponse(
-                "Invalid JSON",
-                status_code=400,
-                headers=response_headers
+    match operation_type:
+        case "POST" | "create" | "update":
+            try:
+                json_body = json.loads(body)
+                context = Context(agent_config, user_settings["user_id"], user_settings["user_tenant"])
+                result = context.save_context(json_body)
+                response_str = json.dumps(result, ensure_ascii=False).encode('utf8')
+                return func.HttpResponse(response_str, headers=response_headers, status_code=200)
+            except ValueError:
+                return func.HttpResponse(
+                    "Invalid JSON",
+                    status_code=400,
+                    headers=response_headers
+                    )
+        case "DELETE" | "delete":
+            try:
+                context = Context(agent_config, user_settings["user_id"], user_settings["user_tenant"])
+                result = context.delete_context(item_id)
+                response_str = json.dumps(result, ensure_ascii=False).encode('utf8')
+                return func.HttpResponse(response_str, headers=response_headers, status_code=200)
+            except ValueError:
+                return func.HttpResponse(
+                    "Invalid JSON",
+                    status_code=400,
+                    headers=response_headers
+                )
+        case "GET" | "list" | "list_all":
+            try:
+                context = Context(agent_config, user_settings["user_id"], user_settings["user_tenant"])
+                if item_id is not None:
+                    result = context.get_context(item_id)
+                else:
+                    result = context.load_all_contexts()
+
+                logging.info('Loaded contexts')
+                response_str = json.dumps(result, ensure_ascii=False).encode('utf8')
+                return func.HttpResponse(response_str, headers=response_headers, status_code=200)
+            except ValueError:
+                return func.HttpResponse(
+                    "Invalid JSON",
+                    status_code=400,
+                    headers=response_headers
             )
-    else:
-        return func.HttpResponse("Method not allowed", status_code=405, headers=response_headers)
+        case default:
+            return func.HttpResponse("Method not allowed", status_code=405, headers=response_headers)
 
 @df_contexts.route(route="run_context")
 @df_contexts.durable_client_input(client_name="client")
@@ -90,11 +99,19 @@ async def run_context(req: func.HttpRequest, client) -> func.HttpResponse:
         user_settings = response["user_settings"]
         payload = response["payload"]
 
-    #body = req.get_body().decode('utf-8')
+    item_id = req.params.get("id") if req.params is not None else None
+
+    try:
+        # optional setting overrides when called as a tool
+        body = req.get_body().decode('utf-8')
+        json_body = json.loads(body)
+        item_id = json_body['id'] if 'id' in json_body else item_id
+    except Exception as err:
+        logging.debug(f"Debug Warning: optional payload overrides: {err}")
 
     input = {
         "user_settings":user_settings,
-        "id":req.params.get("id","")
+        "id":item_id
     }
 
     instance_id = await client.start_new("orchestrate_context", None, input )

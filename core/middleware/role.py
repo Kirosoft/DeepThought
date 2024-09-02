@@ -41,7 +41,7 @@ class Role:
             return self.db_roles_system.index(role["name"], role)
 
 
-    def get_role(self, role_name: str, input_data) -> str:
+    def get_role(self, role_name: str, input_data = None) -> str:
         
         # determine role, default user_id, default tenant
         # if the role name is 'auto' then semantically lookup the closest role

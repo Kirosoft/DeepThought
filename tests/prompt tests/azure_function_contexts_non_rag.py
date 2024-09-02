@@ -1,4 +1,6 @@
 import os
+import random
+import string
 from core.db.agent_db_base import AgentDBBase
 from core.agent.agent_config import AgentConfig
 import json
@@ -58,17 +60,8 @@ def run_tool(document, tool_name="run_agent"):
     print("----------------------------------------------------------------------------------------------------------------------------")
     url = f"{base_url}/{tool_name}"
 
-    operation = document["operation"] if "operation" in document else "default"
-
-    match operation:
-        case "update" | "create" | "default":
-            response = requests.post(url, payload, headers=headers)
-        case "list" | "list_all":
-            response = requests.get(url, payload, headers=headers)
-        case "delete":
-            response = requests.delete(url, payload, headers=headers)
-        case default:
-            response = requests.post(url, payload, headers=headers)
+    # agent will set 'operation'
+    response = requests.post(url, payload, headers=headers)
 
     if response.status_code == 200:
         response_json = response.json()
@@ -84,7 +77,7 @@ def run_tool(document, tool_name="run_agent"):
         handle_agent_response(response_json)
         return {"answer_type":"done"}
     else:
-        return {"answer_type":response["reason"]}
+        return {"answer_type":response["reason"] if "reason" in response else "Unknown"}
 
 def run_agent(document):
     return run_tool(document, "run_agent")
@@ -161,12 +154,15 @@ if __name__ == "__main__":
     finished = False
 
     while not finished:
+        session_token = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
+
+        role = input("role selection >> ")
         user_input = input(">> ")
 
         if (user_input == "quit" or user_input=="exit"):
             finished = True
         else:
-            document = {"input": user_input,"role":"auto", "name":"run_agent"}
+            document = {"input": user_input,"role":role, "name":"run_agent", 'session_token':session_token}
             run_agent(document)
 
     print("Exit")

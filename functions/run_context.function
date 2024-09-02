@@ -1,0 +1,5 @@
+{
+    "id":"the name of the context to 'run' - this forces an update of data from the external source referenced in the context. This operation can take some time to complete depending on the size of the data that needs to be transferred",
+    "operation":["@enum_operation", "run_context"],
+    "id": ""
+}

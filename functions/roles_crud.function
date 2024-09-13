@@ -16,15 +16,5 @@
         "use_reasoning": true,
         "schema_override_context":"a valid context name or empty if not required"
     },
-    "valid_fields": [
-        "name",
-        "description",
-        "role",
-        "expected_input",
-        "examples",
-        "tools",
-        "options",
-        "level"
-    ],
     "level": "system"
 }

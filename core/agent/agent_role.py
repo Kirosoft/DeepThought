@@ -81,7 +81,6 @@ class AgentRole:
             {role["description"] if "description" in role else ""}
             {role["role"] if "role" in role else ""}
             {f"Expected input: {role['expected_input']}" if role['expected_input'] != "" else ""}
-            {f"Think about your response. If all the INPUT was provided and the OUTPUT seems complete, OUTPUT [[**FINISHED**]] OR [[**NOT_FINISHED**]] if not finished. You *MUST* output one or the other based on the circumstances."}
             {f"Example output: {role['examples']}" if "examples" in role and role['examples'] != "" and self.icl_memory is not None else ""}
             {f"output format: JSON SCHEMA [{','.join(output_format_json)}] do not invent any new fields or change the output scehma in any way. Any UNESCAPED characters should be escaped. Ensuer there are no NEWLINE characters inserted. Ensure there are no back slashes or enescaped characters.The answer to the user should just be text and not JSON" if len(output_format_json) != 0 else ""}
         """           

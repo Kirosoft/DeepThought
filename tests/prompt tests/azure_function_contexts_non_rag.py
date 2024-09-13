@@ -107,7 +107,7 @@ def handle_tool_call(response_json):
     if response_json['tool_name'] == "run_agent":
         #### running agent ####
         # move current call into the parent stack
-        tool_arguments["role"] = tool_arguments["role"].split("//")[1] if "//" in tool_arguments["role"] else tool_arguments["role"]
+        tool_arguments["role"] = tool_arguments["role"].split(".")[1] if "." in tool_arguments["role"] else tool_arguments["role"]
         tool_arguments["parent_role"].append({"role":response_json["role"], "id":call_id}) 
 
         response_json = run_agent(tool_arguments)

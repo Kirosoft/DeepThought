@@ -119,7 +119,8 @@ class LLMBase:
                 
                 try:
                     completion = client.chat.completions.create(model=llm_model, messages=completed_prompt["messages"], 
-                                                            tools = None if len(completed_prompt['tools']) == 0 else completed_prompt['tools'], response_format=completed_prompt['schema'])
+                                                            tools = None if len(completed_prompt['tools']) == 0 else completed_prompt['tools'], 
+                                                            response_format=completed_prompt['schema'])
 
                 except Exception as e:
                     logging.error(f'inference error {str(e)}')

@@ -1,12 +1,15 @@
 from pydantic import BaseModel, Field, create_model, EmailStr
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Union, Literal
 from enum import Enum, auto
 
-def create_enum_from_list(name, strings):
-    return Enum(name, {string.upper(): string for string in strings})
+def create_enum_from_list(name, data_list):
+
+    return Enum(name, {item.upper() if isinstance(item, str) else f'const{idx}': item for idx, item in enumerate(data_list)})
 
 def infer_pydantic_type(value: Any) -> Any:
-    if isinstance(value, int):
+    if isinstance(value, bool):
+        return bool
+    elif isinstance(value, int):
         return int
     elif isinstance(value, float):
         return float
@@ -15,22 +18,21 @@ def infer_pydantic_type(value: Any) -> Any:
         if "@" in value:
             return EmailStr
         return str
-    elif isinstance(value, bool):
-        return bool
     elif isinstance(value, list):
         if value:
             if (isinstance(value[0], str) and value[0].startswith("@")):
                 enum_name = value[0][1:]
                 return create_enum_from_list(enum_name, value[1:])
             else:
-                return List[infer_pydantic_type(value[0])]
+                return List[value]
 
         return List[Any]
     elif isinstance(value, dict):
-        return create_dynamic_model(value)
+        inner_model =  create_dynamic_model('sub_object', value)
+        return inner_model
     else:
         return Any
 
-def create_dynamic_model(json_data: Dict[str, Any]) -> BaseModel:
-    fields = {key: (infer_pydantic_type(value), Field(default=value)) for key, value in json_data.items()}
-    return create_model('DynamicModel', **fields)
+def create_dynamic_model(name, json_data: Dict[str, Any]) -> BaseModel:
+    fields = {key: (infer_pydantic_type(value),...) for key, value in json_data.items()}
+    return create_model(name, **fields)

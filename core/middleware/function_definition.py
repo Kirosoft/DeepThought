@@ -46,9 +46,20 @@ class FunctionDefinition:
 
                 # convert to a formal json schema
                 schema_obj = json.loads(override_function_definition["content"])
-                schema_model = create_dynamic_model(schema_obj).schema()
-                #schema_model["name"]=role["name"]
-                schema = {"type":"function", "function":{"name":function_name, "description": schema_obj["description"] if "description" in schema_obj else function_name, "parameters": schema_model}, "strict":True}
+                schema_model = create_dynamic_model(function_name, schema_obj).model_json_schema()
+                schema_model["additionalProperties"]=False
+                for key in schema_model["$defs"].keys():
+                    schema_model["$defs"][key]["additionalProperties"]=False 
+                    
+                schema = {
+                            "type":"function", 
+                            "function":
+                                    {
+                                        "name":function_name, 
+                                        "description": schema_obj["description"] if "description" in schema_obj else function_name, 
+                                        "parameters": schema_model
+                                    }
+                        }
 
                 result["schema"] = schema
             except Exception as err:

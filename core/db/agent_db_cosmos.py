@@ -79,15 +79,17 @@ class AgentDBCosmos(AgentDBBase):
                 
         return self.container
 
-    def check_for_valid_fields(self, collection):
+    def check_for_valid_fields(self, collection, validator):
         results = []
+
+        valid_fields = validator['valid_fields']
+
         for row in collection:
             # if a valid fields list exists then remove
             # all fields that are not listed in the valid
             # field list
-            if row is not None and "valid_fields" in row:
+            if row is not None:
 
-                valid_fields = row["valid_fields"]
                 field_list = list(row.keys()).copy()
                 new_row = {}
 
@@ -113,7 +115,13 @@ class AgentDBCosmos(AgentDBBase):
             tenant = tenant if tenant is not None else self.tenant
             data = self.get_container().read_item(item=id, partition_key=[tenant, user_id, self.__data_type])
 
-            data = self.check_for_valid_fields([data])[0]
+            # see if there is any validation of filtering required
+            try:
+                validator_id = f'{self.__data_type}_validator'
+                validator = self.get_container().read_item(item=validator_id, partition_key=[tenant, user_id, validator_id])
+                data = self.check_for_valid_fields([data], validator["valid_fields"])[0] if validator is not None else data
+            except Exception as err:
+                pass
 
         except Exception  as err:
             data = None

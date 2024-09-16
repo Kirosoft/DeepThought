@@ -3,7 +3,6 @@ from typing import Any, Dict, List, Union, Literal
 from enum import Enum, auto
 
 def create_enum_from_list(name, data_list):
-
     return Enum(name, {item.upper() if isinstance(item, str) else f'const{idx}': item for idx, item in enumerate(data_list)})
 
 def infer_pydantic_type(value: Any) -> Any:
@@ -24,12 +23,11 @@ def infer_pydantic_type(value: Any) -> Any:
                 enum_name = value[0][1:]
                 return create_enum_from_list(enum_name, value[1:])
             else:
-                return List[value]
+                return List[str]
 
         return List[Any]
     elif isinstance(value, dict):
-        inner_model =  create_dynamic_model('sub_object', value)
-        return inner_model
+        return create_dynamic_model('sub_object', value)
     else:
         return Any
 

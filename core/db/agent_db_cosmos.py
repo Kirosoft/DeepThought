@@ -119,7 +119,7 @@ class AgentDBCosmos(AgentDBBase):
             try:
                 validator_id = f'{self.__data_type}_validator'
                 validator = self.get_container().read_item(item=validator_id, partition_key=[tenant, user_id, validator_id])
-                data = self.check_for_valid_fields([data], validator["valid_fields"])[0] if validator is not None else data
+                data = self.check_for_valid_fields([data], validator)[0] if validator is not None else data
             except Exception as err:
                 pass
 
@@ -140,9 +140,14 @@ class AgentDBCosmos(AgentDBBase):
                         enable_cross_partition_query=False,  # Ensure cross-partition querying is disabled
                         partition_key=[tenant, user_id, self.__data_type]  # Specify the partition key
                     )
-            
-            data = self.check_for_valid_fields(list(collection))
-
+            data = collection
+            # see if there is any validation of filtering required
+            try:
+                validator_id = f'{self.__data_type}_validator'
+                validator = self.get_container().read_item(item=validator_id, partition_key=[tenant, user_id, validator_id])
+                data = self.check_for_valid_fields(collection, validator) if validator is not None else collection
+            except Exception as err:
+                pass
         except Exception  as err:
             data = None
             logging.warning(f"{err} Could not find {id} in ${self.index} with partition_key {[tenant, user_id, self.__data_type]}")
@@ -156,7 +161,13 @@ class AgentDBCosmos(AgentDBBase):
         query = f"SELECT * FROM C where C.id in ('{','.join(docs)}')"
         result = self.get_container().query_items(query, enable_cross_partition_query=True, partition_key=[self.tenant, self.user_id, self.__data_type])
 
-        result = self.check_for_valid_fields(result)
+        # see if there is any validation of filtering required
+        try:
+            validator_id = f'{self.__data_type}_validator'
+            validator = self.get_container().read_item(item=validator_id, partition_key=[tenant, user_id, validator_id])
+            result = self.check_for_valid_fields(result, validator) if validator is not None else result
+        except Exception as err:
+            pass
 
         return result
 

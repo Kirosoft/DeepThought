@@ -285,7 +285,7 @@ s57_json = {
             }
           ]
         }
-    #   },
+       },
     #   {
     #     "Title": "Northern Baltic",
     #     "Description": "Various updates on buoyage, lights, and rock features in the Northern Baltic area.",
@@ -377,7 +377,7 @@ s57_json = {
     #       "End": "2024-09-30",
     #       "Details": "Bridge will still open for cargo ships."
     #     }
-       }
+      # }
     ]
   }
 }
@@ -387,4 +387,4 @@ gdf, data = s57_to_geodataframe(s57_json)
 print(gdf)
 
 
-create_nautical_chart_image_with_latlong(gdf, data, 'nautical_chart_with_corrected_bounds.png', zoom_level=14, use_openseamap=True)
+create_nautical_chart_image_with_latlong(gdf, data, 'nautical_chart_with_corrected_bounds.png', zoom_level=16, use_openseamap=True)

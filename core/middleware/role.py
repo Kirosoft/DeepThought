@@ -25,7 +25,7 @@ class Role:
         self.context = Context(agent_config, user_id, tenant)
 
     def load_all_roles(self):
-        system_roles = list(self.db_roles_system.get_all())
+        system_roles = list(self.db_roles_system.get_all())  
         user_roles = list(self.db_roles_user.get_all())
 
         # TODO: tenant roles?

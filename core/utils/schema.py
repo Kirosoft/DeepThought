@@ -24,7 +24,8 @@ def infer_pydantic_type(value: Any) -> Any:
                 enum_name = value[0][1:]
                 return create_enum_from_list(enum_name, value[1:])
             else:
-                return List[value]
+                # TODO: we only support str or int type lists
+                return List[str] if isinstance(value[0], str) else List[int]
 
         return List[Any]
     elif isinstance(value, dict):

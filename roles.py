@@ -64,7 +64,7 @@ def roles_crud(req: func.HttpRequest) -> func.HttpResponse:
         case "GET" | "list" | "list_all":
             try:
                 role = Role(agent_config, user_settings["user_id"], user_settings["user_tenant"])
-                if item_id is not None:
+                if item_id is not None and item_id != '':
                     result = role.get_role(item_id)
                 else:
                     result = role.load_all_roles()

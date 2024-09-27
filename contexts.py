@@ -68,7 +68,7 @@ def contexts_crud(req: func.HttpRequest) -> func.HttpResponse:
         case "GET" | "list" | "list_all":
             try:
                 context = Context(agent_config, user_settings["user_id"], user_settings["user_tenant"])
-                if item_id is not None:
+                if item_id is not None and item_id != '':
                     result = context.get_context(item_id)
                 else:
                     result = context.load_all_contexts()

@@ -79,11 +79,12 @@ class AgentDBCosmos(AgentDBBase):
                 
         return self.container
 
-    def check_for_valid_fields(self, collection, validator):
+    def check_for_valid_fields(self, collection, valid_fields=None):
         results = []
 
-        valid_fields = validator['valid_fields']
-
+        if valid_fields == None:
+            return results
+        
         for row in collection:
             # if a valid fields list exists then remove
             # all fields that are not listed in the valid
@@ -140,11 +141,17 @@ class AgentDBCosmos(AgentDBBase):
                         enable_cross_partition_query=False,  # Ensure cross-partition querying is disabled
                         partition_key=[tenant, user_id, self.__data_type]  # Specify the partition key
                     )
-            
-            data = self.check_for_valid_fields(list(collection))
+                        # see if there is any validation of filtering required
+            try:
+                validator_id = f'{self.__data_type}_validator'
+                validator = self.get_container().read_item(item=validator_id, partition_key=[tenant, user_id, validator_id])
+                data = self.check_for_valid_fields(list(collection), validator["valid_fields"]) if validator is not None else data
+            except Exception as err:
+                logging.warning(f"{err}")
+                data = []
 
         except Exception  as err:
-            data = None
+            data = []
             logging.warning(f"{err} Could not find {id} in ${self.index} with partition_key {[tenant, user_id, self.__data_type]}")
 
         return data
@@ -156,9 +163,14 @@ class AgentDBCosmos(AgentDBBase):
         query = f"SELECT * FROM C where C.id in ('{','.join(docs)}')"
         result = self.get_container().query_items(query, enable_cross_partition_query=True, partition_key=[self.tenant, self.user_id, self.__data_type])
 
-        result = self.check_for_valid_fields(result)
+        try:
+            validator_id = f'{self.__data_type}_validator'
+            validator = self.get_container().read_item(item=validator_id, partition_key=[tenant, user_id, validator_id])
+            data = self.check_for_valid_fields(list(result), validator["valid_fields"]) if validator is not None else data
+        except Exception as err:
+            data = []
 
-        return result
+        return data
 
 
     def get_session(self, session_token:str, role:str):

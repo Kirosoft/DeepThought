@@ -83,58 +83,45 @@ update_basemap_with_osm_and_openseamap(ax[0])
 update_basemap_with_osm_and_openseamap(ax[1])
 
 # Zoom factor for zoom in/out
-zoom_factor = 0.8  # 20% zoom
+zoom_factor = 0.8  # 20% zoom (reduce by factor of 0.8 for zoom-in)
 
-# Function to calculate new limits during zoom
-def calculate_new_limits(xlim, ylim, zoom_factor, zoom_in=True):
-    """Calculate new x and y limits for zooming."""
-    x_center = (xlim[0] + xlim[1]) / 2
-    y_center = (ylim[0] + ylim[1]) / 2
+# Function to zoom both axes
+def zoom(zoom_in=True):
+    factor = zoom_factor if zoom_in else 1 / zoom_factor
+    for axis in ax:
+        xlim = axis.get_xlim()
+        ylim = axis.get_ylim()
 
-    if zoom_in:
-        # Zoom in: shrink the limits around the center
-        new_xlim = [x_center - (x_center - xlim[0]) * zoom_factor, x_center + (xlim[1] - x_center) * zoom_factor]
-        new_ylim = [y_center - (y_center - ylim[0]) * zoom_factor, y_center + (ylim[1] - y_center) * zoom_factor]
-    else:
-        # Zoom out: expand the limits around the center
-        new_xlim = [x_center - (x_center - xlim[0]) / zoom_factor, x_center + (xlim[1] - x_center) / zoom_factor]
-        new_ylim = [y_center - (y_center - ylim[0]) / zoom_factor, y_center + (ylim[1] - y_center) / zoom_factor]
+        # Calculate new limits
+        width = xlim[1] - xlim[0]
+        height = ylim[1] - ylim[0]
 
-    return new_xlim, new_ylim
+        new_width = width * factor
+        new_height = height * factor
+
+        # Calculate new center
+        x_center = (xlim[0] + xlim[1]) / 2
+        y_center = (ylim[0] + ylim[1]) / 2
+
+        new_xlim = [x_center - new_width / 2, x_center + new_width / 2]
+        new_ylim = [y_center - new_height / 2, y_center + new_height / 2]
+
+        # Prevent going below certain latitude/longitude limits (i.e., latitude limits should remain within bounds)
+        axis.set_xlim(new_xlim)
+        axis.set_ylim(new_ylim)
+
+    # Update the basemap after changing zoom
+    update_basemap_with_osm_and_openseamap(ax[0])
+    update_basemap_with_osm_and_openseamap(ax[1])
+    plt.draw()
 
 # Function to zoom in
 def zoom_in(event):
-    for axis in ax:
-        xlim = axis.get_xlim()
-        ylim = axis.get_ylim()
-
-        # Calculate the new limits
-        new_xlim, new_ylim = calculate_new_limits(xlim, ylim, zoom_factor, zoom_in=True)
-
-        # Apply the new limits
-        axis.set_xlim(new_xlim)
-        axis.set_ylim(new_ylim)
-
-    update_basemap_with_osm_and_openseamap(ax[0])
-    update_basemap_with_osm_and_openseamap(ax[1])
-    plt.draw()
+    zoom(zoom_in=True)
 
 # Function to zoom out
 def zoom_out(event):
-    for axis in ax:
-        xlim = axis.get_xlim()
-        ylim = axis.get_ylim()
-
-        # Calculate the new limits
-        new_xlim, new_ylim = calculate_new_limits(xlim, ylim, zoom_factor, zoom_in=False)
-
-        # Apply the new limits
-        axis.set_xlim(new_xlim)
-        axis.set_ylim(new_ylim)
-
-    update_basemap_with_osm_and_openseamap(ax[0])
-    update_basemap_with_osm_and_openseamap(ax[1])
-    plt.draw()
+    zoom(zoom_in=False)
 
 # Synchronize interactive zoom and pan
 def sync_axes(event):

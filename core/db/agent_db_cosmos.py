@@ -120,7 +120,7 @@ class AgentDBCosmos(AgentDBBase):
             try:
                 validator_id = f'{self.__data_type}_validator'
                 validator = self.get_container().read_item(item=validator_id, partition_key=[tenant, user_id, validator_id])
-                data = self.check_for_valid_fields([data], validator["valid_fields"])[0] if validator is not None else data
+                data = self.check_for_valid_fields([data], validator)[0] if validator is not None else data
             except Exception as err:
                 pass
 

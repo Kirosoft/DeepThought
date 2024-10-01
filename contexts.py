@@ -8,6 +8,7 @@ import json
 from core.agent.agent_config import AgentConfig
 from core.middleware.context import Context
 from core.middleware.loader import Loader
+import requests
 
 contexts = func.Blueprint()
 df_contexts  = df.Blueprint()
@@ -75,6 +76,24 @@ def contexts_crud(req: func.HttpRequest) -> func.HttpResponse:
 
                 logging.info('Loaded contexts')
                 response_str = json.dumps(result, ensure_ascii=False).encode('utf8')
+                return func.HttpResponse(response_str, headers=response_headers, status_code=200)
+            except ValueError:
+                return func.HttpResponse(
+                    "Invalid JSON",
+                    status_code=400,
+                    headers=response_headers
+                )
+        case "run_context":
+            try:
+                context = Context(agent_config, user_settings["user_id"], user_settings["user_tenant"])
+                if item_id is not None and item_id != '':
+                    headers = dict(req.headers)
+                    url = "http://localhost:7071/api/run_context"
+                    params = {'id': item_id}
+                    response = requests.get(url, params=params, headers=headers)
+                    response_json = response.json()
+
+                logging.info('run_context: context not found')
                 return func.HttpResponse(response_str, headers=response_headers, status_code=200)
             except ValueError:
                 return func.HttpResponse(

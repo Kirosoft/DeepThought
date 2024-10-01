@@ -1,182 +1,166 @@
-import matplotlib.pyplot as plt
-from matplotlib.widgets import Button
-import geopandas as gpd
-from shapely.geometry import Point
-import contextily as ctx
+import os
+import types
+from core.agent.agent_config import AgentConfig
+from openai import OpenAI
+from ollama import Client
+from groq import Groq
+from datetime import datetime
+import random, string
+import json
+import anthropic
+import logging
 
-# Before and After data
-before_data = [
-    {"name": "Existing Dolphin", "lon": 17.93565, "lat": 62.63037},
-    {"name": "Existing Dolphin", "lon": 17.93525, "lat": 62.63040},
-    {"name": "Existing Spar Buoy", "lon": 17.93565, "lat": 62.63338},
-    {"name": "Existing Spar Buoy", "lon": 17.93545, "lat": 62.63340},
-    {"name": "Existing Spar Buoy", "lon": 17.93343, "lat": 62.63308},
-    {"name": "Existing Spar Buoy", "lon": 17.93256, "lat": 62.63082},
-]
-after_data = [
-    {"name": "New Dolphin (Port-hand)", "lon": 17.93565, "lat": 62.63037},
-    {"name": "New Dolphin (Starboard-hand)", "lon": 17.93525, "lat": 62.63040},
-    {"name": "Deleted Spar Buoy", "lon": 17.93565, "lat": 62.63338},
-    {"name": "Deleted Spar Buoy", "lon": 17.93545, "lat": 62.63340},
-    {"name": "New Spar Buoy (Port-hand)", "lon": 17.93808, "lat": 62.62693},
-    {"name": "New Spar Buoy (Starboard-hand)", "lon": 17.93868, "lat": 62.62713},
-]
+llm_types = types.SimpleNamespace()
+llm_types.OPENAI = "openai"
+llm_types.OLLAMA = "ollama"
+llm_types.GROQ = "groq"
+llm_types.ANTHROPIC = "anthropic"
 
-# Create GeoDataFrames
-before_gdf = gpd.GeoDataFrame(before_data, geometry=gpd.points_from_xy([d['lon'] for d in before_data], [d['lat'] for d in before_data]))
-after_gdf = gpd.GeoDataFrame(after_data, geometry=gpd.points_from_xy([d['lon'] for d in after_data], [d['lat'] for d in after_data]))
+class LLMBase:
+    def __init__(self, agent_config:AgentConfig):
+        self.agent_config = agent_config
 
-# Set the CRS to WGS84 (EPSG:4326)
-before_gdf.set_crs(epsg=4326, inplace=True)
-after_gdf.set_crs(epsg=4326, inplace=True)
 
-# Define a function to update the basemap using both OpenStreetMap and OpenSeaMap providers
-def update_basemap_with_osm_and_openseamap(ax):
-    """Fetch and update the basemap using OpenStreetMap and OpenSeaMap providers."""
-    ctx.add_basemap(ax, crs=before_gdf.crs, source=ctx.providers.OpenStreetMap.Mapnik)
-    ctx.add_basemap(ax, crs=before_gdf.crs, source=ctx.providers.OpenSeaMap, alpha=0.5)  # Adjust alpha for layer transparency
+    def get_model(self, llm_type):
 
-# Calculate the bounding box that includes all points (both before and after changes)
-minx = min(before_gdf.total_bounds[0], after_gdf.total_bounds[0])
-miny = min(before_gdf.total_bounds[1], after_gdf.total_bounds[1])
-maxx = max(before_gdf.total_bounds[2], after_gdf.total_bounds[2])
-maxy = max(before_gdf.total_bounds[3], after_gdf.total_bounds[3])
+        match llm_type:
+            case llm_types.OPENAI:
+                return self.agent_config.OPENAI_MODEL
+            case llm_types.OLLAMA:
+                return self.agent_config.OLLAMA_MODEL
+            case llm_types.GROQ:
+                return self.agent_config.GROK_MODEL
+            case llm_types.ANTHROPIC:
+                return self.agent_config.ANTHROPIC_MODEL
+            
+    def process_ai_completion(self, completion, role):
+        # todo: assumes the answer object schema
+        answer = completion.choices[0].message.content
+        answer_type = ""
+        tool_name = ''
+        tool_arguments = ''
+        tool_result = ''
 
-# Add a buffer to ensure all points are visible
-buffer = 0.0005  # Adjust as needed for visibility
+        # TODO: support multiple tool calls
+        if completion.choices[0].finish_reason =="tool_calls":
+            tool_call = completion.choices[0].message.tool_calls[0]
+            tool_name = tool_call.function.name
+            tool_arguments = json.dumps(tool_call.function.arguments)
+            answer_type ="tool_calls"
+            tool_result = {
+                "role":"assistant",
+                "content": None,
+                "tool_calls": [{
+                                    "id":tool_call.id,
+                                    "function":{
+                                        "name": tool_name,
+                                        "arguments":tool_arguments, 
+                                    },
+                                    "type": "function"
+                }]
+            }
+        elif answer.__contains__("**FINISHED**"):
+            answer_type="complete"
+        else:
+            answer_type="user_input_needed"
 
-# Adjust the limits by adding/subtracting the buffer
-minx_buffered = minx - buffer
-miny_buffered = miny - buffer
-maxx_buffered = maxx + buffer
-maxy_buffered = maxy + buffer
+        doc={
+            "id": ''.join(random.choices(string.ascii_letters + string.digits, k=self.agent_config.SESSION_ID_CHARS)), 
+            "input": self.agent_config.input,
+            "finish_reason": completion.choices[0].finish_reason,
+            "tool_calls":  [] if completion.choices[0].finish_reason != "tool_calls" else str(completion.choices[0].message.tool_calls),
+            "tool_name": tool_name,
+            "tool_arguments": tool_arguments,
+            "answer_type": answer_type,     # TODO: deprecate
+            "answer": tool_result if completion.choices[0].finish_reason == "tool_calls" else answer,
+            "timestamp": datetime.now().isoformat(),
+            "role":role,
+            "parent_role":self.agent_config.parent_role,
+            "session_token":self.agent_config.session_token
+        }
 
-# Adjusted common limits
-common_xlim_buffered = (minx_buffered, maxx_buffered)
-common_ylim_buffered = (miny_buffered, maxy_buffered)
+        return doc
 
-# Set up the plot with the same initial view for both windows
-fig, ax = plt.subplots(1, 2, figsize=(14, 7))
+    def process_ai_error(self, error, role):
+        # todo: assumes the answer object schema
+        answer = str(error)
+        answer_type = ""
 
-# Set aspect ratios to equal for both subplots
-ax[0].set_aspect('equal')
-ax[1].set_aspect('equal')
 
-# Plot 'Before' on the left with buffered common limits
-before_gdf.plot(ax=ax[0], color='blue', marker='o', markersize=50, label="Before Changes")
-ax[0].set_title("Before Changes")
-ax[0].set_xlim(common_xlim_buffered)
-ax[0].set_ylim(common_ylim_buffered)
-for x, y, label in zip(before_gdf.geometry.x, before_gdf.geometry.y, before_gdf['name']):
-    ax[0].text(x, y, label, fontsize=8)
+        doc={
+            "id": ''.join(random.choices(string.ascii_letters + string.digits, k=self.agent_config.SESSION_ID_CHARS)), 
+            "input": self.agent_config.input,
+            "finish_reason": answer,
+            "tool_calls":  [] ,
+            "answer_type": answer_type,
+            "answer": answer,
+            "timestamp": datetime.now().isoformat(),
+            "role":role,
+            "parent_role":self.agent_config.parent_role,
+            "session_token":self.agent_config.session_token
+        }
 
-# Plot 'After' on the right with buffered common limits
-after_gdf.plot(ax=ax[1], color='red', marker='o', markersize=50, label="After Changes")
-ax[1].set_title("After Changes")
-ax[1].set_xlim(common_xlim_buffered)
-ax[1].set_ylim(common_ylim_buffered)
-for x, y, label in zip(after_gdf.geometry.x, after_gdf.geometry.y, after_gdf['name']):
-    ax[1].text(x, y, label, fontsize=8)
-
-# Initial basemap rendering using both OpenStreetMap and OpenSeaMap
-update_basemap_with_osm_and_openseamap(ax[0])
-update_basemap_with_osm_and_openseamap(ax[1])
-
-# Zoom factor for zoom in/out
-zoom_factor = 0.8  # 20% zoom
-
-# Function to calculate new limits during zoom
-def calculate_new_limits(xlim, ylim, zoom_factor, zoom_in=True):
-    """Calculate new x and y limits for zooming."""
-    x_center = (xlim[0] + xlim[1]) / 2
-    y_center = (ylim[0] + ylim[1]) / 2
-
-    if zoom_in:
-        # Zoom in: shrink the limits around the center
-        new_xlim = [x_center - (x_center - xlim[0]) * zoom_factor, x_center + (xlim[1] - x_center) * zoom_factor]
-        new_ylim = [y_center - (y_center - ylim[0]) * zoom_factor, y_center + (ylim[1] - y_center) * zoom_factor]
-    else:
-        # Zoom out: expand the limits around the center
-        new_xlim = [x_center - (x_center - xlim[0]) / zoom_factor, x_center + (xlim[1] - x_center) / zoom_factor]
-        new_ylim = [y_center - (y_center - ylim[0]) / zoom_factor, y_center + (ylim[1] - y_center) / zoom_factor]
-
-    return new_xlim, new_ylim
-
-# Function to zoom in
-def zoom_in(event):
-    for axis in ax:
-        xlim = axis.get_xlim()
-        ylim = axis.get_ylim()
-
-        # Calculate the new limits
-        new_xlim, new_ylim = calculate_new_limits(xlim, ylim, zoom_factor, zoom_in=True)
-
-        # Apply the new limits
-        axis.set_xlim(new_xlim)
-        axis.set_ylim(new_ylim)
-
-    update_basemap_with_osm_and_openseamap(ax[0])
-    update_basemap_with_osm_and_openseamap(ax[1])
-    plt.draw()
-
-# Function to zoom out
-def zoom_out(event):
-    for axis in ax:
-        xlim = axis.get_xlim()
-        ylim = axis.get_ylim()
-
-        # Calculate the new limits
-        new_xlim, new_ylim = calculate_new_limits(xlim, ylim, zoom_factor, zoom_in=False)
-
-        # Apply the new limits
-        axis.set_xlim(new_xlim)
-        axis.set_ylim(new_ylim)
-
-    update_basemap_with_osm_and_openseamap(ax[0])
-    update_basemap_with_osm_and_openseamap(ax[1])
-    plt.draw()
-
-# Synchronize interactive zoom and pan
-def sync_axes(event):
-    """Sync the axes limits between the two subplots when zooming or panning."""
-    if event.inaxes is None:
-        return  # Ignore if the event happens outside the axes
+        return doc
     
-    # Get the limits from the event axis
-    xlim = event.inaxes.get_xlim()
-    ylim = event.inaxes.get_ylim()
+    def inference(self, completed_prompt:object, llm_type:str = "", llm_model:str = "", temperature = 0.0):
 
-    # Apply the same limits to both axes
-    for axis in ax:
-        axis.set_xlim(xlim)
-        axis.set_ylim(ylim)
+        if "options" in completed_prompt and "model_override" in completed_prompt["options"]:
+            option_parts=completed_prompt["options"]["model_override"].split(":")
+            llm_type = option_parts[0]
+            llm_model = option_parts[1]
 
-    # Reapply the basemap updates for both subplots
-    update_basemap_with_osm_and_openseamap(ax[0])
-    update_basemap_with_osm_and_openseamap(ax[1])
-    plt.draw()
+        llm_type = self.agent_config.LLM_TYPE if llm_type == "" else llm_type
+        llm_model = self.get_model(llm_type) if llm_model == "" else llm_model
 
-# Add zoom in/out buttons
-ax_zoom_in = plt.axes([0.81, 0.05, 0.08, 0.04])  # Position of the zoom in button
-ax_zoom_out = plt.axes([0.71, 0.05, 0.08, 0.04])  # Position of the zoom out button
+        match llm_type:
+            case llm_types.OPENAI:
+                client =  OpenAI(api_key=self.agent_config.OPENAI_API_KEY)
+                #completion = client.chat.completions.create(model=llm_model, messages=completed_prompt["messages"], tools=completed_prompt["tools"])
+                
+                try:
+                    completion = client.chat.completions.create(model=llm_model, messages=completed_prompt["messages"], 
+                                                            tools = None if len(completed_prompt['tools']) == 0 else completed_prompt['tools'], 
+                                                            response_format=completed_prompt['schema'])
 
-button_zoom_in = Button(ax_zoom_in, 'Zoom In')
-button_zoom_out = Button(ax_zoom_out, 'Zoom Out')
+                except Exception as e:
+                    logging.error(f'inference error {str(e)}')
+                    return self.process_ai_error(e, completed_prompt["role"])
+                
+                return self.process_ai_completion(completion, completed_prompt["role"])
 
-# Connect the buttons to the zoom functions
-button_zoom_in.on_clicked(zoom_in)
-button_zoom_out.on_clicked(zoom_out)
+            case llm_types.OLLAMA:
+                client = Client(host=self.agent_config.OLLAMA_ENDPOINT)
+                options =   {
+                    "seed": 101,
+                    "temperature": temperature
+                    }
+                completion = client.chat(model=llm_model, messages=completed_prompt["messages"], tools=completed_prompt["tools"], options=options)
 
-# Connect the mouse event to sync axes on zoom and pan
-fig.canvas.mpl_connect('button_release_event', sync_axes)
+                doc={
+                    "id": ''.join(random.choices(string.ascii_letters + string.digits, k=self.agent_config.SESSION_ID_CHARS)), 
+                    "input": self.agent_config.input,
+                    "finish_reason": completion.choices[0].finish_reason,
+                    "tool_calls":  [] if completion.choices[0].finish_reason != "tool_calls" else str(completion.choices[0].message.tool_calls),
+                    "answer": completion['message']['content'],
+                    "timestamp": datetime.now().isoformat(),
+                    "role": completed_prompt["role"],
+                    "parent_role":self.agent_config.parent_role,
+                    "session_token":self.agent_config.session_token
+                }
+                return doc
 
-# Clean up the lat/lon axis labels to 5 decimal places
-for axis in ax:
-    axis.set_xlabel("Longitude")
-    axis.set_ylabel("Latitude")
-    axis.grid(True)
-    axis.xaxis.set_major_formatter(plt.FuncFormatter(lambda val, pos: '{:.5f}'.format(val)))
-    axis.yaxis.set_major_formatter(plt.FuncFormatter(lambda val, pos: '{:.5f}'.format(val)))
+            case llm_types.GROQ:
+                client = Groq(api_key=self.agent_config.GROK_API_KEY)
+                completion = client.chat.completions.create(model=llm_model, messages=completed_prompt["messages"], tools=completed_prompt["tools"])
+                
+                doc = self.process_ai_completion(completion)
+                
+                return doc
 
-plt.tight_layout()
-plt.show()
+            case llm_types.ANTHROPIC:
+                client = anthropic.Anthropic(api_key=self.agent_config.ANTHROPIC_API_KEY)
+                completion = client.messages.create(model=llm_model, messages=completed_prompt["messages"], tools=completed_prompt["tools"])
+                
+                doc = self.process_ai_completion(completion)
+                
+                return doc
